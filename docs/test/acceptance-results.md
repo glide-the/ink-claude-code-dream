@@ -9,7 +9,7 @@ Final local run date: 2026-08-23.
 | Command | Exit | Evidence |
 | --- | ---: | --- |
 | `bun install --frozen-lockfile` | 0 | 9 installs across 35 packages checked; no changes |
-| `bun run lint` | 0 | 68 current inventory entries; 8 source JSON contracts parsed; package/legal/vendor/header/toolchain gates passed |
+| `bun run lint` | 0 | 64 current inventory entries; 8 source JSON contracts parsed; package/legal/vendor/header/toolchain gates passed |
 | `bun run build` | 0 | deterministic Node 22 ESM release generated from Bun `1.2.20` lock; build receipt pins Node `24.13.0` archive packer |
 | `node scripts/verify-release.mjs` | 0 | 20 files, 19 checksums, all five contracts consumed, external core absent |
 | `bun run test` | 0 | 14 passed, 0 failed |
