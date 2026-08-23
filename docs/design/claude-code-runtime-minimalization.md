@@ -146,15 +146,33 @@ The wrapper may validate its own deployment contract, supervise a process group,
 
 No supported current source build, tree-shaking boundary, or stable patch surface was evidenced for the native `2.1.241` executable. Vendor/restored patching is rejected by version mismatch, maintainability, and redistribution gates. Tree shaking applies only to this small wrapper.
 
+Documented current extension points are runtime inputs, not core build inputs:
+Agent SDK `cli_path` and custom transport; CLI `--settings`, `--mcp-config`,
+`--strict-mcp-config`, `--plugin-dir`, `--add-dir`, `--agents`, and `--bare`.
+No official source-build entry, feature/build flag, module exclusion list, or
+postinstall-patch contract was found. Because the current platform package is
+a native executable without a source map or separate JS module graph, static
+imports, dynamic imports, registration order, and import side effects cannot be
+reliably classified or tree-shaken. Any internal modification could affect
+stream-json, transcript/resume, MCP, tools, sandbox, authentication, or
+Workspace, and would require modifying vendor implementation.
+
 ## 8. Candidate comparison
 
-| Candidate | Core reduction | Legal/compatibility | Decision |
-| --- | ---: | --- | --- |
-| Direct official `2.1.241` | 0 | lowest risk | production baseline |
-| Official `--bare` with explicit inputs | possible discovery reduction; unmeasured | official flag, but skips required discovery and OAuth/keychain | experimental opt-in only |
-| Independent supervisor | 0 | legal if child is external/unmodified and auth untouched | implemented operations option |
-| Binary/source patch or restored rebuild | unknown | prohibited/unsupported without separate authorization | blocked |
-| SDK/Dream protocol fork | 0 | duplicates state machine and violates scope | rejected |
+| Candidate | Evidence / official support | Maintainability / latest compatibility | IM and MCP impact | Upgrade risk / rollback | Decision |
+| --- | --- | --- | --- | --- | --- |
+| Official configuration minimalization | Supported documented settings/MCP/plugin/agent inputs; no core exclusion | High; valid on `2.1.241` | Reduces configured capabilities only, not core load; wrong config can remove required MCP/plugins | Low; remove config or restore prior file | Use for explicit configuration, not as a core-size claim |
+| Official `--bare` | Supported flag; skips automatic hooks, skills, commands, subagents, plugins, MCP, memory, CLAUDE.md and OAuth/keychain reads | Medium; semantics may evolve with official releases | High unless every Dream carrier is explicit; OAuth and discovery are material risks | Medium; remove flag/profile together | Experimental opt-in only after full business A/B |
+| Runtime lazy loading | Supported only inside this independent wrapper | High for wrapper; no effect on opaque core | Wrapper diagnostics stay off hot path; MCP/core unchanged | Low; direct official CLI path rollback | Implemented, but core reduction is 0 |
+| Compile-time capability flags | No official build flag or current source build found | Not maintainable/applicable to native `2.1.241` | Unknown risk across SDK/MCP/tools/resume | Unbounded; no supported replay | Reject |
+| Bundle tree shaking | No module graph/source map in platform package | Not applicable to native core; valid only for wrapper | Cannot prove unused registrations or side effects | Unbounded for core; rebuild wrapper to roll back | Reject for core |
+| Postinstall binary/source patch | No official patch contract; legal terms require unmodified binary | Low; byte offsets/bundles change per release | High protocol/auth/MCP risk | High; reinstall exact official artifact | Reject / publication blocked |
+| Replayable vendor patch set | Could store diffs without vendor source, but applying them still modifies restricted implementation | Low; every release needs conflict and semantic review | High; unchanged patch application does not prove behavior | High; discard patched artifact and restore official | Reject absent written authorization |
+| Custom vendor-derived Runtime package | Requires copying/modifying official or restored implementation | Incompatible with current legal gate and restored `2.1.88` age | Would own all SDK/MCP/auth compatibility risk | Critical; replace package with official artifact | Blocked |
+| Restored-source Bun rebuild | Historical `2.1.88`; no redistribution authorization; cannot prove parity with `2.1.241` | Low; recovered identifiers/modules are not an upstream build contract | Missing recent MCP/resume/security behavior is likely | Critical; abandon build and return to official | Blocked; restored source remains read-only |
+| Clean-room external supervisor | Uses documented process/CLI path boundary; external core unmodified | High; exact manifest/version tests per release | Opaque forwarding preserves official semantics; adds TMPDIR/process supervision | Low; set `CLAUDE_CODE_CLI_PATH` directly to official | Implemented as an operations option, not an optimization claim |
+| Direct official Runtime / loading-order hygiene | Fully supported published artifact | Highest; exact version pin | Preserves every observed and unknown capability | Lowest; select previous verified official artifact | Production and performance baseline |
+| SDK/Dream protocol fork | Technically possible but not an official Runtime extension point | Low; duplicates state machine and parser | Highest divergence risk | High; revert application code | Rejected by scope and architecture |
 
 ## 9. Recommended solution
 
@@ -253,7 +271,8 @@ Rollback is configuration-only: restore `CLAUDE_CODE_CLI_PATH` to the previously
 | cancel/timeout/crash/process group | provider-free fixture |
 | checksums/SBOM/license/legal/contracts | release verifier |
 | SDK `0.2.140` Dream path | current local compatibility harness |
-| SDK `0.2.143`, real OAuth/MCP reconnect/Dream E2E | pending parent validation |
+| installed SDK `0.2.143` → actual envelope → external core | passed: real official `2.1.241` bounded version probe plus public `query()` through a no-network core fixture |
+| real OAuth/MCP reconnect/Dream E2E | pending user-specified actor/entities and validation budget |
 
 ## 19. Acceptance criteria and design self-review
 
