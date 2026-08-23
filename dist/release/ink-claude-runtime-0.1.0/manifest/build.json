@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "releaseId": "ink-claude-runtime-0.1.0",
+  "sourceDateEpoch": 1787443200,
+  "buildTimestamp": "2026-08-23T00:00:00.000Z",
+  "runtimeTarget": "node22",
+  "packageManager": "bun@1.2.20",
+  "esbuild": "0.25.9",
+  "deterministicArchivePacker": "tar-stream@3.1.7 plus node:zlib",
+  "externals": [
+    "@anthropic-ai/claude-code",
+    "claude-agent-sdk",
+    "@modelcontextprotocol/sdk"
+  ],
+  "sourceMaps": "external-without-sources-content",
+  "dynamicImports": [
+    "Runtime release-manifest diagnostic",
+    "launcher/doctor"
+  ],
+  "claudeCoreLoadingReduction": 0
+}
