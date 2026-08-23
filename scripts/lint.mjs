@@ -14,6 +14,9 @@ if (packageJson.name !== "@ink-memory/runtime-envelope") {
 if (packageJson.private !== true || packageJson.license !== "UNLICENSED") {
   throw new Error("package must remain private and UNLICENSED");
 }
+if (packageJson.inkBuild?.archiveNode !== "24.13.0") {
+  throw new Error("archive Node/zlib toolchain pin drift");
+}
 for (const script of ["lint", "build", "test", "package", "verify"]) {
   if (!packageJson.scripts?.[script]) throw new Error(`missing package script: ${script}`);
 }

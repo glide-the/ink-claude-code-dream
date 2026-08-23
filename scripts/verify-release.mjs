@@ -24,6 +24,16 @@ const releaseManifestPath = join(releaseRoot, "release-manifest.json");
 if (!checksummedPaths.has("release-manifest.json")) {
   throw new Error("release-manifest.json is not in the checksum inventory");
 }
+const buildReceipt = JSON.parse(
+  await readFile(join(releaseRoot, "manifest", "build.json"), "utf8"),
+);
+if (
+  buildReceipt.packageManager !== "bun@1.2.20" ||
+  buildReceipt.archivePackerNode !== "24.13.0" ||
+  buildReceipt.deterministicArchivePacker !== "tar-stream@3.1.7 plus node:zlib"
+) {
+  throw new Error("release build toolchain receipt mismatch");
+}
 const manifest = JSON.parse(await readFile(releaseManifestPath, "utf8"));
 if (
   manifest.schemaVersion !== "ink-claude-cli-envelope/v1" ||

@@ -10,6 +10,9 @@
     "bun": ">=1.2.20 <2.0.0"
   },
   "packageManager": "bun@1.2.20",
+  "inkBuild": {
+    "archiveNode": "24.13.0"
+  },
   "scripts": {
     "lint": "node scripts/lint.mjs",
     "build": "bun run scripts/build.ts",

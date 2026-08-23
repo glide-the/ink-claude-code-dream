@@ -89,7 +89,7 @@ test("MCP 1.27.0 and 1.27.1 are Runtime evidence, not an SDK handshake", async (
     "1.27.1",
   ]);
   assert.deepEqual(envelope.manifest.claudeCodeMcpChangelogVersions, [
-    "2.1.240",
+    "2.1.239",
     "2.1.238",
   ]);
 });
@@ -236,6 +236,22 @@ test("SDK -v output is passed through while doctor alone enforces the pin", asyn
   });
   assert.equal(doctorMismatch.code, 70);
   assert.match(doctorMismatch.stderr.toString("utf8"), /incompatible/);
+
+  const untrustedManifestPath = join(root, "untrusted-release-manifest.json");
+  const untrustedManifest = JSON.parse(
+    await readFile(resolve("runtime/release-manifest.json"), "utf8"),
+  );
+  untrustedManifest.core.version = "2.1.240";
+  await writeFile(untrustedManifestPath, `${JSON.stringify(untrustedManifest)}\n`);
+  const overrideAttempt = await run(["--runtime-doctor"], {
+    env: {
+      INK_CLAUDE_CODE_EXECUTABLE: fakeClaude,
+      INK_CLAUDE_RUNTIME_MANIFEST_PATH: untrustedManifestPath,
+      FAKE_CLAUDE_VERSION: "2.1.240",
+    },
+  });
+  assert.equal(overrideAttempt.code, 70);
+  assert.match(overrideAttempt.stderr.toString("utf8"), /expected 2\.1\.241/);
 });
 
 test("explicit bare profile forwards exact argv and fails closed on missing carriers", async () => {

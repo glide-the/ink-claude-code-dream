@@ -4,7 +4,7 @@
 
 # Build and package
 
-Requirements: Bun `1.2.20` for dependency/build scripts and Node `>=22,<25` for the produced runtime. A reachable registry may be supplied to `bun install`; subsequent builds use the checked-in lock.
+Requirements: Bun `1.2.20` for dependency/build scripts, exact Node `24.13.0` for deterministic archive packing, and Node `>=22,<25` for executing the produced runtime. The exact packer pin controls the `node:zlib` gzip bytes; cross-Node archive identity is not claimed. A reachable registry may be supplied to `bun install`; subsequent builds use the checked-in lock.
 
 ```sh
 bun install --frozen-lockfile

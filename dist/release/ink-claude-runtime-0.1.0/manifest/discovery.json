@@ -8,7 +8,7 @@
   },
   "executable": "bin/ink-claude-runtime.mjs",
   "releaseManifest": "release-manifest.json",
-  "releaseManifestSha256": "a62f214a8b9f1808bf84b8a6a89e459e3b340c2701f06809a64ac2e3161cea36",
+  "releaseManifestSha256": "5f7746f2defe08905ff5e21735e2e94db324ae43c5a0c7855f3c5ab33080a808",
   "evidenceManifest": "manifest/capabilities.json",
   "sdk": {
     "version": "0.2.143",

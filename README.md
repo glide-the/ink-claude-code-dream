@@ -6,7 +6,7 @@
 
 This private repository ships an independent Node 22 CLI supervisor around a user-supplied, externally installed official Claude Code `2.1.241` artifact. It adds Runtime-owned contracts, a deployment doctor, thread-TMPDIR guard, process-group supervision, checksums, SBOM, license evidence, and deterministic packaging. It does not contain, rebuild, patch, rename, or publish Claude Code.
 
-This is not the recommended production cold-start or memory optimization. Claude core loading reduction is exactly **0**; the envelope adds a Node process and release-file loading. The final local macOS arm64 measurement made the `--version` path 24.22 ms / 50.8% slower than the official binary. Keep the verified official executable as the production default and rollback target unless the supervision/attestation features justify that cost.
+This is not the recommended production cold-start or memory optimization. Claude core loading reduction is exactly **0**; the envelope adds a Node process and release-file loading. The final local macOS arm64 measurement made the `--version` path 24.09 ms / 40.5% slower than the official binary. Keep the verified official executable as the production default and rollback target unless the supervision/attestation features justify that cost.
 
 ## Existing Dream/SDK integration
 
@@ -33,7 +33,7 @@ bun run verify
 bun run package
 ```
 
-The executable is a Node-target bundle; Bun manages dependencies and runs build scripts but is not the production runtime. See [the design and license/publish decision](docs/design/claude-code-runtime-minimalization.md), [build instructions](docs/build/README.md), and [test evidence](docs/test/README.md).
+The executable is a Node-target bundle; Bun manages dependencies and runs build scripts but is not the production runtime. Archive packing is pinned to Node `24.13.0` so `node:zlib` output is reproducible, while the produced supervisor supports Node `>=22,<25`. See [the design and license/publish decision](docs/design/claude-code-runtime-minimalization.md), [build instructions](docs/build/README.md), and [test evidence](docs/test/README.md).
 
 ## Release contents
 

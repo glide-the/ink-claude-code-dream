@@ -20,7 +20,7 @@ import { dirname, join, relative, resolve } from "node:path";
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const packageJson = JSON.parse(
   await readFile(join(repositoryRoot, "package.json"), "utf8"),
-) as { name: string; version: string };
+) as { name: string; version: string; inkBuild: { archiveNode: string } };
 const releaseId = `ink-claude-runtime-${packageJson.version}`;
 const releaseRoot = join(repositoryRoot, "dist", "release", releaseId);
 const epochSeconds = Number(process.env.SOURCE_DATE_EPOCH || "1787443200");
@@ -198,6 +198,7 @@ await writeFile(
       packageManager: "bun@1.2.20",
       esbuild: esbuildVersion,
       deterministicArchivePacker: "tar-stream@3.1.7 plus node:zlib",
+      archivePackerNode: packageJson.inkBuild.archiveNode,
       externals,
       sourceMaps: "external-without-sources-content",
       dynamicImports: ["Runtime release-manifest diagnostic", "launcher/doctor"],

@@ -13,7 +13,7 @@ async function main() {
   const command = args[0];
   if (command === "--runtime-manifest") {
     if (args.length !== 1) throw new Error("runtime manifest command takes no arguments");
-    const { readManifestEnvelope } = await import("../lib/manifest-C2MWZTPA.mjs");
+    const { readManifestEnvelope } = await import("../lib/manifest-DMPST4LO.mjs");
     const envelope = await readManifestEnvelope();
     process.stdout.write(`${JSON.stringify(envelope)}
 `);
@@ -21,7 +21,7 @@ async function main() {
   }
   if (command === "--runtime-doctor") {
     if (args.length !== 1) throw new Error("runtime doctor command takes no arguments");
-    const { doctor } = await import("../lib/launcher-UUPMEHFP.mjs");
+    const { doctor } = await import("../lib/launcher-LET44XUT.mjs");
     process.stdout.write(`${JSON.stringify(await doctor())}
 `);
     return;
@@ -29,7 +29,7 @@ async function main() {
   if (command && CONTROL_FLAGS.has(command)) {
     throw new Error("unsupported runtime control command");
   }
-  const { conventionalSignalExitCode, launchOfficialCli } = await import("../lib/launcher-UUPMEHFP.mjs");
+  const { conventionalSignalExitCode, launchOfficialCli } = await import("../lib/launcher-LET44XUT.mjs");
   const result = await launchOfficialCli(args);
   if (result.signal) {
     process.exitCode = conventionalSignalExitCode(result.signal);

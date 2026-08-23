@@ -63,7 +63,7 @@
     "1.27.1"
   ],
   "claudeCodeMcpChangelogVersions": [
-    "2.1.240",
+    "2.1.239",
     "2.1.238"
   ],
   "trustBoundary": "Deployment verifies the external pinned core with --runtime-doctor; published CLI flags, including version and authentication commands, are otherwise passed to the unmodified external binary."

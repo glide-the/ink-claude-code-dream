@@ -1,4 +1,4 @@
-// [Input] Consume a checksum-verified release directory and fixed SOURCE_DATE_EPOCH.
+// [Input] Consume a checksum-verified release directory, fixed SOURCE_DATE_EPOCH, and pinned archive Node/zlib toolchain.
 // [Output] Create a deterministic tar.gz with sorted entries, fixed metadata/gzip header, and SHA-256 sidecar.
 // [Pos] Reproducible archive packer; the external Claude core is intentionally absent.
 
@@ -13,6 +13,13 @@ import { pack as createTarPack } from "tar-stream";
 const releaseRoot = resolve("dist/release/ink-claude-runtime-0.1.0");
 const releaseId = basename(releaseRoot);
 const archive = resolve("dist/ink-claude-runtime-0.1.0.tar.gz");
+const packageJson = JSON.parse(await readFile(resolve("package.json"), "utf8"));
+const requiredNode = packageJson.inkBuild?.archiveNode;
+if (!requiredNode || process.versions.node !== requiredNode) {
+  throw new Error(
+    `archive packing requires Node ${requiredNode || "<missing pin>"}; received ${process.versions.node}`,
+  );
+}
 const epochSeconds = Number(process.env.SOURCE_DATE_EPOCH || "1787443200");
 if (!Number.isSafeInteger(epochSeconds) || epochSeconds <= 0) {
   throw new Error("SOURCE_DATE_EPOCH must be a positive integer");

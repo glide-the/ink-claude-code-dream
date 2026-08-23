@@ -7,6 +7,7 @@
   "packageManager": "bun@1.2.20",
   "esbuild": "0.25.9",
   "deterministicArchivePacker": "tar-stream@3.1.7 plus node:zlib",
+  "archivePackerNode": "24.13.0",
   "externals": [
     "@anthropic-ai/claude-code",
     "claude-agent-sdk",

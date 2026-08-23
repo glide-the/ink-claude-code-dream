@@ -18,6 +18,7 @@ Dream needs Claude Agent SDK headless streaming, tools, workspace/sandbox, MCP, 
 | Agent SDK Python | upstream main `0.2.143`, bundled CLI `2.1.241` | Current interface baseline |
 | Dream observed SDK | `0.2.140` | Compatibility test baseline until Dream upgrades |
 | Bun | `1.2.20` | Lock/build orchestration only |
+| Archive packer Node | exact `24.13.0` | Pins `node:zlib` gzip bytes; enforced before packaging |
 | Produced wrapper | Node `>=22,<25` ESM | Independent supervisor; no Claude protocol parsing |
 | Restored source | historical Claude Code `2.1.88` | Read-only historical evidence; never copied or built |
 
@@ -54,16 +55,16 @@ official flags, protocol observations, and black-box tests.
 | Workspace、cwd 与文件工具 | 条件使用 | thread factory/server-owned cwd → SDK options | Workspace Mode 或文件工具启用时 | 条件必需 | Workspace/Read/Grep 等失效 | TF, SVC, RUN |
 | sandbox | 条件使用 | SDK sandbox options + settings | turn 启动时 | 条件必需 | 启用场景越权或无法执行 | RUN；生产 settings 内容仍需真实验收 |
 | `CLAUDE_CODE_TMPDIR` | 已证实使用 | ENV 创建 `{thread}/.claude-tmp`；launcher 校验 | 每次 CLI 启动前 | 必需 | 违反 thread 隔离安全合同 | ENV；0700/no-symlink/exact-child 回归 |
-| 内置/产品 MCP | 条件使用 | runner 组合 Editor、Story Workspace、Memory/Necklace 等 | options 构造/连接时 | 条件必需 | 对应编辑、故事、记忆能力失效 | RUN, SVC；Memory/Necklace 默认关闭 |
-| 用户级 stdio MCP | 已证实使用 | user MCP config → `mcp_servers`/CLI config | Agent 连接时 | 必需于已配置用户 | 用户工具不可用 | RUN；MCP driver/service 回归 |
+| 内置/产品 MCP | 已证实使用 | runner 组合 Editor、Story Workspace、Memory/Necklace 等 | options 构造/连接时 | 条件必需 | 对应编辑、故事、记忆能力失效 | RUN, SVC；真实 Dream 工具调用/result 已验，Memory/Necklace 默认关闭 |
+| 用户级 stdio MCP | 条件使用 | user MCP config → `mcp_servers`/CLI config | Agent 连接时 | 必需于已配置用户 | 用户工具不可用 | RUN；MCP driver/service 回归；本次真实 actor 未配置用户级 server |
 | 用户级 HTTP/SSE MCP | 条件使用 | remote MCP config → official Runtime | 远端 server 被配置/连接时 | 条件必需 | 远端工具不可用 | RUN；真实 HTTP/OAuth 仍待 E2E |
 | MCP OAuth | 条件使用 | MCP resources API → official `mcp login/logout` | 用户发起授权/注销时 | 条件必需 | OAuth server 无法使用 | ROUTER/SVC；CLI argv 合同已验，真实授权待验 |
 | MCP Resources | 条件使用 | Dream MCP Resources 页面与 server config API | 页面查询/Agent 复用时 | 条件必需 | Resources 页面和复用合同退化 | MCP router/service 回归；原始 SDK resources inventory 未报告 |
 | MCP server/tool inventory | 已证实使用 | inventory service → Runtime/SDK init metadata | 配置校验与会话 init | 必需 | 无法展示/校验可用工具 | MCP inventory 回归；tools 已报告 |
 | plugin-scope MCP | 条件使用 | locked plugin materialization → official plugin discovery | plugin 装载时 | 条件必需 | plugin 内 MCP 不可用 | SVC/RUN；真实 plugin MCP 待 E2E |
-| plugins | 已证实使用 | Deck 锁定 plugin → `--plugin-dir` | Dream turn 启动时 | Dream 必需 | Dream Deck 合同失效 | SVC, RUN；plugin pipeline 回归 |
+| plugins | 已证实使用 | Deck 锁定 plugin → `--plugin-dir` | Dream turn 启动时 | Dream 必需 | Dream Deck 合同失效 | SVC, RUN；真实 Dream plugin load receipt 与业务链通过 |
 | skills | 条件使用 | plugin/explicit skill carriers | 发现或调用 skill 时 | 条件必需 | 已配置 skill 不可见 | SVC/RUN；语义 E2E 待验 |
-| hooks | 已证实使用 | SDK Python hooks 与 Dream artifact turn hook | tool/turn lifecycle | 必需于 Dream artifact | artifact/策略钩子失效 | RUN；artifact hook 回归；file SessionStart/Stop 未注册 |
+| hooks | 已证实使用 | SDK Python hooks 与 Dream artifact turn hook | tool/turn lifecycle | 必需于 Dream artifact | artifact/策略钩子失效 | RUN；真实 Dream Episode artifact 链与回归通过；file SessionStart/Stop 未注册 |
 | slash commands | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
 | subagents | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
 | Remote Session | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
@@ -184,7 +185,7 @@ The wrapper never implements MCP. It preserves CLI/config/stdin/stdout and leave
 
 The authoritative recent evidence is the official main [`CHANGELOG.md`](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md), not release-body text alone:
 
-- `2.1.240`: fixes clipped MCP elicitation forms and recovery of remote MCP servers after transient 5xx during mid-session reconnect, cloud, or SDK `setMcpServers()`.
+- `2.1.239`: fixes clipped MCP elicitation forms and recovery of remote MCP servers after transient 5xx during mid-session reconnect, cloud, or SDK `setMcpServers()`.
 - `2.1.238`: initializes stdio MCP before server discovery; changes `headersHelper` trust/credential handling; fixes disabled `mcp list/get` behavior.
 
 Release notes and changelog may differ in detail, so compatibility claims cite the changelog and must be tested. Python MCP `1.27.0`/`1.27.1` remain provider-free regression targets; they are not substitutes for real CLI OAuth/remote reconnect tests.
@@ -242,13 +243,15 @@ sequenceDiagram
     M-->>G: only clean-room source/contracts; no vendor artifact
 ```
 
-Commands are `bun install --frozen-lockfile`, `bun run lint`, `bun run build`, `bun run test`, `bun run package`, and `bun run verify`. Python SDK packaging stays in its own repository/wheel flow.
+Commands are `bun install --frozen-lockfile`, `bun run lint`, `bun run build`, `bun run test`, `bun run package`, and `bun run verify`. Packaging and reproducibility run under exact Node `24.13.0`; the produced wrapper remains compatible with Node `>=22,<25`. Python SDK packaging stays in its own repository/wheel flow.
 
 ## 15. Security and license boundary
 
 Official legal guidance requires the binary remain unmodified and run as published; customers may not remove, disable, or restrict built-in authentication unless separately agreed. The wrapper therefore passes auth commands and auth environment unchanged, never selects a method, and does not inject bare mode. It is named and described as an independent envelope, not Claude Code.
 
 The official package/restored package license is all-rights-reserved and points to Anthropic legal agreements. The target GitHub repository was verified `PRIVATE`, but repository visibility does not grant redistribution rights. No redistribution permission was established. Vendor source, binary, bundle, map, logo, tokens, transcripts, settings, or workspace content must never enter git or the release.
+
+The release-relative manifest is the wrapper's immutable trust root. Runtime environment may select the external official executable, workspace, timeout, and explicit bare profile, but cannot replace the manifest or change the exact `2.1.241` doctor pin. The reserved legacy `INK_CLAUDE_RUNTIME_MANIFEST_PATH` key is stripped before child launch and intentionally ignored by manifest loading.
 
 ## 16. Upgrade and replay
 
@@ -265,24 +268,28 @@ Rollback is configuration-only: restore `CLAUDE_CODE_CLI_PATH` to the previously
 | JSONL/argv/env/cwd exact forwarding | provider-free fixture |
 | version/help/MCP/auth command forwarding | provider-free fixture |
 | auth environment preservation without value logging | provider-free presence assertions |
-| external path/version doctor | provider-free fixture plus bounded real official `2.1.241` version/doctor probe; deployment pending |
+| external path/version doctor | provider-free fixture plus real unmodified official `2.1.241` version/doctor probe; passed |
 | TMPDIR/symlink/mode/workspace | provider-free fixture |
 | bare explicit carriers/no injection/fail closed | provider-free fixture |
 | cancel/timeout/crash/process group | provider-free fixture |
 | checksums/SBOM/license/legal/contracts | release verifier |
 | SDK `0.2.140` Dream path | current local compatibility harness |
 | installed SDK `0.2.143` → actual envelope → external core | passed: real official `2.1.241` bounded version probe plus public `query()` through a no-network core fixture |
-| real OAuth/MCP reconnect/Dream E2E | pending user-specified actor/entities and validation budget |
+| real Dream with direct official CLI | passed through the public Deck → Chat → Dream production journey on the existing local Dream/Admin/Gateway/PostgreSQL topology |
+| real Dream with custom Runtime path | passed the same production journey through the packaged envelope and the same official core |
+| real new session/SSE/tool/result/workspace/transcript/resume/plugin/hook | passed in both real-business lanes; content-free receipts remain local and uncommitted |
+| real OAuth/remote HTTP MCP/Resources/reconnect/logout | blocked by the selected actor having no configured remote MCP server; no substitute or shadow server was used |
+| production sandbox semantics | not claimed: the accepted Deck journey did not prove an enabled production sandbox policy |
 
 ## 19. Acceptance criteria and design self-review
 
-Accept the clean-room package when lint, build, unit tests, release verify, package, and reproducibility pass; release contains no vendor/user material; exact manifests reference `2.1.241`/`0.2.143`; auth is untouched; and rollback is documented. Do not claim Runtime reduction or IM completeness until real business E2E passes.
+Accept the clean-room package when lint, build, unit tests, release verify, package, and reproducibility pass; release contains no vendor/user material; exact manifests reference `2.1.241`/`0.2.143`; auth is untouched; and rollback is documented. Real Dream business E2E has passed for the official direct and envelope paths. This still does not prove a Runtime loading reduction, remote OAuth/MCP behavior, an enabled production sandbox, Linux deployment behavior, or bare-profile equivalence.
 
 | Self-review question | Answer |
 | --- | --- |
-| Focused on Runtime rather than Dream business changes? | Yes; Dream remains read-only. |
+| Focused on Runtime rather than Dream business changes? | Yes; no Dream production code changed. The only local Dream edits repair the explicit Playwright release harness to follow the current public UI. |
 | Evidence supports deleting an official capability? | No deletion is attempted; the core stays whole. |
-| SDK, MCP, tools, SSE, workspace, sandbox, and resume retained? | Yes at the opaque boundary; real E2E remains explicitly pending. |
+| SDK, MCP, tools, SSE, workspace, and resume retained? | Yes at the opaque boundary and in both real-business lanes; internal stdio MCP tool/result passed. Remote OAuth/HTTP/Resources and enabled production sandbox semantics remain explicitly unclaimed. |
 | Depends on historical restored behavior? | No; restored `2.1.88` is reference-only. |
 | Introduces a second agent state machine or Python SDK rewrite? | No. |
 | Packages transcript, workspace, plugin, MCP, OAuth, auth, or settings data? | No; verifier rejects these classes. |
@@ -293,7 +300,9 @@ Accept the clean-room package when lint, build, unit tests, release verify, pack
 ## 20. Open items and blockers
 
 - Redistribution of official/restored implementation is blocked without separate authorization.
-- Dream currently pins SDK `0.2.140`; upstream-baseline `0.2.143` business validation belongs to the parent integration task.
-- Bare profile settings/plugin/MCP content is not yet semantically attested; real new session, resume, SSE, tools, sandbox, auth, OAuth, Resources, and reconnect remain pending.
-- The local official executable is `2.1.220`, so it cannot satisfy the `2.1.241` doctor gate.
-- No commit, push, merge, package publication, or deployment is authorized in this task.
+- Dream currently pins SDK `0.2.140`; installed SDK `0.2.143` passed package/process-boundary tests, while a full Dream application upgrade to `0.2.143` remains outside this change.
+- Bare profile settings/plugin/MCP content is not semantically attested and remains disabled for production.
+- Real new session, SSE, internal MCP tool/result, workspace, transcript, resume, locked plugin, artifact hook, and durable UI re-entry passed. The selected existing actor had no configured remote MCP server, so real HTTP/OAuth/logout/Resources/remote-5xx-reconnect behavior remains blocked by that external prerequisite.
+- The accepted business Deck did not establish that production sandbox was enabled; sandbox policy semantics therefore remain unclaimed.
+- The default `claude` on `PATH` is `2.1.220`, so it cannot satisfy the `2.1.241` doctor gate; a separately extracted, unmodified Darwin arm64 `2.1.241` artifact passed the bounded doctor/differential probe.
+- Source branch commit/push and independent PR creation are authorized for this task. Merge, package publication, release tagging, and deployment remain unauthorized.
