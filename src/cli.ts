@@ -56,6 +56,6 @@ Object.defineProperty(main, "upstreamSecureStorageSelector", {
 });
 
 main().catch((error: unknown) => {
-  process.stderr.write(`ink-claude-runtime: ${safeErrorMessage(error)}\n`);
+  process.stderr.write(`ink-claude-code-dream: ${safeErrorMessage(error)}\n`);
   process.exitCode = 70;
 });

@@ -2,7 +2,7 @@
   "schemaVersion": "ink-license-report/v1",
   "generatedFrom": "package manifests and official package LICENSE evidence observed 2026-08-23",
   "project": {
-    "name": "@ink-memory/runtime-envelope",
+    "name": "ink-claude-code-dream",
     "version": "0.1.0",
     "license": "UNLICENSED",
     "private": true

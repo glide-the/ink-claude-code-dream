@@ -1,5 +1,6 @@
 {
   "schemaVersion": "ink-external-artifact/v1",
+  "distributionStatus": "feasibility-artifact-not-pruned-core-not-production-eligible",
   "artifact": {
     "product": "Claude Code",
     "publisher": "Anthropic PBC",

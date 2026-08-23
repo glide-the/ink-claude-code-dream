@@ -1,9 +1,9 @@
 {
   "schemaVersion": "ink-claude-cli-envelope/v1",
   "runtime": {
-    "name": "ink-runtime-envelope",
+    "name": "ink-claude-code-dream",
     "version": "0.1.0",
-    "entrypoint": "bin/ink-claude-runtime.mjs",
+    "entrypoint": "bin/ink-claude-code-dream",
     "integration": {
       "environment": "CLAUDE_CODE_CLI_PATH",
       "sdkOption": "ClaudeAgentOptions.cli_path",
@@ -17,7 +17,15 @@
     "version": "2.1.241",
     "delivery": "external-not-bundled",
     "execution": "unmodified-as-published",
-    "loadingReduction": 0
+    "loadingReduction": 0,
+    "corePruned": false,
+    "productionEligible": false,
+    "blockingReasons": [
+      "NO_CURRENT_OFFICIAL_SOURCE_BUILD_GRAPH",
+      "NO_WRITTEN_MODIFICATION_AUTHORIZATION",
+      "NO_WRITTEN_REDISTRIBUTION_AUTHORIZATION",
+      "REQUIRED_CAPABILITY_REACHABILITY_NOT_PROVABLE_ON_NATIVE_BINARY"
+    ]
   },
   "protocol": {
     "name": "claude-code-stream-json",
@@ -51,7 +59,8 @@
     "entrypointPolicy": "manifest/entrypoint-policy.json",
     "runtimeData": "manifest/runtime-data-contract.json",
     "bareProfile": "manifest/bare-profile.json",
-    "licenses": "manifest/dependency-licenses.json"
+    "licenses": "manifest/dependency-licenses.json",
+    "pruningDecision": "manifest/pruning-decision.json"
   },
   "legalGate": {
     "binary": "unmodified-as-published",

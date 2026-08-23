@@ -9,7 +9,7 @@ import { join, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 
 const executable = resolve(
-  "dist/release/ink-claude-runtime-0.1.0/bin/ink-claude-runtime.mjs",
+  "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream",
 );
 const fakeClaude = resolve("tests/fixtures/fake-claude.mjs");
 await chmod(fakeClaude, 0o755);

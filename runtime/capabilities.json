@@ -2,11 +2,13 @@
   "schemaVersion": "ink-runtime-evidence/v1",
   "releaseManifest": "../release-manifest.json",
   "runtime": {
-    "name": "ink-runtime-envelope",
+    "name": "ink-claude-code-dream",
     "version": "0.1.0",
     "protocolVersion": "claude-code-stream-json/1",
     "mode": "official-cli-compatibility-envelope",
     "coreLoadingReduction": 0,
+    "corePruned": false,
+    "productionEligible": false,
     "node": {
       "target": "node22",
       "minVersion": "22.0.0",

@@ -1,11 +1,15 @@
 <!-- [Input] Credential-safe commands and the real local Dream business journey for the 2.1.241/SDK baseline. -->
 <!-- [Output] Preserve exit codes, bounded evidence, failure/fix/retest receipts, hashes, and explicit blockers. -->
 <!-- [Pos] Current acceptance record; it claims the completed Dream and OAuth HTTP MCP lanes but not Linux or bare equivalence. -->
-<!-- [Sync] 2026-08-23: add secure-storage marker regression and real OAuth HTTP MCP Chat evidence. -->
+<!-- [Sync] 2026-08-23: add renamed feasibility release, pruning evidence, and deterministic archive receipts. -->
 
 # Acceptance results
 
 Final local run date: 2026-08-23.
+
+Current feasibility-release rerun: lint reported 88 repository entries and 9 JSON contracts; 16 Node tests passed; release verification reported 22 files and 21 checksums; SDK `0.2.140` direct-spawn contract and provider-free acceptance passed. The explicit read-only historical evidence gate reported 1,902 `src` files, 1,884 TS/TSX files, 1,902 tracked files, and 17 verified candidate paths. npm dry-run exposed the unscoped `ink-claude-code-dream` package and extensionless console bin without the prior release tree. Exact Node `24.13.0` reproduced archive SHA-256 `3e43f1aa9518dfcf970434b26098e197a236ff3dbab70b5523e9ff13fea456e9` and checksum-inventory SHA-256 `9a1f9ff6a59ff0dbc364e9cd79bf3f776781363258204373d1823ed38b53463a` twice.
+
+These receipts validate only the feasibility artifact. They do not overturn `corePruned=false`, `productionEligible=false`, or the license/build-graph blockers.
 
 | Command | Exit | Evidence |
 | --- | ---: | --- |

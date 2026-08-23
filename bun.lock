@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "@ink-memory/runtime-envelope",
+      "name": "ink-claude-code-dream",
       "devDependencies": {
         "esbuild": "0.25.9",
         "tar-stream": "3.1.7",

@@ -1,7 +1,7 @@
 {
   "inputs": {
     "src/cli.ts": {
-      "bytes": 2413,
+      "bytes": 2416,
       "imports": [
         {
           "path": "src/manifest.ts",
@@ -53,7 +53,7 @@
       "format": "esm"
     },
     "src/manifest.ts": {
-      "bytes": 2730,
+      "bytes": 2966,
       "imports": [
         {
           "path": "node:crypto",
@@ -70,18 +70,18 @@
     }
   },
   "outputs": {
-    "dist/release/ink-claude-runtime-0.1.0/bin/ink-claude-runtime.mjs": {
+    "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream.mjs": {
       "imports": [
         {
-          "path": "dist/release/ink-claude-runtime-0.1.0/lib/manifest-DMPST4LO.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-5K7GSGDF.mjs",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/release/ink-claude-runtime-0.1.0/lib/launcher-LET44XUT.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-VNWHM5P6.mjs",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/release/ink-claude-runtime-0.1.0/lib/launcher-LET44XUT.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-VNWHM5P6.mjs",
           "kind": "dynamic-import"
         }
       ],
@@ -89,18 +89,18 @@
       "entryPoint": "src/cli.ts",
       "inputs": {
         "src/cli.ts": {
-          "bytesInOutput": 1680
+          "bytesInOutput": 1683
         }
       },
-      "bytes": 1694
+      "bytes": 1697
     },
-    "dist/release/ink-claude-runtime-0.1.0/bin/ink-claude-runtime.mjs.map": {
+    "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream.mjs.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
       "bytes": 1212
     },
-    "dist/release/ink-claude-runtime-0.1.0/lib/launcher-LET44XUT.mjs": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-VNWHM5P6.mjs": {
       "imports": [
         {
           "path": "node:fs",
@@ -123,7 +123,7 @@
           "external": true
         },
         {
-          "path": "dist/release/ink-claude-runtime-0.1.0/lib/manifest-DMPST4LO.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-5K7GSGDF.mjs",
           "kind": "dynamic-import"
         }
       ],
@@ -141,13 +141,13 @@
       },
       "bytes": 12008
     },
-    "dist/release/ink-claude-runtime-0.1.0/lib/launcher-LET44XUT.mjs.map": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-VNWHM5P6.mjs.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
       "bytes": 8045
     },
-    "dist/release/ink-claude-runtime-0.1.0/lib/manifest-DMPST4LO.mjs": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-5K7GSGDF.mjs": {
       "imports": [
         {
           "path": "node:crypto",
@@ -166,16 +166,16 @@
       "entryPoint": "src/manifest.ts",
       "inputs": {
         "src/manifest.ts": {
-          "bytesInOutput": 2089
+          "bytesInOutput": 2305
         }
       },
-      "bytes": 2143
+      "bytes": 2359
     },
-    "dist/release/ink-claude-runtime-0.1.0/lib/manifest-DMPST4LO.mjs.map": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-5K7GSGDF.mjs.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 1238
+      "bytes": 1368
     }
   }
 }

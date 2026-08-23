@@ -17,9 +17,9 @@ function validateManifest(value: unknown): asserts value is ReleaseManifest {
   const manifest = value as Partial<ReleaseManifest>;
   if (
     manifest.schemaVersion !== "ink-claude-cli-envelope/v1" ||
-    manifest.runtime?.name !== "ink-runtime-envelope" ||
+    manifest.runtime?.name !== "ink-claude-code-dream" ||
     manifest.runtime.version !== "0.1.0" ||
-    manifest.runtime.entrypoint !== "bin/ink-claude-runtime.mjs" ||
+    manifest.runtime.entrypoint !== "bin/ink-claude-code-dream" ||
     manifest.runtime?.integration.environment !== "CLAUDE_CODE_CLI_PATH" ||
     manifest.runtime.integration.sdkOption !== "ClaudeAgentOptions.cli_path" ||
     manifest.runtime.integration.sdkVersion !== "0.2.143" ||
@@ -28,6 +28,10 @@ function validateManifest(value: unknown): asserts value is ReleaseManifest {
     manifest.core?.delivery !== "external-not-bundled" ||
     manifest.core.execution !== "unmodified-as-published" ||
     manifest.core.loadingReduction !== 0 ||
+    manifest.core.corePruned !== false ||
+    manifest.core.productionEligible !== false ||
+    !Array.isArray(manifest.core.blockingReasons) ||
+    manifest.core.blockingReasons.length < 4 ||
     manifest.protocol?.name !== "claude-code-stream-json" ||
     manifest.protocol?.version !== 1 ||
     !Array.isArray(manifest.mcpVersionsRegressed) ||
@@ -42,6 +46,7 @@ function validateManifest(value: unknown): asserts value is ReleaseManifest {
     !manifest.contracts.runtimeData ||
     !manifest.contracts.bareProfile ||
     !manifest.contracts.licenses
+    || !manifest.contracts.pruningDecision
   ) {
     throw new Error("runtime manifest is incomplete or unsupported");
   }

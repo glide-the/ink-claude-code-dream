@@ -8,8 +8,11 @@ import { extname, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const packageJson = JSON.parse(await readFile(resolve(root, "package.json"), "utf8"));
-if (packageJson.name !== "@ink-memory/runtime-envelope") {
-  throw new Error("package name must not brand the wrapper as Claude Code");
+if (packageJson.name !== "ink-claude-code-dream") {
+  throw new Error("package name must be the unscoped Runtime distribution identity");
+}
+if (packageJson.bin?.["ink-claude-code-dream"] !== "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream") {
+  throw new Error("console bin must expose the extensionless Runtime entrypoint");
 }
 if (packageJson.private !== true || packageJson.license !== "UNLICENSED") {
   throw new Error("package must remain private and UNLICENSED");
@@ -30,6 +33,7 @@ const jsonFiles = [
   "runtime/runtime-data-contract.json",
   "runtime/bare-profile.json",
   "runtime/dependency-licenses.json",
+  "runtime/pruning-decision.json",
 ];
 const parsed = new Map();
 for (const path of jsonFiles) {
@@ -37,10 +41,13 @@ for (const path of jsonFiles) {
 }
 const release = parsed.get("runtime/release-manifest.json");
 if (
-  release.runtime?.name !== "ink-runtime-envelope" ||
+  release.runtime?.name !== "ink-claude-code-dream" ||
   release.runtime?.integration?.sdkVersion !== "0.2.143" ||
   release.core?.version !== "2.1.241" ||
   release.core?.execution !== "unmodified-as-published" ||
+  release.core?.corePruned !== false ||
+  release.core?.productionEligible !== false ||
+  !Array.isArray(release.core?.blockingReasons) ||
   release.legalGate?.authentication !== "unaltered-opaque-pass-through"
 ) {
   throw new Error("release baseline/legal contract drift");
@@ -58,6 +65,19 @@ if (
   licenses.legalGate?.vendorBinaryMayBeCommitted !== false
 ) {
   throw new Error("license gate drift");
+}
+const pruning = parsed.get("runtime/pruning-decision.json");
+if (
+  pruning.decision?.corePruned !== false ||
+  pruning.decision?.productionEligible !== false ||
+  pruning.decision?.coreLoadingReductionBytes !== 0 ||
+  !Array.isArray(pruning.decision?.reasonCodes) ||
+  pruning.decision.reasonCodes.length < 4 ||
+  !Array.isArray(pruning.authorizationAndInputsRequiredToProceed) ||
+  pruning.authorizationAndInputsRequiredToProceed.length < 6 ||
+  !pruning.candidateDisposition?.every((entry) => entry.coreDeleted === false)
+) {
+  throw new Error("pruning decision must fail closed until authorization and build inputs exist");
 }
 
 const inventoryResult = spawnSync(

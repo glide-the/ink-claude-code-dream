@@ -1,10 +1,17 @@
 {
-  "name": "@ink-memory/runtime-envelope",
+  "name": "ink-claude-code-dream",
   "version": "0.1.0",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
-  "description": "Fail-closed, transparent launcher and capability contract for Dream's pinned Claude Code runtime",
+  "bin": {
+    "ink-claude-code-dream": "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream"
+  },
+  "description": "Fail-closed feasibility distribution for Dream's pinned Claude Code runtime",
+  "files": [
+    "dist/release/ink-claude-code-dream-0.1.0",
+    "README.md"
+  ],
   "engines": {
     "node": ">=22.0.0 <25.0.0",
     "bun": ">=1.2.20 <2.0.0"
@@ -21,6 +28,7 @@
     "test:acceptance": "bun run build && node scripts/run-acceptance.mjs",
     "test:official-difference": "bun run build && node scripts/benchmark-official.mjs",
     "test:mcp-matrix": "node scripts/run-mcp-matrix.mjs",
+    "test:pruning-evidence": "node scripts/verify-pruning-evidence.mjs",
     "test:reproducible": "node scripts/check-reproducible.mjs",
     "verify": "bun run lint && bun run test && bun run test:upstream-sdk && bun run test:acceptance && node scripts/verify-release.mjs && bun run test:reproducible",
     "package": "bun run release:pack",

@@ -1,15 +1,19 @@
 {
   "schemaVersion": "1.0.0",
-  "releaseId": "ink-claude-runtime-0.1.0",
+  "releaseId": "ink-claude-code-dream-0.1.0",
   "runtimeVersion": "0.1.0",
   "protocol": {
     "name": "claude-code-stream-json",
     "version": 1
   },
-  "executable": "bin/ink-claude-runtime.mjs",
+  "executable": "bin/ink-claude-code-dream",
   "releaseManifest": "release-manifest.json",
-  "releaseManifestSha256": "5f7746f2defe08905ff5e21735e2e94db324ae43c5a0c7855f3c5ab33080a808",
+  "releaseManifestSha256": "b8dc452558c84f365aea4d59a108d91d46f57812c22b768ac71964d06e8ba891",
   "evidenceManifest": "manifest/capabilities.json",
+  "status": {
+    "corePruned": false,
+    "productionEligible": false
+  },
   "sdk": {
     "version": "0.2.143",
     "dreamObservedVersion": "0.2.140",

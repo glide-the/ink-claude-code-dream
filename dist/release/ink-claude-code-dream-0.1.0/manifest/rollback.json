@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "releaseId": "ink-claude-runtime-0.1.0",
+  "releaseId": "ink-claude-code-dream-0.1.0",
   "runtimeVersion": "0.1.0",
   "claudeCodeVersion": "2.1.241",
   "agentSdkVersion": "0.2.143",
@@ -9,6 +9,6 @@
     "1.27.0",
     "1.27.1"
   ],
-  "activation": "set CLAUDE_CODE_CLI_PATH to the immutable release executable after doctor/verify-release",
+  "activation": "not authorized as a production default; feasibility tests may set CLAUDE_CODE_CLI_PATH explicitly after doctor/verify-release",
   "rollback": "restore CLAUDE_CODE_CLI_PATH to the previously verified official Claude executable; the official runtime is the default rollback"
 }

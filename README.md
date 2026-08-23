@@ -1,11 +1,13 @@
 <!-- [Input] Runtime source, release manifests, Dream evidence, and executable acceptance results. -->
 <!-- [Output] Explain what this repository ships, how to build/test it, and why it is not a core optimization. -->
 <!-- [Pos] Operator-facing entry point for the Claude Code compatibility envelope. -->
-<!-- [Sync] 2026-08-23: document the macOS MCP identity gate and completed real OAuth/HTTP MCP journey. -->
+<!-- [Sync] 2026-08-23: identify the extensionless feasibility distribution and fail-closed pruning gate. -->
 
-# Ink Runtime envelope
+# ink-claude-code-dream
 
-This private repository ships an independent Node 22 CLI supervisor around a user-supplied, externally installed official Claude Code `2.1.241` artifact. It adds Runtime-owned contracts, a deployment doctor, thread-TMPDIR guard, process-group supervision, checksums, SBOM, license evidence, and deterministic packaging. It does not contain, rebuild, patch, rename, or publish Claude Code.
+This private repository builds an installable, discoverable feasibility distribution named `ink-claude-code-dream`. Its extensionless console bin supervises a user-supplied official Claude Code `2.1.241` artifact and adds contracts, a deployment doctor, thread-TMPDIR guard, process-group supervision, checksums, SBOM, license evidence, and deterministic packaging. It does not contain, rebuild, patch, rename, or publish Claude Code.
+
+It is deliberately **not a pruned core and not production eligible**. Both release manifest and verifier fix `corePruned=false`, `productionEligible=false`, and the blocking reasons. Dream must not select this artifact as a claimed optimized default; the verified official executable remains the default and rollback.
 
 This is not the recommended production cold-start or memory optimization. Claude core loading reduction is exactly **0**; the envelope adds a Node process and release-file loading. The final local macOS arm64 measurement made the `--version` path 24.09 ms / 40.5% slower than the official binary. Keep the verified official executable as the production default and rollback target unless the supervision/attestation features justify that cost.
 
@@ -14,7 +16,7 @@ This is not the recommended production cold-start or memory optimization. Claude
 Upstream baseline Python `claude-agent-sdk==0.2.143` (bundled CLI `2.1.241`) remains unchanged; Dream's currently observed `0.2.140` path is retained as a compatibility check. Dream already resolves `CLAUDE_CODE_CLI_PATH`, applies it to `ClaudeAgentOptions.cli_path`, and uses the same resolver for MCP Resources/OAuth management. No SDK manifest, bridge, fork, or Dream code change is required:
 
 ```sh
-export CLAUDE_CODE_CLI_PATH="$PWD/dist/release/ink-claude-runtime-0.1.0/bin/ink-claude-runtime.mjs"
+export CLAUDE_CODE_CLI_PATH="$PWD/dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream"
 # Optional only when `claude` on PATH is not the verified official 2.1.241 artifact:
 export INK_CLAUDE_CODE_EXECUTABLE=/path/to/verified/official/claude
 
@@ -46,4 +48,4 @@ The executable is a Node-target bundle; Bun manages dependencies and runs build 
 
 ## Release contents
 
-`dist/release/ink-claude-runtime-0.1.0/` contains the executable, lazy chunks, external source maps, Runtime-owned artifact/entrypoint/data/bare/license/evidence contracts, platform pins, checksums, CycloneDX SBOM, build metadata, and rollback receipt. The official artifact, vendor/restored source, transcripts, workspace content, materialized plugins, OAuth/auth state, settings, credentials, and secrets are excluded.
+`dist/release/ink-claude-code-dream-0.1.0/` contains the executable, lazy chunks, external source maps, Runtime-owned artifact/entrypoint/data/bare/license/evidence contracts, platform pins, checksums, CycloneDX SBOM, build metadata, and rollback receipt. The official artifact, vendor/restored source, transcripts, workspace content, materialized plugins, OAuth/auth state, settings, credentials, and secrets are excluded.

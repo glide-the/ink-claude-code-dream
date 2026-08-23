@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // [Input] Consume launcher-forwarded argv/stdin/env and test-only behavior controls.
-// [Output] Emulate the public Claude CLI process boundary for deterministic protocol/lifecycle tests.
+// [Output] Emulate the public Claude CLI boundary with an explicit lifecycle readiness handshake.
 // [Pos] Test fixture only; never copied into release artifacts.
+// [Sync] 2026-08-24: publish leader/grandchild readiness only after signal cleanup is installed.
 
 import { appendFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
@@ -56,7 +57,9 @@ if (args.includes("--fake-crash")) process.exit(23);
 if (args.includes("--fake-grandchild")) {
   const heartbeat = process.env.FAKE_GRANDCHILD_HEARTBEAT;
   const pidPath = process.env.FAKE_GRANDCHILD_PID;
+  const leaderPidPath = process.env.FAKE_LEADER_PID;
   if (!heartbeat || !pidPath) process.exit(64);
+  if (leaderPidPath) await writeFile(leaderPidPath, String(process.pid));
   const grandchild = spawn(
     process.execPath,
     [
@@ -72,6 +75,7 @@ if (args.includes("--fake-grandchild")) {
     if (process.env.FAKE_LEADER_EXITS_ON_TERM === "1") process.exit(0);
   });
   await appendFile(heartbeat, "s");
+  process.stdout.write(`INK_FAKE_GRANDCHILD_READY:${grandchild.pid}\n`);
   setInterval(() => {}, 1000);
   await new Promise(() => {});
 }

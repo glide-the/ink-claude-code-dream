@@ -303,7 +303,7 @@ async function launchOfficialCli(args) {
   });
 }
 async function doctor() {
-  const { readManifestEnvelope } = await import("./manifest-DMPST4LO.mjs");
+  const { readManifestEnvelope } = await import("./manifest-5K7GSGDF.mjs");
   const [{ manifest, sha256 }, executable] = await Promise.all([
     readManifestEnvelope(),
     resolveCoreExecutable()

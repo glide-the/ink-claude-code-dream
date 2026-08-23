@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "releaseId": "ink-claude-runtime-0.1.0",
+  "releaseId": "ink-claude-code-dream-0.1.0",
   "sourceDateEpoch": 1787443200,
   "buildTimestamp": "2026-08-23T00:00:00.000Z",
   "runtimeTarget": "node22",
@@ -18,5 +18,7 @@
     "Runtime release-manifest diagnostic",
     "launcher/doctor"
   ],
-  "claudeCoreLoadingReduction": 0
+  "claudeCoreLoadingReduction": 0,
+  "corePruned": false,
+  "productionEligible": false
 }

@@ -7,7 +7,7 @@ import { constants as fsConstants } from "node:fs";
 import { access, readFile, readdir, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
-const releaseRoot = resolve("dist/release/ink-claude-runtime-0.1.0");
+const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.0");
 const checksumPath = join(releaseRoot, "manifest", "checksums.sha256");
 const checksumLines = (await readFile(checksumPath, "utf8")).trim().split("\n");
 const checksummedPaths = new Set();
@@ -30,7 +30,9 @@ const buildReceipt = JSON.parse(
 if (
   buildReceipt.packageManager !== "bun@1.2.20" ||
   buildReceipt.archivePackerNode !== "24.13.0" ||
-  buildReceipt.deterministicArchivePacker !== "tar-stream@3.1.7 plus node:zlib"
+  buildReceipt.deterministicArchivePacker !== "tar-stream@3.1.7 plus node:zlib" ||
+  buildReceipt.corePruned !== false ||
+  buildReceipt.productionEligible !== false
 ) {
   throw new Error("release build toolchain receipt mismatch");
 }
@@ -85,9 +87,19 @@ if (
   discovery.sdk?.discoveryEnvironment !== "CLAUDE_CODE_CLI_PATH" ||
   discovery.sdk?.modified !== false ||
   discovery.sdk?.version !== "0.2.143" ||
-  discovery.sdk?.dreamObservedVersion !== "0.2.140"
+  discovery.sdk?.dreamObservedVersion !== "0.2.140" ||
+  discovery.status?.corePruned !== false ||
+  discovery.status?.productionEligible !== false
 ) {
   throw new Error("release discovery does not match the unchanged cli_path contract");
+}
+if (
+  manifest.core?.corePruned !== false ||
+  manifest.core?.productionEligible !== false ||
+  !Array.isArray(manifest.core?.blockingReasons) ||
+  manifest.core.blockingReasons.length < 4
+) {
+  throw new Error("release must identify itself as a blocked feasibility artifact");
 }
 
 const contractSchemas = {
@@ -96,6 +108,7 @@ const contractSchemas = {
   "runtime-data-contract.json": "ink-runtime-data/v1",
   "bare-profile.json": "ink-claude-bare-profile/v1",
   "dependency-licenses.json": "ink-license-report/v1",
+  "pruning-decision.json": "ink-claude-code-dream-pruning/v1",
 };
 for (const [name, schemaVersion] of Object.entries(contractSchemas)) {
   const expectedPath = `manifest/${name}`;
@@ -110,6 +123,17 @@ for (const [name, schemaVersion] of Object.entries(contractSchemas)) {
 const artifactContract = JSON.parse(
   await readFile(join(releaseRoot, "manifest", "artifact-manifest.json"), "utf8"),
 );
+const pruningDecision = JSON.parse(
+  await readFile(join(releaseRoot, "manifest", "pruning-decision.json"), "utf8"),
+);
+if (
+  pruningDecision.decision?.corePruned !== false ||
+  pruningDecision.decision?.productionEligible !== false ||
+  pruningDecision.decision?.coreLoadingReductionBytes !== 0 ||
+  !pruningDecision.candidateDisposition?.every((entry) => entry.coreDeleted === false)
+) {
+  throw new Error("release pruning decision is not fail closed");
+}
 if (
   artifactContract.artifact?.version !== "2.1.241" ||
   artifactContract.artifact?.bundled !== false ||

@@ -22,6 +22,9 @@ export interface ReleaseManifest {
     delivery: "external-not-bundled";
     execution: "unmodified-as-published";
     loadingReduction: 0;
+    corePruned: false;
+    productionEligible: false;
+    blockingReasons: string[];
   };
   protocol: {
     name: "claude-code-stream-json";
@@ -36,6 +39,7 @@ export interface ReleaseManifest {
     runtimeData: string;
     bareProfile: string;
     licenses: string;
+    pruningDecision: string;
   };
   legalGate: {
     binary: "unmodified-as-published";

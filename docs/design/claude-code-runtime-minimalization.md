@@ -1,11 +1,13 @@
 <!-- [Input] Official 2.1.241/SDK 0.2.143 evidence, Dream read-only evidence, legal terms, and clean-room contracts. -->
 <!-- [Output] Define the evidence-led minimal Runtime decision, explicit bare profile, packaging, compatibility, and rollback. -->
 <!-- [Pos] Canonical design for the independent Runtime envelope; it is not Claude Code source or a Claude Code product. -->
-<!-- [Sync] 2026-08-23: record the macOS MCP identity marker and completed real OAuth/HTTP MCP business validation. -->
+<!-- [Sync] 2026-08-23: record the blocked core-pruning decision, official package shape, and historical candidate inventory. -->
 
 # Claude Code Runtime minimalization decision
 
-Evidence date: 2026-08-23. This document describes an independent supervisor that runs a user-supplied official artifact; it does not contain, rebuild, patch, or rename Claude Code.
+Evidence date: 2026-08-23. This document describes the `ink-claude-code-dream` feasibility distribution, an independent supervisor that runs a user-supplied official artifact. It does not contain, rebuild, patch, or rename Claude Code. The release is machine-gated as `corePruned=false` and `productionEligible=false`; no Dream default switch is authorized.
+
+The pruning blocker is concrete: the current official platform package is a single native executable, no official 2.1.241 source/build/import graph was available, and the observed license is all-rights-reserved. The historical 2.1.88 restored tree is read-only evidence only. Its fixed recursive inventory is 1,902 files under `src`, including 1,884 TS/TSX files, with 1,902 git-tracked `src` files. `runtime/pruning-decision.json` records every candidate path and the exact written authorizations/build inputs required to proceed.
 
 ## 1. Background and problem
 
@@ -213,8 +215,8 @@ Release notes and changelog may differ in detail, so compatibility claims cite t
 ## 11. Runtime artifact layout
 
 ```text
-ink-claude-runtime-0.1.0/
-  bin/ink-claude-runtime.mjs
+ink-claude-code-dream-0.1.0/
+  bin/ink-claude-code-dream
   lib/*.mjs
   release-manifest.json
   manifest/
