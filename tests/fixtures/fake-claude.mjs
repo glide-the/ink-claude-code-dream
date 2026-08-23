@@ -11,14 +11,14 @@ if (args.length === 1 && args[0] === "--version") {
   if (process.env.FAKE_VERSION_COUNT) {
     await appendFile(process.env.FAKE_VERSION_COUNT, "v");
   }
-  process.stdout.write(`${process.env.FAKE_CLAUDE_VERSION || "2.1.235"} (Claude Code)\n`);
+  process.stdout.write(`${process.env.FAKE_CLAUDE_VERSION || "2.1.241"} (Claude Code)\n`);
   process.exit(0);
 }
 if (args.length === 1 && args[0] === "-v") {
   if (process.env.FAKE_VERSION_COUNT) {
     await appendFile(process.env.FAKE_VERSION_COUNT, "v");
   }
-  process.stdout.write(`${process.env.FAKE_CLAUDE_VERSION || "2.1.235"} (Claude Code)\n`);
+  process.stdout.write(`${process.env.FAKE_CLAUDE_VERSION || "2.1.241"} (Claude Code)\n`);
   process.exit(0);
 }
 
@@ -39,6 +39,15 @@ const record = {
     INK_CLAUDE_RUNTIME_WORKSPACE_ROOT:
       process.env.INK_CLAUDE_RUNTIME_WORKSPACE_ROOT ?? null,
     CLAUDE_CODE_CLI_PATH: process.env.CLAUDE_CODE_CLI_PATH ?? null,
+    INK_CLAUDE_BARE_PROFILE: process.env.INK_CLAUDE_BARE_PROFILE ?? null,
+    authenticationPresence: {
+      ANTHROPIC_API_KEY: Boolean(process.env.ANTHROPIC_API_KEY),
+      ANTHROPIC_AUTH_TOKEN: Boolean(process.env.ANTHROPIC_AUTH_TOKEN),
+      CLAUDE_CODE_OAUTH_TOKEN: Boolean(process.env.CLAUDE_CODE_OAUTH_TOKEN),
+      CLAUDE_CODE_USE_BEDROCK: Boolean(process.env.CLAUDE_CODE_USE_BEDROCK),
+      CLAUDE_CODE_USE_VERTEX: Boolean(process.env.CLAUDE_CODE_USE_VERTEX),
+      CLAUDE_CODE_USE_FOUNDRY: Boolean(process.env.CLAUDE_CODE_USE_FOUNDRY),
+    },
   },
 };
 if (recordPath) await writeFile(recordPath, `${JSON.stringify(record)}\n`);

@@ -25,13 +25,25 @@ function validateManifest(value: unknown): asserts value is ReleaseManifest {
     manifest.schemaVersion !== "ink-claude-cli-envelope/v1" ||
     manifest.runtime?.integration.environment !== "CLAUDE_CODE_CLI_PATH" ||
     manifest.runtime.integration.sdkOption !== "ClaudeAgentOptions.cli_path" ||
+    manifest.runtime.integration.sdkVersion !== "0.2.143" ||
     manifest.runtime.integration.sdkModified !== false ||
     manifest.core?.delivery !== "external-not-bundled" ||
+    manifest.core.execution !== "unmodified-as-published" ||
     manifest.core.loadingReduction !== 0 ||
     manifest.protocol?.name !== "claude-code-stream-json" ||
     manifest.protocol?.version !== 1 ||
     !Array.isArray(manifest.mcpVersionsRegressed) ||
-    !manifest.mcpVersionsRegressed.every((value) => typeof value === "string")
+    !manifest.mcpVersionsRegressed.every((value) => typeof value === "string") ||
+    !Array.isArray(manifest.claudeCodeMcpChangelogVersions) ||
+    manifest.claudeCodeMcpChangelogVersions.join(",") !== "2.1.240,2.1.238" ||
+    manifest.legalGate?.binary !== "unmodified-as-published" ||
+    manifest.legalGate.authentication !== "unaltered-opaque-pass-through" ||
+    manifest.legalGate.branding !== "wrapper-is-not-Claude-Code" ||
+    !manifest.contracts?.artifact ||
+    !manifest.contracts.entrypointPolicy ||
+    !manifest.contracts.runtimeData ||
+    !manifest.contracts.bareProfile ||
+    !manifest.contracts.licenses
   ) {
     throw new Error("runtime manifest is incomplete or unsupported");
   }

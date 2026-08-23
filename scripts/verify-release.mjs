@@ -30,15 +30,24 @@ if (
   manifest.runtime?.version !== "0.1.0" ||
   manifest.runtime?.integration?.environment !== "CLAUDE_CODE_CLI_PATH" ||
   manifest.runtime?.integration?.sdkOption !== "ClaudeAgentOptions.cli_path" ||
-  manifest.runtime?.integration?.sdkVersion !== "0.2.140" ||
+  manifest.runtime?.integration?.sdkVersion !== "0.2.143" ||
+  manifest.runtime?.integration?.dreamObservedSdkVersion !== "0.2.140" ||
   manifest.runtime?.integration?.sdkModified !== false ||
-  manifest.core?.version !== "2.1.235" ||
+  manifest.core?.version !== "2.1.241" ||
   manifest.core?.delivery !== "external-not-bundled" ||
+  manifest.core?.execution !== "unmodified-as-published" ||
   manifest.core?.loadingReduction !== 0 ||
   manifest.protocol?.name !== "claude-code-stream-json" ||
   manifest.protocol?.version !== 1
 ) {
   throw new Error("Runtime-owned release manifest contract mismatch");
+}
+if (
+  manifest.legalGate?.binary !== "unmodified-as-published" ||
+  manifest.legalGate?.authentication !== "unaltered-opaque-pass-through" ||
+  manifest.legalGate?.branding !== "wrapper-is-not-Claude-Code"
+) {
+  throw new Error("legal gate contract mismatch");
 }
 if (isAbsolute(manifest.runtime.entrypoint)) {
   throw new Error("release entrypoint must be relative to its immutable release");
@@ -64,9 +73,62 @@ if (
   discovery.releaseManifest !== "release-manifest.json" ||
   discovery.sdk?.option !== "ClaudeAgentOptions.cli_path" ||
   discovery.sdk?.discoveryEnvironment !== "CLAUDE_CODE_CLI_PATH" ||
-  discovery.sdk?.modified !== false
+  discovery.sdk?.modified !== false ||
+  discovery.sdk?.version !== "0.2.143" ||
+  discovery.sdk?.dreamObservedVersion !== "0.2.140"
 ) {
   throw new Error("release discovery does not match the unchanged cli_path contract");
+}
+
+const contractSchemas = {
+  "artifact-manifest.json": "ink-external-artifact/v1",
+  "entrypoint-policy.json": "ink-entrypoint-policy/v1",
+  "runtime-data-contract.json": "ink-runtime-data/v1",
+  "bare-profile.json": "ink-claude-bare-profile/v1",
+  "dependency-licenses.json": "ink-license-report/v1",
+};
+for (const [name, schemaVersion] of Object.entries(contractSchemas)) {
+  const expectedPath = `manifest/${name}`;
+  if (!manifest.contracts || !Object.values(manifest.contracts).includes(expectedPath)) {
+    throw new Error(`release manifest does not reference ${expectedPath}`);
+  }
+  const contract = JSON.parse(await readFile(join(releaseRoot, expectedPath), "utf8"));
+  if (contract.schemaVersion !== schemaVersion) {
+    throw new Error(`contract schema mismatch: ${name}`);
+  }
+}
+const artifactContract = JSON.parse(
+  await readFile(join(releaseRoot, "manifest", "artifact-manifest.json"), "utf8"),
+);
+if (
+  artifactContract.artifact?.version !== "2.1.241" ||
+  artifactContract.artifact?.bundled !== false ||
+  artifactContract.artifact?.patched !== false ||
+  artifactContract.artifact?.renamed !== false ||
+  artifactContract.artifact?.execution !== "unmodified-as-published"
+) {
+  throw new Error("external artifact legal/provenance contract mismatch");
+}
+const entrypointPolicy = JSON.parse(
+  await readFile(join(releaseRoot, "manifest", "entrypoint-policy.json"), "utf8"),
+);
+if (
+  entrypointPolicy.child?.mustBeUnmodified !== true ||
+  entrypointPolicy.child?.authenticationPolicy !==
+    "preserve-all-built-in-methods-and-auth-environment" ||
+  entrypointPolicy.bare?.automaticInjection !== false
+) {
+  throw new Error("entrypoint/legal/bare policy mismatch");
+}
+const licenseReport = JSON.parse(
+  await readFile(join(releaseRoot, "manifest", "dependency-licenses.json"), "utf8"),
+);
+if (
+  licenseReport.legalGate?.officialBinaryMustBeUnmodified !== true ||
+  licenseReport.legalGate?.builtInAuthenticationMustRemainAvailable !== true ||
+  licenseReport.legalGate?.vendorOrRestoredSourceMayBeCommitted !== false
+) {
+  throw new Error("license report legal gate mismatch");
 }
 
 async function filesUnder(root) {
@@ -121,6 +183,7 @@ const core = sbom.components.find((item) => item.name === "@anthropic-ai/claude-
 if (!core?.properties?.some((item) => item.name === "ink:delivery" && item.value === "external-not-bundled")) {
   throw new Error("SBOM does not identify the official core as external");
 }
+if (core.version !== "2.1.241") throw new Error("SBOM external core version mismatch");
 process.stdout.write(
   `${JSON.stringify({
     ok: true,

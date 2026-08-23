@@ -70,7 +70,7 @@ process.stdout.write(
       ok: doctor.code === 0,
       node: process.versions.node,
       runtime: "0.1.0",
-      fakeCore: "2.1.235",
+      fakeCore: "2.1.241",
       coreLoadingReduction: 0,
       coldStartMs: {
         manifestMedian: median(manifestSamples),

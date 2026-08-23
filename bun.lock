@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "@ink-memory/minimal-claude-code-runtime",
+      "name": "@ink-memory/runtime-envelope",
       "devDependencies": {
         "esbuild": "0.25.9",
         "tar-stream": "3.1.7",

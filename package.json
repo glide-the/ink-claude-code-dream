@@ -1,7 +1,8 @@
 {
-  "name": "@ink-memory/minimal-claude-code-runtime",
+  "name": "@ink-memory/runtime-envelope",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "description": "Fail-closed, transparent launcher and capability contract for Dream's pinned Claude Code runtime",
   "engines": {
@@ -10,6 +11,7 @@
   },
   "packageManager": "bun@1.2.20",
   "scripts": {
+    "lint": "node scripts/lint.mjs",
     "build": "bun run scripts/build.ts",
     "test": "bun run build && node --test tests/*.test.mjs",
     "test:upstream-sdk": "bun run build && node scripts/run-upstream-sdk-contract.mjs",
@@ -17,7 +19,8 @@
     "test:official-difference": "bun run build && node scripts/benchmark-official.mjs",
     "test:mcp-matrix": "node scripts/run-mcp-matrix.mjs",
     "test:reproducible": "node scripts/check-reproducible.mjs",
-    "verify": "bun run test && bun run test:upstream-sdk && bun run test:acceptance && node scripts/verify-release.mjs && bun run test:reproducible",
+    "verify": "bun run lint && bun run test && bun run test:upstream-sdk && bun run test:acceptance && node scripts/verify-release.mjs && bun run test:reproducible",
+    "package": "bun run release:pack",
     "release:pack": "bun run build && node scripts/verify-release.mjs && node scripts/pack-release.mjs"
   },
   "devDependencies": {

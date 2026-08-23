@@ -1,5 +1,5 @@
-// [Input] Consume checked-in TypeScript, capability/platform manifests, Bun lock state, and SOURCE_DATE_EPOCH.
-// [Output] Produce a deterministic Node 22 ESM release with split lazy chunks, source maps, checksums, and CycloneDX SBOM.
+// [Input] Consume checked-in TypeScript, legal/artifact/data/capability manifests, Bun lock state, and SOURCE_DATE_EPOCH.
+// [Output] Produce a deterministic Node 22 ESM release with split lazy chunks, contracts, maps, checksums, license report, and SBOM.
 // [Pos] Bun-managed build entry; generated artifacts contain no Claude core, workspace, transcript, plugin, OAuth, setting, or secret material.
 
 import { build, version as esbuildVersion } from "esbuild";
@@ -76,6 +76,18 @@ await cp(
   join(repositoryRoot, "runtime", "platforms.json"),
   join(releaseRoot, "manifest", "platforms.json"),
 );
+for (const contract of [
+  "artifact-manifest.json",
+  "entrypoint-policy.json",
+  "runtime-data-contract.json",
+  "bare-profile.json",
+  "dependency-licenses.json",
+]) {
+  await cp(
+    join(repositoryRoot, "runtime", contract),
+    join(releaseRoot, "manifest", contract),
+  );
+}
 
 const manifestRaw = await readFile(
   join(releaseRoot, "release-manifest.json"),
@@ -91,7 +103,8 @@ const discovery = {
   releaseManifestSha256: manifestSha256,
   evidenceManifest: "manifest/capabilities.json",
   sdk: {
-    version: "0.2.140",
+    version: "0.2.143",
+    dreamObservedVersion: "0.2.140",
     modified: false,
     option: "ClaudeAgentOptions.cli_path",
     discoveryEnvironment: "CLAUDE_CODE_CLI_PATH",
@@ -131,14 +144,15 @@ const sbom = {
     {
       type: "application",
       name: "@anthropic-ai/claude-code",
-      version: "2.1.235",
+      version: "2.1.241",
       scope: "required",
+      licenses: [{ license: { name: "LicenseRef-Anthropic-All-Rights-Reserved" } }],
       properties: [{ name: "ink:delivery", value: "external-not-bundled" }],
     },
     {
       type: "library",
       name: "claude-agent-sdk",
-      version: "0.2.140",
+      version: "0.2.143",
       scope: "optional",
       properties: [{ name: "ink:delivery", value: "Dream Python environment" }],
     },
@@ -200,8 +214,9 @@ await writeFile(
       schemaVersion: "1.0.0",
       releaseId,
       runtimeVersion: packageJson.version,
-      claudeCodeVersion: "2.1.235",
-      agentSdkVersion: "0.2.140",
+      claudeCodeVersion: "2.1.241",
+      agentSdkVersion: "0.2.143",
+      dreamObservedSdkVersion: "0.2.140",
       mcpVersions: ["1.27.0", "1.27.1"],
       activation: "set CLAUDE_CODE_CLI_PATH to the immutable release executable after doctor/verify-release",
       rollback: "restore CLAUDE_CODE_CLI_PATH to the previously verified official Claude executable; the official runtime is the default rollback",

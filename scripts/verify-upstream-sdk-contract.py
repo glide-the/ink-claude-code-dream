@@ -1,4 +1,4 @@
-"""[Input] Built CLI wrapper, Dream's existing CLI-path helper, and installed upstream SDK 0.2.140.
+"""[Input] Built CLI wrapper, Dream's existing CLI-path helper, and Dream-observed SDK 0.2.140.
 [Output] Prove unchanged apply_cli_path_to_options + SubprocessCLITransport launch the wrapper and preserve NDJSON.
 [Pos] Cross-repository read-only acceptance; it never imports an SDK fork or modifies Dream.
 """
@@ -48,7 +48,7 @@ async def exercise() -> dict[str, object]:
     installed_sdk_version = package_version("claude-agent-sdk")
     if installed_sdk_version != "0.2.140":
         raise AssertionError(
-            f"expected upstream claude-agent-sdk 0.2.140, found {installed_sdk_version}"
+            f"expected Dream-observed claude-agent-sdk 0.2.140, found {installed_sdk_version}"
         )
     (
         transport_type,

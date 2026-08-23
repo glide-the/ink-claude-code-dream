@@ -1,4 +1,4 @@
-"""[Input] Isolated environment containing public claude-agent-sdk 0.2.140 and one expected mcp release.
+"""[Input] Isolated environment containing public claude-agent-sdk 0.2.143 and one expected mcp release.
 [Output] Exercise real in-memory MCP initialize/ping/tools/resources/prompts/audio/structuredContent forwarding.
 [Pos] Network-free matrix payload; the runner creates disposable environments and never changes Dream/SDK repos.
 """
@@ -74,7 +74,7 @@ def server() -> Server:
 async def exercise(expected: str) -> dict[str, object]:
     actual_sdk = package_version("claude-agent-sdk")
     actual_mcp = package_version("mcp")
-    if actual_sdk != "0.2.140" or actual_mcp != expected or MCP_MAJOR != 1:
+    if actual_sdk != "0.2.143" or actual_mcp != expected or MCP_MAJOR != 1:
         raise AssertionError(
             f"unexpected matrix environment sdk={actual_sdk} mcp={actual_mcp} major={MCP_MAJOR}"
         )

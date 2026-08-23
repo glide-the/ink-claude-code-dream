@@ -11,7 +11,8 @@ export interface ReleaseManifest {
     integration: {
       environment: "CLAUDE_CODE_CLI_PATH";
       sdkOption: "ClaudeAgentOptions.cli_path";
-      sdkVersion: "0.2.140";
+      sdkVersion: "0.2.143";
+      dreamObservedSdkVersion: "0.2.140";
       sdkModified: false;
     };
   };
@@ -19,6 +20,7 @@ export interface ReleaseManifest {
     package: "@anthropic-ai/claude-code";
     version: string;
     delivery: "external-not-bundled";
+    execution: "unmodified-as-published";
     loadingReduction: 0;
   };
   protocol: {
@@ -28,7 +30,20 @@ export interface ReleaseManifest {
   };
   commands: { headless: string; management: string[] };
   capabilityEvidence: string;
+  contracts: {
+    artifact: string;
+    entrypointPolicy: string;
+    runtimeData: string;
+    bareProfile: string;
+    licenses: string;
+  };
+  legalGate: {
+    binary: "unmodified-as-published";
+    authentication: "unaltered-opaque-pass-through";
+    branding: "wrapper-is-not-Claude-Code";
+  };
   mcpVersionsRegressed: string[];
+  claudeCodeMcpChangelogVersions: string[];
   trustBoundary: string;
   [key: string]: unknown;
 }

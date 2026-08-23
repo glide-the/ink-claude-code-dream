@@ -1,20 +1,22 @@
 {
   "schemaVersion": "ink-claude-cli-envelope/v1",
   "runtime": {
-    "name": "ink-minimal-claude-code-runtime",
+    "name": "ink-runtime-envelope",
     "version": "0.1.0",
     "entrypoint": "bin/ink-claude-runtime.mjs",
     "integration": {
       "environment": "CLAUDE_CODE_CLI_PATH",
       "sdkOption": "ClaudeAgentOptions.cli_path",
-      "sdkVersion": "0.2.140",
+      "sdkVersion": "0.2.143",
+      "dreamObservedSdkVersion": "0.2.140",
       "sdkModified": false
     }
   },
   "core": {
     "package": "@anthropic-ai/claude-code",
-    "version": "2.1.235",
+    "version": "2.1.241",
     "delivery": "external-not-bundled",
+    "execution": "unmodified-as-published",
     "loadingReduction": 0
   },
   "protocol": {
@@ -27,6 +29,8 @@
     "management": [
       "--help",
       "--version",
+      "-h",
+      "-v",
       "mcp add",
       "mcp get",
       "mcp list",
@@ -34,13 +38,33 @@
       "mcp logout",
       "mcp remove",
       "mcp --help",
-      "mcp --version"
+      "mcp --version",
+      "auth login",
+      "auth logout",
+      "auth status",
+      "setup-token"
     ]
   },
   "capabilityEvidence": "manifest/capabilities.json",
+  "contracts": {
+    "artifact": "manifest/artifact-manifest.json",
+    "entrypointPolicy": "manifest/entrypoint-policy.json",
+    "runtimeData": "manifest/runtime-data-contract.json",
+    "bareProfile": "manifest/bare-profile.json",
+    "licenses": "manifest/dependency-licenses.json"
+  },
+  "legalGate": {
+    "binary": "unmodified-as-published",
+    "authentication": "unaltered-opaque-pass-through",
+    "branding": "wrapper-is-not-Claude-Code"
+  },
   "mcpVersionsRegressed": [
     "1.27.0",
     "1.27.1"
   ],
-  "trustBoundary": "Deployment verifies the external pinned core with --runtime-doctor; normal launches do not add a second core version process."
+  "claudeCodeMcpChangelogVersions": [
+    "2.1.240",
+    "2.1.238"
+  ],
+  "trustBoundary": "Deployment verifies the external pinned core with --runtime-doctor; published CLI flags, including version and authentication commands, are otherwise passed to the unmodified external binary."
 }

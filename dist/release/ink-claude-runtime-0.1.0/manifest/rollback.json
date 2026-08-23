@@ -2,8 +2,9 @@
   "schemaVersion": "1.0.0",
   "releaseId": "ink-claude-runtime-0.1.0",
   "runtimeVersion": "0.1.0",
-  "claudeCodeVersion": "2.1.235",
-  "agentSdkVersion": "0.2.140",
+  "claudeCodeVersion": "2.1.241",
+  "agentSdkVersion": "0.2.143",
+  "dreamObservedSdkVersion": "0.2.140",
   "mcpVersions": [
     "1.27.0",
     "1.27.1"

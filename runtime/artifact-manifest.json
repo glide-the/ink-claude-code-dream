@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "ink-external-artifact/v1",
+  "artifact": {
+    "product": "Claude Code",
+    "publisher": "Anthropic PBC",
+    "version": "2.1.241",
+    "delivery": "external-user-supplied",
+    "bundled": false,
+    "patched": false,
+    "renamed": false,
+    "execution": "unmodified-as-published",
+    "configuredPathEnvironment": "INK_CLAUDE_CODE_EXECUTABLE",
+    "configuredPathMustBeAbsolute": true,
+    "fallbackDiscovery": "claude on PATH",
+    "versionProbe": "--runtime-doctor"
+  },
+  "integrity": {
+    "platformMetadata": "manifest/platforms.json",
+    "operatorReceipt": "deployment-owned-outside-git",
+    "normalLaunchPrehash": false,
+    "reason": "Deployment verifies provenance, platform metadata, and version before activation."
+  },
+  "redistribution": {
+    "status": "blocked-without-separate-authorization",
+    "licenseObserved": "Anthropic PBC; all rights reserved; use subject to applicable legal agreements",
+    "binaryInRelease": false,
+    "sourceInRelease": false,
+    "bundleInRelease": false,
+    "sourceMapInRelease": false
+  },
+  "officialEvidence": [
+    "https://code.claude.com/docs/en/legal-and-compliance",
+    "https://code.claude.com/docs/en/headless",
+    "https://code.claude.com/docs/en/cli-usage"
+  ]
+}

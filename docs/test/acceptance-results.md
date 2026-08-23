@@ -1,25 +1,37 @@
-<!-- [Input] Commands executed on 2026-08-23 and their bounded, credential-free outputs. -->
-<!-- [Output] Preserve pass/failure/fix/retest receipts and performance limitations. -->
-<!-- [Pos] Human-readable executable acceptance record. -->
+<!-- [Input] Bounded credential-free commands executed for the 2.1.241/SDK 0.2.143 clean-room baseline. -->
+<!-- [Output] Preserve exit codes, bounded evidence, failure/fix/retest receipts, hashes, and untested blockers. -->
+<!-- [Pos] Current local acceptance record; it does not claim real provider, OAuth, or Dream business E2E. -->
 
 # Acceptance results
 
-Final pre-document implementation runs:
+Final local run date: 2026-08-23.
 
-- Build/release verification: exit 0; 15 release files, 14 checksum entries, executable confined/executable, SDK unchanged, external core absent.
-- Node tests: 12 passed, 0 failed. Covered manifest isolation, opaque JSONL/env/argv, MCP management, exact version diagnostics, TMPDIR, resume/interactive classification, SDK skip rejection, crash, timeout, cancellation cleanup, and dynamic imports.
-- Existing SDK/Dream path: exit 0 with SDK `0.2.140`; `CLAUDE_CODE_CLI_PATH` selected the wrapper; upstream transport directly executed its shebang; one version core start and one main core start; one NDJSON message preserved.
-- MCP public-package matrix: `1.27.0` and `1.27.1` both passed initialize, ping, tools/list, tools/call, resources/list, prompts/list, audio and structuredContent; the runner validates and removes its own temp root in `finally`.
-- Reproducibility: two fixed-epoch builds produced identical archive and inventory digests.
+| Command | Exit | Evidence |
+| --- | ---: | --- |
+| `bun install --frozen-lockfile` | 0 | 9 installs across 35 packages checked; no changes |
+| `bun run lint` | 0 | 69 current inventory entries; 8 source JSON contracts parsed; package/legal/vendor/header gates passed |
+| `bun run build` | 0 | deterministic Node 22 ESM release generated from Bun `1.2.20` lock |
+| `node scripts/verify-release.mjs` | 0 | 20 files, 19 checksums, all five contracts consumed, external core absent |
+| `bun run test` | 0 | 14 passed, 0 failed |
+| `bun run test:upstream-sdk` | 0 | current Dream SDK `0.2.140` selected cli_path; one version probe, one main launch, one JSONL message |
+| `bun run test:acceptance` | 0 | provider-free `2.1.241` fixture doctor and process boundary passed |
+| `INK_ACCEPTANCE_REAL_CLAUDE=/private/tmp/.../claude bun run test:acceptance` | 0 | external, unmodified official `2.1.241` passed the bounded version/doctor probe; no auth, prompt, model, or business call |
+| direct official `--version` vs envelope `--version` | 0 | both returned `2.1.241 (Claude Code)` |
+| `bun run package` | 0 | verified deterministic tar and SHA sidecar generated |
+| `bun run test:reproducible` | 0 | two fixed-epoch release/archive builds matched |
+| `bun run verify` | 0 | full local lint/test/SDK/acceptance/release/reproducibility chain passed |
 
-Performance on one macOS arm64 host with official `2.1.235`: direct `--version` median 47.64 ms; envelope direct-shebang median 71.86 ms; delta +24.22 ms / +50.8%. Nine final samples per path after warm-up. Official versus envelope `--help` exit/stdout/stderr digests matched. This result is not generalized to Linux and no RSS improvement is claimed.
+The 14 Node tests cover manifest isolation; exact argv/JSONL/stderr/cwd/environment forwarding; MCP/auth/help management; built-in authentication environment presence without recording values; version output passthrough and doctor-only pin enforcement; explicit bare profile/no injection/missing-carrier rejection; external absolute artifact path; exact TMPDIR/symlink/mode/workspace; resume/session persistence; SDK skip rejection; crash; timeout; cancellation cleanup; and lazy imports.
 
-Final deterministic archive SHA-256: `a7ca239348d87eed9a45a6d1342df3c48dcc7f3024fe2a1602e3563a9c8cb821`; checksum inventory SHA-256: `154e1e68cd2ee99d6ceffdf0a9941d3063b449fe0ef863778cbca268e6304627`.
+Final provider-free timing sample reported by the Bun-launched test process under Node `26.4.0` used a fake executable, not official Claude Code: manifest median 26.32 ms, SDK version-probe median 51.67 ms, and one main-launch median 51.34 ms. These numbers are harness overhead evidence only and make no production or core-loading improvement claim. The supported release target remains the declared Node `>=22,<25` range and requires a matching target-runtime validation before deployment.
 
-Observed failures before retest:
+Final deterministic archive SHA-256: `8152b0297bbf57410e81733d021e1da653955feb808fbbdc0894c51006906a24`.
 
-- Default npm registry connection refused; a reachable registry completed Bun install and generated the lock.
-- Cross-SDK runner resolved a venv symlink to bare Python; preserving the venv executable fixed missing packages.
-- Initial PyPI MCP fetch returned an invalid content type; the single allowed mirror retry succeeded.
+Final checksum-inventory SHA-256: `37a6b96cb7f25d336f7bdb1c783e8ab13d361838aa0ef25460b1bc435a912804`.
 
-No credentials, model call, live OAuth, user MCP configuration, or Dream database was touched.
+Observed failures and fixes before the final pass:
+
+- Initial lint exited 1 because git inventory included a deleted tracked documentation path; lint now skips worktree-absent entries while checking all current files.
+- Initial Node run had 13/14 pass because the bare fixture declared a temporary workspace but launched from repository cwd; the test helper now supplies the declared cwd, proving the production fail-closed check was correct.
+
+The real official `2.1.241` check was deliberately limited to `--version` and the envelope doctor. Not executed or claimed: SDK `0.2.143` through live Dream, provider/model calls, real SSE/database/transcript persistence, real OAuth/keychain, MCP remote 5xx reconnect, plugin/skill/hook semantics, production sandbox, Linux dynamic-library compatibility, or bare-mode performance/business equivalence. No credentials, user transcript, workspace content, complete environment, deployment, or package publication was touched.

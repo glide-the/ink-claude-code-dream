@@ -8,10 +8,11 @@
   },
   "executable": "bin/ink-claude-runtime.mjs",
   "releaseManifest": "release-manifest.json",
-  "releaseManifestSha256": "c95f6d08eb71d8c537bf0e6be15c27448c32f570800010b09adb82d45d58295c",
+  "releaseManifestSha256": "a62f214a8b9f1808bf84b8a6a89e459e3b340c2701f06809a64ac2e3161cea36",
   "evidenceManifest": "manifest/capabilities.json",
   "sdk": {
-    "version": "0.2.140",
+    "version": "0.2.143",
+    "dreamObservedVersion": "0.2.140",
     "modified": false,
     "option": "ClaudeAgentOptions.cli_path",
     "discoveryEnvironment": "CLAUDE_CODE_CLI_PATH",

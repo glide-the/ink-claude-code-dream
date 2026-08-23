@@ -22,7 +22,7 @@
       "format": "esm"
     },
     "src/launcher.ts": {
-      "bytes": 10513,
+      "bytes": 13935,
       "imports": [
         {
           "path": "node:fs",
@@ -48,17 +48,12 @@
           "path": "src/manifest.ts",
           "kind": "dynamic-import",
           "original": "./manifest.js"
-        },
-        {
-          "path": "src/manifest.ts",
-          "kind": "dynamic-import",
-          "original": "./manifest.js"
         }
       ],
       "format": "esm"
     },
     "src/manifest.ts": {
-      "bytes": 2022,
+      "bytes": 2690,
       "imports": [
         {
           "path": "node:crypto",
@@ -88,15 +83,15 @@
     "dist/release/ink-claude-runtime-0.1.0/bin/ink-claude-runtime.mjs": {
       "imports": [
         {
-          "path": "dist/release/ink-claude-runtime-0.1.0/lib/manifest-PKF65RIO.mjs",
+          "path": "dist/release/ink-claude-runtime-0.1.0/lib/manifest-C2MWZTPA.mjs",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/release/ink-claude-runtime-0.1.0/lib/launcher-OUANYSMS.mjs",
+          "path": "dist/release/ink-claude-runtime-0.1.0/lib/launcher-UUPMEHFP.mjs",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/release/ink-claude-runtime-0.1.0/lib/launcher-OUANYSMS.mjs",
+          "path": "dist/release/ink-claude-runtime-0.1.0/lib/launcher-UUPMEHFP.mjs",
           "kind": "dynamic-import"
         }
       ],
@@ -115,7 +110,7 @@
       "inputs": {},
       "bytes": 1129
     },
-    "dist/release/ink-claude-runtime-0.1.0/lib/launcher-OUANYSMS.mjs": {
+    "dist/release/ink-claude-runtime-0.1.0/lib/launcher-UUPMEHFP.mjs": {
       "imports": [
         {
           "path": "node:fs",
@@ -138,11 +133,7 @@
           "external": true
         },
         {
-          "path": "dist/release/ink-claude-runtime-0.1.0/lib/manifest-PKF65RIO.mjs",
-          "kind": "dynamic-import"
-        },
-        {
-          "path": "dist/release/ink-claude-runtime-0.1.0/lib/manifest-PKF65RIO.mjs",
+          "path": "dist/release/ink-claude-runtime-0.1.0/lib/manifest-C2MWZTPA.mjs",
           "kind": "dynamic-import"
         }
       ],
@@ -155,18 +146,18 @@
       "entryPoint": "src/launcher.ts",
       "inputs": {
         "src/launcher.ts": {
-          "bytesInOutput": 8702
+          "bytesInOutput": 11892
         }
       },
-      "bytes": 8818
+      "bytes": 12008
     },
-    "dist/release/ink-claude-runtime-0.1.0/lib/launcher-OUANYSMS.mjs.map": {
+    "dist/release/ink-claude-runtime-0.1.0/lib/launcher-UUPMEHFP.mjs.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 5939
+      "bytes": 8045
     },
-    "dist/release/ink-claude-runtime-0.1.0/lib/manifest-PKF65RIO.mjs": {
+    "dist/release/ink-claude-runtime-0.1.0/lib/manifest-C2MWZTPA.mjs": {
       "imports": [
         {
           "path": "node:crypto",
@@ -195,16 +186,16 @@
       "entryPoint": "src/manifest.ts",
       "inputs": {
         "src/manifest.ts": {
-          "bytesInOutput": 1483
+          "bytesInOutput": 2103
         }
       },
-      "bytes": 1537
+      "bytes": 2157
     },
-    "dist/release/ink-claude-runtime-0.1.0/lib/manifest-PKF65RIO.mjs.map": {
+    "dist/release/ink-claude-runtime-0.1.0/lib/manifest-C2MWZTPA.mjs.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 979
+      "bytes": 1268
     }
   }
 }

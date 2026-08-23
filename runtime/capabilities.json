@@ -2,7 +2,7 @@
   "schemaVersion": "ink-runtime-evidence/v1",
   "releaseManifest": "../release-manifest.json",
   "runtime": {
-    "name": "ink-minimal-claude-code-runtime",
+    "name": "ink-runtime-envelope",
     "version": "0.1.0",
     "protocolVersion": "claude-code-stream-json/1",
     "mode": "official-cli-compatibility-envelope",
@@ -20,8 +20,9 @@
   "core": {
     "package": "@anthropic-ai/claude-code",
     "dreamPinnedVersion": "2.1.235",
+    "upstreamBaselineVersion": "2.1.241",
     "acceptedVersions": [
-      "2.1.235"
+      "2.1.241"
     ],
     "sourceRebuildable": false,
     "sourceEvidence": {
@@ -43,8 +44,11 @@
       "language": "python",
       "package": "claude-agent-sdk",
       "dreamPinnedVersion": "0.2.140",
+      "upstreamBaselineVersion": "0.2.143",
+      "upstreamBundledCliVersion": "2.1.241",
       "acceptedVersions": [
-        "0.2.140"
+        "0.2.140",
+        "0.2.143"
       ],
       "launcherOption": "ClaudeAgentOptions.cli_path",
       "discoveryEnvironment": "CLAUDE_CODE_CLI_PATH",
@@ -182,12 +186,27 @@
     {
       "id": "runtime.version-verification",
       "availability": "deployment-gate",
-      "preservation": "exact -v and --runtime-doctor; hot path trusts verified deployment"
+      "preservation": "--runtime-doctor verifies exact pin; -v/--version pass through unchanged"
     },
     {
       "id": "runtime.sdk-version-skip-bypass",
       "availability": "enforced",
       "preservation": "headless launch rejects non-empty CLAUDE_AGENT_SDK_SKIP_VERSION_CHECK"
+    },
+    {
+      "id": "runtime.official-binary-unmodified",
+      "availability": "enforced-by-release-contract",
+      "preservation": "external unmodified-as-published artifact only"
+    },
+    {
+      "id": "authentication.built-in-methods",
+      "availability": "delegated",
+      "preservation": "opaque environment and auth command forwarding; wrapper selects no method"
+    },
+    {
+      "id": "startup.bare-explicit-profile",
+      "availability": "experimental-opt-in",
+      "preservation": "caller-supplied --bare only; fail closed unless explicit settings, MCP, plugin/skill, workspace, TMPDIR, and persistence carriers are present"
     }
   ],
   "materialPolicy": {
@@ -196,6 +215,7 @@
       "workspace-content",
       "plugin-materialization",
       "oauth-state",
+      "authentication-state",
       "settings",
       "credentials",
       "secrets"

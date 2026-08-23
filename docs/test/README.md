@@ -22,7 +22,7 @@ INK_DREAM_PYTHON=/path/to/venv/bin/python \
 bun run test:upstream-sdk
 ```
 
-It requires public SDK `0.2.140`, directly executes the release shebang through Dream's existing `CLAUDE_CODE_CLI_PATH` helper, and does not install or modify Python packages.
+It records current Dream compatibility with SDK `0.2.140`, directly executes the release shebang through Dream's existing `CLAUDE_CODE_CLI_PATH` helper, and does not install or modify Python packages. Upstream design baseline is SDK `0.2.143`/CLI `2.1.241`; its real Dream business validation is outside this bounded local suite.
 
 The networked MCP regression creates disposable temp environments, validates that the created root is a direct `ink-mcp-matrix-*` child of the OS temp directory, and removes it in `finally`; it changes no checkout:
 
@@ -30,7 +30,7 @@ The networked MCP regression creates disposable temp environments, validates tha
 UV_DEFAULT_INDEX=https://your-approved-pypi-mirror/simple bun run test:mcp-matrix
 ```
 
-To compare a locally available verified official `2.1.235` executable:
+To compare a locally available verified official `2.1.241` executable:
 
 ```sh
 INK_ACCEPTANCE_REAL_CLAUDE=/path/to/official/claude bun run test:official-difference
