@@ -1,6 +1,7 @@
 // [Input] Consume checked-in TypeScript, legal/artifact/data/capability manifests, Bun lock state, and SOURCE_DATE_EPOCH.
 // [Output] Produce a deterministic Node 22 ESM release with split lazy chunks, contracts, maps, checksums, license report, and SBOM.
 // [Pos] Bun-managed build entry; generated artifacts contain no Claude core, workspace, transcript, plugin, OAuth, setting, or secret material.
+// [Sync] 2026-08-24: align generated discovery, SBOM, and rollback receipts with Dream's locked SDK/CLI.
 
 import { build, version as esbuildVersion } from "esbuild";
 import { createHash } from "node:crypto";
@@ -30,7 +31,7 @@ if (!Number.isSafeInteger(epochSeconds) || epochSeconds <= 0) {
 const buildTimestamp = new Date(epochSeconds * 1000).toISOString();
 const externals = [
   "@anthropic-ai/claude-code",
-  "claude-agent-sdk",
+  "ink-claude-dream-agent-sdk",
   "@modelcontextprotocol/sdk",
 ];
 
@@ -115,8 +116,9 @@ const discovery = {
     productionEligible: false,
   },
   sdk: {
+    distribution: "ink-claude-dream-agent-sdk",
     version: "0.2.143",
-    dreamObservedVersion: "0.2.140",
+    dreamObservedVersion: "0.2.143",
     modified: false,
     option: "ClaudeAgentOptions.cli_path",
     discoveryEnvironment: "CLAUDE_CODE_CLI_PATH",
@@ -163,7 +165,7 @@ const sbom = {
     },
     {
       type: "library",
-      name: "claude-agent-sdk",
+      name: "ink-claude-dream-agent-sdk",
       version: "0.2.143",
       scope: "optional",
       properties: [{ name: "ink:delivery", value: "Dream Python environment" }],
@@ -230,8 +232,9 @@ await writeFile(
       releaseId,
       runtimeVersion: packageJson.version,
       claudeCodeVersion: "2.1.241",
+      agentSdkDistribution: "ink-claude-dream-agent-sdk",
       agentSdkVersion: "0.2.143",
-      dreamObservedSdkVersion: "0.2.140",
+      dreamObservedSdkVersion: "0.2.143",
       mcpVersions: ["1.27.0", "1.27.1"],
       activation: "not authorized as a production default; feasibility tests may set CLAUDE_CODE_CLI_PATH explicitly after doctor/verify-release",
       rollback: "restore CLAUDE_CODE_CLI_PATH to the previously verified official Claude executable; the official runtime is the default rollback",

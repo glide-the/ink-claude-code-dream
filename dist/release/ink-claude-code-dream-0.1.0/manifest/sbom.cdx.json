@@ -1,7 +1,7 @@
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
-  "serialNumber": "urn:uuid:9ec2b22c-f33c-57d7-81ce-b8dc452558c8",
+  "serialNumber": "urn:uuid:9ec2b22c-f33c-57d7-81ce-e4e9a7ab19ca",
   "version": 1,
   "metadata": {
     "timestamp": "2026-08-23T00:00:00.000Z",
@@ -53,7 +53,7 @@
     },
     {
       "type": "library",
-      "name": "claude-agent-sdk",
+      "name": "ink-claude-dream-agent-sdk",
       "version": "0.2.143",
       "scope": "optional",
       "properties": [

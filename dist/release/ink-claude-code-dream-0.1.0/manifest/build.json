@@ -10,7 +10,7 @@
   "archivePackerNode": "24.13.0",
   "externals": [
     "@anthropic-ai/claude-code",
-    "claude-agent-sdk",
+    "ink-claude-dream-agent-sdk",
     "@modelcontextprotocol/sdk"
   ],
   "sourceMaps": "external-without-sources-content",

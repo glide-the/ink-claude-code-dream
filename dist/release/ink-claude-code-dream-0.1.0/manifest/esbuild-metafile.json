@@ -22,7 +22,7 @@
       "format": "esm"
     },
     "src/launcher.ts": {
-      "bytes": 13935,
+      "bytes": 14022,
       "imports": [
         {
           "path": "node:fs",
@@ -53,7 +53,7 @@
       "format": "esm"
     },
     "src/manifest.ts": {
-      "bytes": 2966,
+      "bytes": 3222,
       "imports": [
         {
           "path": "node:crypto",
@@ -73,15 +73,15 @@
     "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream.mjs": {
       "imports": [
         {
-          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-5K7GSGDF.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-QFQAPTG2.mjs",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-VNWHM5P6.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-SIHXUL7S.mjs",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-VNWHM5P6.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-SIHXUL7S.mjs",
           "kind": "dynamic-import"
         }
       ],
@@ -100,7 +100,7 @@
       "inputs": {},
       "bytes": 1212
     },
-    "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-VNWHM5P6.mjs": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-SIHXUL7S.mjs": {
       "imports": [
         {
           "path": "node:fs",
@@ -123,7 +123,7 @@
           "external": true
         },
         {
-          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-5K7GSGDF.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-QFQAPTG2.mjs",
           "kind": "dynamic-import"
         }
       ],
@@ -141,13 +141,13 @@
       },
       "bytes": 12008
     },
-    "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-VNWHM5P6.mjs.map": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-SIHXUL7S.mjs.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
       "bytes": 8045
     },
-    "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-5K7GSGDF.mjs": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-QFQAPTG2.mjs": {
       "imports": [
         {
           "path": "node:crypto",
@@ -166,16 +166,16 @@
       "entryPoint": "src/manifest.ts",
       "inputs": {
         "src/manifest.ts": {
-          "bytesInOutput": 2305
+          "bytesInOutput": 2456
         }
       },
-      "bytes": 2359
+      "bytes": 2510
     },
-    "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-5K7GSGDF.mjs.map": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-QFQAPTG2.mjs.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 1368
+      "bytes": 1425
     }
   }
 }

@@ -21,7 +21,7 @@
   },
   "core": {
     "package": "@anthropic-ai/claude-code",
-    "dreamPinnedVersion": "2.1.235",
+    "dreamPinnedVersion": "2.1.241",
     "upstreamBaselineVersion": "2.1.241",
     "acceptedVersions": [
       "2.1.241"
@@ -33,7 +33,7 @@
       "limitation": "Historical sourcemap restoration only; it is not evidence of current native internals and is not a legal/current rebuild input."
     },
     "officialChannelsObserved": {
-      "observedAt": "2026-08-23T00:00:00Z",
+      "observedAt": "2026-08-24T00:00:00+08:00",
       "githubLatest": "2.1.241",
       "npmLatest": "2.1.241",
       "npmStable": "2.1.231",
@@ -44,18 +44,17 @@
   "integrations": {
     "agentSdk": {
       "language": "python",
-      "package": "claude-agent-sdk",
-      "dreamPinnedVersion": "0.2.140",
+      "package": "ink-claude-dream-agent-sdk",
+      "dreamPinnedVersion": "0.2.143",
       "upstreamBaselineVersion": "0.2.143",
       "upstreamBundledCliVersion": "2.1.241",
       "acceptedVersions": [
-        "0.2.140",
         "0.2.143"
       ],
       "launcherOption": "ClaudeAgentOptions.cli_path",
       "discoveryEnvironment": "CLAUDE_CODE_CLI_PATH",
       "sdkModified": false,
-      "status": "unchanged-upstream"
+      "status": "locked-portable-distribution"
     },
     "mcp": {
       "language": "python",

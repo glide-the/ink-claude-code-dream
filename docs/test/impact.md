@@ -1,6 +1,7 @@
-<!-- [Input] Planned compatibility envelope, Dream read-only Runtime evidence, upstream SDK 0.2.143, and Dream-observed SDK 0.2.140 cli_path contract. -->
-<!-- [Output] Record the impact surface and explicit test boundaries before executable validation. -->
+<!-- [Input] Compatibility envelope, current Dream SDK distribution, official CLI 2.1.241, and paired provider-free evidence. -->
+<!-- [Output] Record the impact surface and explicit differential-test boundaries before executable validation. -->
 <!-- [Pos] Pre-test change-impact receipt for the minimal runtime release. -->
+<!-- [Sync] 2026-08-24: add paired SDK/raw-boundary differential scope and current installed SDK distribution. -->
 
 # Test impact record
 
@@ -15,10 +16,11 @@ Changed surface:
 - New fail-closed `CLAUDE_CODE_TMPDIR` validation for formal launches.
 - New process-group signal, optional timeout, crash exit, and cleanup behavior around the official child.
 - New Bun-managed deterministic build, split dynamic imports, source maps, checksums, SBOM, platform pins, and immutable release directory.
-- Baseline moves to external official Claude Code `2.1.241` and upstream SDK `0.2.143`, while retaining current Dream SDK `0.2.140` as a bounded compatibility observation.
+- Current locked baseline is external official Claude Code `2.1.241` and `ink-claude-dream-agent-sdk==0.2.143`; the earlier official SDK `0.2.140` run remains only in explicit historical receipts.
 - Version/help/MCP/auth commands now pass through exactly; only `--runtime-doctor` enforces the deployment pin.
 - Legal, external-artifact, entrypoint, Runtime-data, bare-profile, and dependency-license contracts are copied into and verified in the release.
 - Explicit `--bare` is never injected; it requires caller opt-in and absolute settings/MCP/plugin carriers, exact workspace/TMPDIR, and session persistence.
+- Paired provider-free tests now send the same raw and SDK JSONL request directly to the fake core and through the envelope; current Dream provides `ink-claude-dream-agent-sdk==0.2.143` under the unchanged `claude_agent_sdk` namespace.
 
 Must remain unchanged at the official SDK/CLI boundary:
 
@@ -28,6 +30,6 @@ Must remain unchanged at the official SDK/CLI boundary:
 - all built-in authentication methods and authentication environment; the wrapper must not select, remove, disable, restrict, or log values;
 - JSON/JSONL/streaming, permissions, MCP stdio/HTTP/SSE/SDK/OAuth/Resources, plugins/skills/hooks, transcript/resume, and exit semantics.
 
-Provider-free acceptance can prove boundary preservation, the unchanged SDK 0.2.140 `cli_path` launch, both MCP regression declarations (`1.27.0`, `1.27.1`), lifecycle cleanup, Runtime manifest validation, lazy envelope imports, and release exclusions. It cannot prove a real model turn, Dream database persistence, real OAuth, or current native core internals. Those remain explicitly unclaimed.
+Provider-free acceptance can prove paired boundary preservation, the installed compatible SDK `cli_path` launch, both MCP regression declarations (`1.27.0`, `1.27.1`), lifecycle cleanup, Runtime manifest validation, lazy envelope imports, and release exclusions. Carrier forwarding does not prove a real model turn, official-core session/resume persistence, MCP tool behavior, sandbox enforcement, Dream database persistence, OAuth/Remote behavior, or current native core internals. Those remain explicitly unclaimed.
 
 The bounded test scope is lint, build, Node unit tests, current Dream SDK-path compatibility, provider-free acceptance, release verification, package, and reproducibility. It may break wrapper startup, management/auth forwarding, strict TMPDIR enforcement, bare opt-in validation, manifest generation, or deterministic hashes; it cannot alter the external official binary or Dream/reference checkouts.

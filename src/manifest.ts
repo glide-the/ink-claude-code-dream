@@ -1,6 +1,7 @@
 // [Input] Read the immutable, release-relative Runtime manifest beside the built launcher.
 // [Output] Return an exact-version, digest-bound evidence envelope for diagnostics and the one-shot version probe.
 // [Pos] Lazy diagnostic reader; callers cannot replace the release trust root through environment configuration.
+// [Sync] 2026-08-24: require Dream's locked SDK distribution/version in the immutable manifest.
 
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -22,7 +23,9 @@ function validateManifest(value: unknown): asserts value is ReleaseManifest {
     manifest.runtime.entrypoint !== "bin/ink-claude-code-dream" ||
     manifest.runtime?.integration.environment !== "CLAUDE_CODE_CLI_PATH" ||
     manifest.runtime.integration.sdkOption !== "ClaudeAgentOptions.cli_path" ||
+    manifest.runtime.integration.sdkDistribution !== "ink-claude-dream-agent-sdk" ||
     manifest.runtime.integration.sdkVersion !== "0.2.143" ||
+    manifest.runtime.integration.dreamObservedSdkVersion !== "0.2.143" ||
     manifest.runtime.integration.sdkModified !== false ||
     manifest.core?.version !== "2.1.241" ||
     manifest.core?.delivery !== "external-not-bundled" ||

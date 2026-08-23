@@ -3,8 +3,9 @@
   "releaseId": "ink-claude-code-dream-0.1.0",
   "runtimeVersion": "0.1.0",
   "claudeCodeVersion": "2.1.241",
+  "agentSdkDistribution": "ink-claude-dream-agent-sdk",
   "agentSdkVersion": "0.2.143",
-  "dreamObservedSdkVersion": "0.2.140",
+  "dreamObservedSdkVersion": "0.2.143",
   "mcpVersions": [
     "1.27.0",
     "1.27.1"

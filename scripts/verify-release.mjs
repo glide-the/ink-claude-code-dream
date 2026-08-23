@@ -1,6 +1,7 @@
 // [Input] Consume the generated immutable release directory, inventory, Runtime manifest, and material policy.
 // [Output] Fail closed on checksum/contract/target drift, unsafe content, missing maps, or a bundled Claude core.
 // [Pos] Post-build executable acceptance gate; it validates no SDK-specific manifest protocol.
+// [Sync] 2026-08-24: require current Dream SDK 0.2.143 throughout generated machine receipts.
 
 import { createHash } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
@@ -42,8 +43,9 @@ if (
   manifest.runtime?.version !== "0.1.0" ||
   manifest.runtime?.integration?.environment !== "CLAUDE_CODE_CLI_PATH" ||
   manifest.runtime?.integration?.sdkOption !== "ClaudeAgentOptions.cli_path" ||
+  manifest.runtime?.integration?.sdkDistribution !== "ink-claude-dream-agent-sdk" ||
   manifest.runtime?.integration?.sdkVersion !== "0.2.143" ||
-  manifest.runtime?.integration?.dreamObservedSdkVersion !== "0.2.140" ||
+  manifest.runtime?.integration?.dreamObservedSdkVersion !== "0.2.143" ||
   manifest.runtime?.integration?.sdkModified !== false ||
   manifest.core?.version !== "2.1.241" ||
   manifest.core?.delivery !== "external-not-bundled" ||
@@ -86,8 +88,9 @@ if (
   discovery.sdk?.option !== "ClaudeAgentOptions.cli_path" ||
   discovery.sdk?.discoveryEnvironment !== "CLAUDE_CODE_CLI_PATH" ||
   discovery.sdk?.modified !== false ||
+  discovery.sdk?.distribution !== "ink-claude-dream-agent-sdk" ||
   discovery.sdk?.version !== "0.2.143" ||
-  discovery.sdk?.dreamObservedVersion !== "0.2.140" ||
+  discovery.sdk?.dreamObservedVersion !== "0.2.143" ||
   discovery.status?.corePruned !== false ||
   discovery.status?.productionEligible !== false
 ) {
@@ -123,6 +126,18 @@ for (const [name, schemaVersion] of Object.entries(contractSchemas)) {
 const artifactContract = JSON.parse(
   await readFile(join(releaseRoot, "manifest", "artifact-manifest.json"), "utf8"),
 );
+const capabilities = JSON.parse(
+  await readFile(join(releaseRoot, "manifest", "capabilities.json"), "utf8"),
+);
+if (
+  capabilities.core?.dreamPinnedVersion !== "2.1.241" ||
+  capabilities.integrations?.agentSdk?.package !== "ink-claude-dream-agent-sdk" ||
+  capabilities.integrations?.agentSdk?.dreamPinnedVersion !== "0.2.143" ||
+  capabilities.integrations?.agentSdk?.upstreamBundledCliVersion !== "2.1.241" ||
+  capabilities.integrations?.agentSdk?.acceptedVersions?.join(",") !== "0.2.143"
+) {
+  throw new Error("Runtime capability evidence does not match Dream's locked SDK/CLI");
+}
 const pruningDecision = JSON.parse(
   await readFile(join(releaseRoot, "manifest", "pruning-decision.json"), "utf8"),
 );
@@ -218,6 +233,23 @@ if (!core?.properties?.some((item) => item.name === "ink:delivery" && item.value
   throw new Error("SBOM does not identify the official core as external");
 }
 if (core.version !== "2.1.241") throw new Error("SBOM external core version mismatch");
+const agentSdk = sbom.components.find(
+  (item) => item.name === "ink-claude-dream-agent-sdk",
+);
+if (agentSdk?.version !== "0.2.143") {
+  throw new Error("SBOM Dream SDK distribution/version mismatch");
+}
+const rollback = JSON.parse(
+  await readFile(join(releaseRoot, "manifest", "rollback.json"), "utf8"),
+);
+if (
+  rollback.claudeCodeVersion !== "2.1.241" ||
+  rollback.agentSdkDistribution !== "ink-claude-dream-agent-sdk" ||
+  rollback.agentSdkVersion !== "0.2.143" ||
+  rollback.dreamObservedSdkVersion !== "0.2.143"
+) {
+  throw new Error("rollback receipt does not match Dream's locked SDK/CLI");
+}
 process.stdout.write(
   `${JSON.stringify({
     ok: true,

@@ -1,6 +1,7 @@
 // [Input] Consume opaque Claude CLI argv/stdio plus the server-owned runtime environment and release manifest.
 // [Output] Validate the pinned core/TMPDIR boundary, then transparently supervise the official CLI process group.
 // [Pos] Lazy-loaded execution boundary; no Claude protocol, MCP payload, transcript, setting, or secret is parsed here.
+// [Sync] 2026-08-24: align the SDK probe comment with Dream's locked 0.2.143 distribution.
 
 import { constants as fsConstants } from "node:fs";
 import { access, lstat, realpath } from "node:fs/promises";
@@ -252,9 +253,8 @@ function signalProcessGroup(pid: number | undefined, signal: NodeJS.Signals): vo
 
 export async function launchOfficialCli(args: string[]): Promise<LaunchResult> {
   const executable = await resolveCoreExecutable();
-  // Upstream SDK 0.2.143 (and Dream-observed 0.2.140) probes cli_path with
-  // `-v` before its stream-json
-  // launch. Do not add another large-core probe here. Deployment must run
+  // Dream's locked ink-claude-dream-agent-sdk 0.2.143 probes cli_path with
+  // `-v` before its stream-json launch. Do not add another large-core probe here. Deployment must run
   // --runtime-doctor. Dream's `mcp ...` management calls and help are not
   // thread launches and therefore do not require a thread-local TMPDIR.
   const managementOrHelp =

@@ -1,7 +1,7 @@
 <!-- [Input] Runtime source, release manifests, Dream evidence, and executable acceptance results. -->
 <!-- [Output] Explain what this repository ships, how to build/test it, and why it is not a core optimization. -->
 <!-- [Pos] Operator-facing entry point for the Claude Code compatibility envelope. -->
-<!-- [Sync] 2026-08-23: identify the extensionless feasibility distribution and fail-closed pruning gate. -->
+<!-- [Sync] 2026-08-24: align current Dream locked SDK/CLI evidence and retain fail-closed pruning. -->
 
 # ink-claude-code-dream
 
@@ -13,7 +13,7 @@ This is not the recommended production cold-start or memory optimization. Claude
 
 ## Existing Dream/SDK integration
 
-Upstream baseline Python `claude-agent-sdk==0.2.143` (bundled CLI `2.1.241`) remains unchanged; Dream's currently observed `0.2.140` path is retained as a compatibility check. Dream already resolves `CLAUDE_CODE_CLI_PATH`, applies it to `ClaudeAgentOptions.cli_path`, and uses the same resolver for MCP Resources/OAuth management. No SDK manifest, bridge, fork, or Dream code change is required:
+Dream currently locks the portable `ink-claude-dream-agent-sdk==0.2.143` distribution and official Claude CLI `2.1.241`. The distribution preserves the `claude_agent_sdk` import namespace and Dream resolves `CLAUDE_CODE_CLI_PATH`, applies it to `ClaudeAgentOptions.cli_path`, and uses the same resolver for MCP Resources/OAuth management. The Runtime does not add an SDK manifest, bridge, fork, or Dream code path:
 
 ```sh
 export CLAUDE_CODE_CLI_PATH="$PWD/dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream"

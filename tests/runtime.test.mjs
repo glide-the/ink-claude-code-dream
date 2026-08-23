@@ -1,7 +1,7 @@
 // [Input] Exercise the built Node launcher with deterministic fake Claude CLI processes and release metadata.
 // [Output] Prove Runtime evidence, forwarding, gates, and race-safe lifecycle cleanup on every assertion path.
 // [Pos] Provider-free runtime contract suite; it does not claim a real Dream/model acceptance.
-// [Sync] 2026-08-24: replace PID polling with readiness handshake and finally-based process-group cleanup.
+// [Sync] 2026-08-24: assert current Dream SDK distribution and retain race-safe lifecycle cleanup.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -148,7 +148,12 @@ test("Runtime manifest diagnostic does not need or launch a Claude core", async 
   assert.equal(envelope.manifest.core.version, "2.1.241");
   assert.equal(envelope.manifest.core.execution, "unmodified-as-published");
   assert.equal(envelope.manifest.runtime.integration.sdkModified, false);
+  assert.equal(
+    envelope.manifest.runtime.integration.sdkDistribution,
+    "ink-claude-dream-agent-sdk",
+  );
   assert.equal(envelope.manifest.runtime.integration.sdkVersion, "0.2.143");
+  assert.equal(envelope.manifest.runtime.integration.dreamObservedSdkVersion, "0.2.143");
   assert.equal(envelope.manifest.runtime.integration.environment, "CLAUDE_CODE_CLI_PATH");
   assert.match(envelope.sha256, /^[a-f0-9]{64}$/);
 });

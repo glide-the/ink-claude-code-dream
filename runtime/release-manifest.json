@@ -7,8 +7,9 @@
     "integration": {
       "environment": "CLAUDE_CODE_CLI_PATH",
       "sdkOption": "ClaudeAgentOptions.cli_path",
+      "sdkDistribution": "ink-claude-dream-agent-sdk",
       "sdkVersion": "0.2.143",
-      "dreamObservedSdkVersion": "0.2.140",
+      "dreamObservedSdkVersion": "0.2.143",
       "sdkModified": false
     }
   },

@@ -1,6 +1,7 @@
 // [Input] Consume the checked-in Runtime-owned release manifest.
 // [Output] Define stable internal shapes for diagnostics and supervised CLI launches.
-// [Pos] Runtime implementation contract only; the unchanged Agent SDK never parses this schema.
+// [Pos] Runtime implementation contract only; Dream's locked SDK distribution never parses this schema.
+// [Sync] 2026-08-24: align current Dream SDK observation with ink-claude-dream-agent-sdk 0.2.143.
 
 export interface ReleaseManifest {
   schemaVersion: "ink-claude-cli-envelope/v1";
@@ -11,8 +12,9 @@ export interface ReleaseManifest {
     integration: {
       environment: "CLAUDE_CODE_CLI_PATH";
       sdkOption: "ClaudeAgentOptions.cli_path";
+      sdkDistribution: "ink-claude-dream-agent-sdk";
       sdkVersion: "0.2.143";
-      dreamObservedSdkVersion: "0.2.140";
+      dreamObservedSdkVersion: "0.2.143";
       sdkModified: false;
     };
   };
