@@ -23,6 +23,23 @@ Dream needs Claude Agent SDK headless streaming, tools, workspace/sandbox, MCP, 
 
 Official package metadata and SDK source are primary version evidence. The current workstation executable `2.1.220` is not accepted as a `2.1.241` deployment artifact.
 
+Current official `2.1.241` distribution-shape evidence:
+
+| Evidence | Observed result | Applicability |
+| --- | --- | --- |
+| npm wrapper package | 7 files, 26,357-byte tarball, 175,849 bytes unpacked; `bin.claude=bin/claude.exe` | The small package is an installer/selector, not the Runtime core |
+| platform selection | eight exact `2.1.241` optional packages for Darwin, Linux glibc/musl, and Windows | Deployment must pin the selected platform artifact, not only the wrapper |
+| Darwin arm64 artifact | one 325,055,632-byte Mach-O `claude` plus package metadata | Native single-file core; no public module/tree-shaking boundary |
+| Linux x64 glibc artifact | one 342,636,848-byte ELF `claude`; SHA-256 `0771bd866cff82b76581fc0499f6529e1a36845078f144f8c81dccb3bc7037b8` | Production-shape evidence for the Debian/glibc target |
+| packaged source maps/resources | no `.map`, `.wasm`, `.node`, or separate dynamic JavaScript resources in either inspected platform package | Restored maps are not current-package build inputs |
+| Darwin dynamic libraries | `libicucore`, `libresolv`, `libc++`, `libSystem` | Supplied by the host OS; never copied into this envelope |
+| Linux dynamic libraries | `librt`, `libc`, dynamic loader, `libpthread`, `libdl`, `libm` | glibc host contract; vendor executable remains external |
+
+These are package/file-format observations, not permission to reverse engineer,
+modify, or redistribute the executable. Static/dynamic feature registration
+inside the native core remains opaque; current behavior is proven only through
+official flags, protocol observations, and black-box tests.
+
 ## 3. Claude Code and IM capability matrix
 
 | 能力 | IM 是否使用 | 调用入口 | 加载时机 | 必需/可选 | 禁用影响 | 当前版本证据 |
