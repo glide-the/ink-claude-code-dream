@@ -14,15 +14,17 @@ Dream needs Claude Agent SDK headless streaming, tools, workspace/sandbox, MCP, 
 
 | Component | Evidence baseline | Applicability |
 | --- | --- | --- |
-| Claude Code | `2.1.241`; platform packages are native executables | Required external artifact; unmodified and run as published |
-| Agent SDK Python | upstream main `0.2.143`, bundled CLI `2.1.241` | Current interface baseline |
-| Dream observed SDK | `0.2.140` | Compatibility test baseline until Dream upgrades |
+| Latest acceptance target | Claude Code `2.1.241`; platform packages are native executables | Required external artifact; unmodified and run as published |
+| Dream deployment pin | Claude Code `2.1.235`, Agent SDK `0.2.140`, Node `22.18.0`, Python `3.12` | Current container baseline in Dream `backend/Dockerfile` / requirements; not evidence about `2.1.241` internals |
+| Local default CLI | Claude Code `2.1.220` | Existing workstation default only; not accepted as the latest target |
+| Agent SDK Python mirror | upstream main `0.2.143`, bundled CLI `2.1.241` | Current mirror/interface baseline |
+| Dream observed SDK | installed and pinned `0.2.140` | Real-business and compatibility-test baseline until Dream upgrades |
 | Bun | `1.2.20` | Lock/build orchestration only |
 | Archive packer Node | exact `24.13.0` | Pins `node:zlib` gzip bytes; enforced before packaging |
 | Produced wrapper | Node `>=22,<25` ESM | Independent supervisor; no Claude protocol parsing |
 | Restored source | historical Claude Code `2.1.88` | Read-only historical evidence; never copied or built |
 
-Official package metadata and SDK source are primary version evidence. The current workstation executable `2.1.220` is not accepted as a `2.1.241` deployment artifact.
+Official package metadata and SDK source are primary version evidence. Dream's container pin `2.1.235` and current workstation default `2.1.220` are recorded exactly but are not accepted as a `2.1.241` deployment artifact. Both real-business lanes explicitly selected the extracted, unmodified `2.1.241` artifact instead of relying on `PATH`.
 
 Current official `2.1.241` distribution-shape evidence:
 
