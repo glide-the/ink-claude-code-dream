@@ -25,18 +25,43 @@ Official package metadata and SDK source are primary version evidence. The curre
 
 ## 3. Claude Code and IM capability matrix
 
-| Capability | Dream status | Default envelope | Explicit `--bare` carrier | Bare decision |
-| --- | --- | --- | --- | --- |
-| SDK/headless JSONL and SSE projection | 已证实使用 | opaque stdio/argv | `-p`, stream-json flags | required |
-| tool use/result and permission callbacks | 已证实使用 | stdin remains open | settings/SDK control frames | required, semantic E2E pending |
-| workspace/cwd and file tools | 已证实使用 | cwd unchanged | cwd equals declared workspace | fail closed |
-| sandbox | 已证实使用 | official discovery/settings | absolute `--settings` file | content/E2E pending |
-| `CLAUDE_CODE_TMPDIR` | 已证实使用 | exact `.claude-tmp`, 0700, no symlink | same contract | enforced |
-| session/transcript/resume | 已证实使用 | argv/config opaque | persistence required; resume/session flags opaque | `--no-session-persistence` rejected |
-| stdio/HTTP/SSE MCP, Resources, OAuth | 已证实使用 | official core/config | strict absolute `--mcp-config` | real OAuth/E2E pending |
-| plugins/skills/hooks | 已证实使用或条件使用 | official discovery | absolute `--plugin-dir` plus settings | carrier checked; contents pending |
-| built-in authentication | required legal/product capability | all methods/env/commands preserved | caller chooses official bare-compatible method | wrapper never selects or converts |
-| Remote Session/team/swarm/IDE | 暂无 Dream 使用证据 | not removed from official core | not claimed | no core deletion |
+| 能力 | IM 是否使用 | 调用入口 | 加载时机 | 必需/可选 | 禁用影响 | 当前版本证据 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Headless/SDK client | 已证实使用 | `ClaudeAgentRunner` → `SimpleClaudeAgentSDKClient` → `ClaudeSDKClient` | 每个 Agent turn 启动/连接 | 必需 | 无法运行 Dream/Chat | RUN, CLIENT；SDK `0.2.140` 合同夹具 |
+| SDK one-shot `query()` | 已证实未使用 | Dream 生产链路无此入口 | 不加载 | 可选 | 无当前业务影响 | CLIENT 使用双向 client；源码搜索无生产调用 |
+| streaming 输入/输出与 SSE | 已证实使用 | SDK stream-json → runner/parser → EventBus/SSE router | turn 全程 | 必需 | 首 Token、增量正文和终态丢失 | RUN, ROUTER；Dream SSE 回归 |
+| session ID 与 transcript | 已证实使用 | SDK result/init → thread 持久化；本地 JSONL 探针 | init、turn 结束、后续启动 | 必需 | 无法建立会话连续性 | SVC, RUN, ENV；Dream session 回归 |
+| resume | 条件使用 | persisted session ID + transcript contract → SDK `resume` | guidance/confirmation 或服务重启后的后续 turn | 必需于续聊 | 续聊退化或错误串线 | SVC, RUN；首次 turn 明确不 resume |
+| tool use/result | 已证实使用 | SDK content/control frames → runner → persisted parts | 模型产生 tool use 时 | 必需 | 文件/MCP/业务工具链失效 | RUN, ROUTER；tool DTO 回归 |
+| permission 与 tool confirmation | 已证实使用 | `PreToolUse`/`can_use_tool` → confirmation API | 受控工具调用时 | 必需 | 权限合同或交互确认被绕过/阻断 | RUN, ROUTER；批准/拒绝回归 |
+| Workspace、cwd 与文件工具 | 条件使用 | thread factory/server-owned cwd → SDK options | Workspace Mode 或文件工具启用时 | 条件必需 | Workspace/Read/Grep 等失效 | TF, SVC, RUN |
+| sandbox | 条件使用 | SDK sandbox options + settings | turn 启动时 | 条件必需 | 启用场景越权或无法执行 | RUN；生产 settings 内容仍需真实验收 |
+| `CLAUDE_CODE_TMPDIR` | 已证实使用 | ENV 创建 `{thread}/.claude-tmp`；launcher 校验 | 每次 CLI 启动前 | 必需 | 违反 thread 隔离安全合同 | ENV；0700/no-symlink/exact-child 回归 |
+| 内置/产品 MCP | 条件使用 | runner 组合 Editor、Story Workspace、Memory/Necklace 等 | options 构造/连接时 | 条件必需 | 对应编辑、故事、记忆能力失效 | RUN, SVC；Memory/Necklace 默认关闭 |
+| 用户级 stdio MCP | 已证实使用 | user MCP config → `mcp_servers`/CLI config | Agent 连接时 | 必需于已配置用户 | 用户工具不可用 | RUN；MCP driver/service 回归 |
+| 用户级 HTTP/SSE MCP | 条件使用 | remote MCP config → official Runtime | 远端 server 被配置/连接时 | 条件必需 | 远端工具不可用 | RUN；真实 HTTP/OAuth 仍待 E2E |
+| MCP OAuth | 条件使用 | MCP resources API → official `mcp login/logout` | 用户发起授权/注销时 | 条件必需 | OAuth server 无法使用 | ROUTER/SVC；CLI argv 合同已验，真实授权待验 |
+| MCP Resources | 条件使用 | Dream MCP Resources 页面与 server config API | 页面查询/Agent 复用时 | 条件必需 | Resources 页面和复用合同退化 | MCP router/service 回归；原始 SDK resources inventory 未报告 |
+| MCP server/tool inventory | 已证实使用 | inventory service → Runtime/SDK init metadata | 配置校验与会话 init | 必需 | 无法展示/校验可用工具 | MCP inventory 回归；tools 已报告 |
+| plugin-scope MCP | 条件使用 | locked plugin materialization → official plugin discovery | plugin 装载时 | 条件必需 | plugin 内 MCP 不可用 | SVC/RUN；真实 plugin MCP 待 E2E |
+| plugins | 已证实使用 | Deck 锁定 plugin → `--plugin-dir` | Dream turn 启动时 | Dream 必需 | Dream Deck 合同失效 | SVC, RUN；plugin pipeline 回归 |
+| skills | 条件使用 | plugin/explicit skill carriers | 发现或调用 skill 时 | 条件必需 | 已配置 skill 不可见 | SVC/RUN；语义 E2E 待验 |
+| hooks | 已证实使用 | SDK Python hooks 与 Dream artifact turn hook | tool/turn lifecycle | 必需于 Dream artifact | artifact/策略钩子失效 | RUN；artifact hook 回归；file SessionStart/Stop 未注册 |
+| slash commands | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
+| subagents | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
+| Remote Session | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
+| swarm/team/teammate | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
+| IDE integrations | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | headless 生产链路证据 |
+| telemetry | 暂无证据 | Dream 不直接调用；官方 core 内部行为不透明 | 未确认 | 不可擅改 | 修改可能破坏支持/合规 | `2.1.241` native artifact；无稳定 patch surface |
+| updater | 已证实未使用 | 部署使用固定外部 artifact，无 update 调用 | 不加载于 Dream 入口 | 可选 | 无当前业务影响；仍不修改 core | Docker pin 与 CLI resolver |
+| feedback/reporting | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
+| diagnostics | 条件使用 | `--version`、doctor、MCP/auth 管理透传 | 部署检查或管理操作 | 运维必需 | 无法验证版本/定位启动问题 | envelope acceptance + real `2.1.241` doctor |
+| authentication | 已证实使用 | 官方 CLI auth/env 与 Gateway 凭据透传 | Runtime 启动/请求时 | 必需 | 无法认证且可能违反法律门禁 | RUN；官方法律要求不得移除/限制 |
+| gateway/provider 适配 | 已证实使用 | Dream options/env → Admin Gateway → provider | 每次推理请求 | 必需 | 无模型推理与结算 | RUN/SVC；本轮不改 Gateway |
+| services registry | 暂无证据 | 无 Claude Code services-registry 直接调用证据 | 未确认 | 可选 | 未知；不得据此删除 core | Dream 只证实 Admin Gateway 资产 |
+| workspace/plugin materialization | 条件使用 | SVC 在启动前同步 server-owned workspace 与 locked plugin | Workspace/Deck turn 前 | 条件必需 | 文件、plugin、resume 元数据不一致 | TF/SVC/RUN；materialization 回归 |
+
+Evidence anchors: TF=`backend/claude_agent/thread_factory.py`; SVC=`backend/claude_agent/service.py`; RUN=`backend/libs/claude_agent_kit/server/agent_runner.py`; ENV=`backend/libs/claude_agent_kit/server/sdk_env.py`; CLIENT=`backend/libs/claude_agent_kit/server/simple_cas_client.py`; ROUTER=`backend/routers/claude_agent.py` in the read-only Dream repository. “暂无证据” never authorizes deletion: the official core remains whole and opaque.
 
 ## 4. Current start and resume call chains
 
