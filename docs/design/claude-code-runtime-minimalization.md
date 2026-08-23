@@ -1,6 +1,7 @@
 <!-- [Input] Official 2.1.241/SDK 0.2.143 evidence, Dream read-only evidence, legal terms, and clean-room contracts. -->
 <!-- [Output] Define the evidence-led minimal Runtime decision, explicit bare profile, packaging, compatibility, and rollback. -->
 <!-- [Pos] Canonical design for the independent Runtime envelope; it is not Claude Code source or a Claude Code product. -->
+<!-- [Sync] 2026-08-23: record the macOS MCP identity marker and completed real OAuth/HTTP MCP business validation. -->
 
 # Claude Code Runtime minimalization decision
 
@@ -59,9 +60,9 @@ official flags, protocol observations, and black-box tests.
 | `CLAUDE_CODE_TMPDIR` | 已证实使用 | ENV 创建 `{thread}/.claude-tmp`；launcher 校验 | 每次 CLI 启动前 | 必需 | 违反 thread 隔离安全合同 | ENV；0700/no-symlink/exact-child 回归 |
 | 内置/产品 MCP | 已证实使用 | runner 组合 Editor、Story Workspace、Memory/Necklace 等 | options 构造/连接时 | 条件必需 | 对应编辑、故事、记忆能力失效 | RUN, SVC；真实 Dream 工具调用/result 已验，Memory/Necklace 默认关闭 |
 | 用户级 stdio MCP | 条件使用 | user MCP config → `mcp_servers`/CLI config | Agent 连接时 | 必需于已配置用户 | 用户工具不可用 | RUN；MCP driver/service 回归；本次真实 actor 未配置用户级 server |
-| 用户级 HTTP/SSE MCP | 条件使用 | remote MCP config → official Runtime | 远端 server 被配置/连接时 | 条件必需 | 远端工具不可用 | RUN；真实 HTTP/OAuth 仍待 E2E |
-| MCP OAuth | 条件使用 | MCP resources API → official `mcp login/logout` | 用户发起授权/注销时 | 条件必需 | OAuth server 无法使用 | ROUTER/SVC；CLI argv 合同已验，真实授权待验 |
-| MCP Resources | 条件使用 | Dream MCP Resources 页面与 server config API | 页面查询/Agent 复用时 | 条件必需 | Resources 页面和复用合同退化 | MCP router/service 回归；原始 SDK resources inventory 未报告 |
+| 用户级 HTTP/SSE MCP | 条件使用 | remote MCP config → official Runtime | 远端 server 被配置/连接时 | 条件必需 | 远端工具不可用 | RUN；真实 OAuth HTTP server 在公开 Dream Chat 两轮调用通过；legacy SSE add 未支持 |
+| MCP OAuth | 条件使用 | MCP resources API → official `mcp login/logout` | 用户发起授权/注销时 | 条件必需 | OAuth server 无法使用 | ROUTER/SVC；真实 DCR/PKCE 授权、连接、logout/remove 通过 |
+| MCP Resources | 条件使用 | Dream MCP Resources 页面与 server config API | 页面查询/Agent 复用时 | 条件必需 | Resources 页面和复用合同退化 | MCP router/service 与 provider-free resources 回归通过；真实外部 provider 声明 resource，但当前 Dream detail/inventory 未报告 Resources/Prompts，不能声明页面读取通过 |
 | MCP server/tool inventory | 已证实使用 | inventory service → Runtime/SDK init metadata | 配置校验与会话 init | 必需 | 无法展示/校验可用工具 | MCP inventory 回归；tools 已报告 |
 | plugin-scope MCP | 条件使用 | locked plugin materialization → official plugin discovery | plugin 装载时 | 条件必需 | plugin 内 MCP 不可用 | SVC/RUN；真实 plugin MCP 待 E2E |
 | plugins | 已证实使用 | Deck 锁定 plugin → `--plugin-dir` | Dream turn 启动时 | Dream 必需 | Dream Deck 合同失效 | SVC, RUN；真实 Dream plugin load receipt 与业务链通过 |
@@ -185,6 +186,23 @@ Keep direct official `2.1.241` as the performance and rollback baseline. Use thi
 
 The wrapper never implements MCP. It preserves CLI/config/stdin/stdout and leaves stdio/HTTP/SSE/OAuth/Resources/tool inventory to the official core and Agent SDK.
 
+The real compatibility lane used a disposable external server built with the
+official MCP Python SDK `2.0.0` (`6f69a3758ebf2ee55ce050f58b470ce11af71133`).
+Through Dream's public production endpoints and the existing real actor, DCR +
+PKCE connected successfully; the normal Chat UI confirmed and persisted a
+remote tool result, refreshed, resumed the same thread, and persisted a second
+result. Public logout/remove returned the actor to no matching server. This is
+protocol evidence using an isolated provider fixture through the normal
+Dream/Admin/Gateway/PostgreSQL topology; it is not a shadow Dream service.
+
+The selected wrapper initially failed Dream's macOS MCP capability gate because
+Dream scans the CLI entrypoint for the literal
+`CLAUDE_SECURESTORAGE_CONFIG_DIR`. The wrapper now retains that static marker
+while leaving all behavior to the official core. Dream's isolated MCP identity
+removes `INK_CLAUDE_CODE_EXECUTABLE`, so the exact verified official `2.1.241`
+artifact must also be first on the backend service `PATH`. No secret-storage or
+authentication implementation was added to the wrapper.
+
 The authoritative recent evidence is the official main [`CHANGELOG.md`](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md), not release-body text alone:
 
 - `2.1.239`: fixes clipped MCP elicitation forms and recovery of remote MCP servers after transient 5xx during mid-session reconnect, cloud, or SDK `setMcpServers()`.
@@ -280,18 +298,20 @@ Rollback is configuration-only: restore `CLAUDE_CODE_CLI_PATH` to the previously
 | real Dream with direct official CLI | passed through the public Deck → Chat → Dream production journey on the existing local Dream/Admin/Gateway/PostgreSQL topology |
 | real Dream with custom Runtime path | passed the same production journey through the packaged envelope and the same official core |
 | real new session/SSE/tool/result/workspace/transcript/resume/plugin/hook | passed in both real-business lanes; content-free receipts remain local and uncommitted |
-| real OAuth/remote HTTP MCP/Resources/reconnect/logout | blocked by the selected actor having no configured remote MCP server; no substitute or shadow server was used |
+| real OAuth/remote HTTP MCP/tool/resume/logout | passed through the public Dream OAuth and Chat journeys with an isolated official MCP SDK `2.0.0` provider; two confirmed tool results persisted across refresh/resume and cleanup completed |
+| real MCP Resources inventory/read | partial only: provider declared a resource and provider-free matrix passed resources, but current Dream detail/inventory reported no Resources/Prompts for this user-scope server |
+| remote MCP transient-5xx reconnect | not claimed; no destructive fault injection was run against the real business topology |
 | production sandbox semantics | not claimed: the accepted Deck journey did not prove an enabled production sandbox policy |
 
 ## 19. Acceptance criteria and design self-review
 
-Accept the clean-room package when lint, build, unit tests, release verify, package, and reproducibility pass; release contains no vendor/user material; exact manifests reference `2.1.241`/`0.2.143`; auth is untouched; and rollback is documented. Real Dream business E2E has passed for the official direct and envelope paths. This still does not prove a Runtime loading reduction, remote OAuth/MCP behavior, an enabled production sandbox, Linux deployment behavior, or bare-profile equivalence.
+Accept the clean-room package when lint, build, unit tests, release verify, package, and reproducibility pass; release contains no vendor/user material; exact manifests reference `2.1.241`/`0.2.143`; auth is untouched; and rollback is documented. Real Dream business E2E has passed for the official direct and envelope paths, including a real OAuth HTTP MCP tool journey through the envelope. This still does not prove a Runtime loading reduction, MCP Resources UI/read behavior, transient-5xx reconnect, an enabled production sandbox, Linux deployment behavior, or bare-profile equivalence.
 
 | Self-review question | Answer |
 | --- | --- |
 | Focused on Runtime rather than Dream business changes? | Yes; no Dream production code changed. The only local Dream edits repair the explicit Playwright release harness to follow the current public UI. |
 | Evidence supports deleting an official capability? | No deletion is attempted; the core stays whole. |
-| SDK, MCP, tools, SSE, workspace, and resume retained? | Yes at the opaque boundary and in both real-business lanes; internal stdio MCP tool/result passed. Remote OAuth/HTTP/Resources and enabled production sandbox semantics remain explicitly unclaimed. |
+| SDK, MCP, tools, SSE, workspace, and resume retained? | Yes at the opaque boundary and in both real-business lanes; internal stdio MCP and real OAuth HTTP MCP tool/result/resume passed. Resources UI/read, transient-5xx reconnect, and enabled production sandbox semantics remain explicitly unclaimed. |
 | Depends on historical restored behavior? | No; restored `2.1.88` is reference-only. |
 | Introduces a second agent state machine or Python SDK rewrite? | No. |
 | Packages transcript, workspace, plugin, MCP, OAuth, auth, or settings data? | No; verifier rejects these classes. |
@@ -304,7 +324,8 @@ Accept the clean-room package when lint, build, unit tests, release verify, pack
 - Redistribution of official/restored implementation is blocked without separate authorization.
 - Dream currently pins SDK `0.2.140`; installed SDK `0.2.143` passed package/process-boundary tests, while a full Dream application upgrade to `0.2.143` remains outside this change.
 - Bare profile settings/plugin/MCP content is not semantically attested and remains disabled for production.
-- Real new session, SSE, internal MCP tool/result, workspace, transcript, resume, locked plugin, artifact hook, and durable UI re-entry passed. The selected existing actor had no configured remote MCP server, so real HTTP/OAuth/logout/Resources/remote-5xx-reconnect behavior remains blocked by that external prerequisite.
+- Real new session, SSE, internal MCP tool/result, workspace, transcript, resume, locked plugin, artifact hook, and durable UI re-entry passed. A disposable official MCP SDK `2.0.0` provider then proved real HTTP OAuth, confirmation, two persisted tool results across refresh/resume, logout, and removal through the same normal topology.
+- The current Dream detail/inventory surface reported `Tools —` and no Resources/Prompts for that external user-scope server even though Chat tool execution passed and the provider declared one resource; Resources UI/read remains unproved. Legacy SSE add and official user-scope server names containing a colon were rejected by the current official CLI. Transient-5xx reconnect was not fault-injected.
 - The accepted business Deck did not establish that production sandbox was enabled; sandbox policy semantics therefore remain unclaimed.
 - The default `claude` on `PATH` is `2.1.220`, so it cannot satisfy the `2.1.241` doctor gate; a separately extracted, unmodified Darwin arm64 `2.1.241` artifact passed the bounded doctor/differential probe.
 - Source branch commit/push and independent PR creation are authorized for this task. Merge, package publication, release tagging, and deployment remain unauthorized.

@@ -1,6 +1,7 @@
 // [Input] Exercise the built Node launcher with deterministic fake Claude CLI processes and release metadata.
 // [Output] Prove Runtime evidence, opaque CLI/SDK/MCP forwarding, version/TMPDIR gates, lifecycle cleanup, and lazy imports.
 // [Pos] Provider-free runtime contract suite; it does not claim a real Dream/model acceptance.
+// [Sync] 2026-08-23: assert the built entrypoint advertises Dream's macOS secure-storage capability marker.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -204,6 +205,14 @@ test("MCP/auth management, version, and help pass through without thread TMPDIR"
   });
   assert.equal(nonzero.code, 19);
   assert.equal(nonzero.stdout.toString("utf8"), "opaque-nonzero\n");
+});
+
+test("built entrypoint retains the upstream macOS secure-storage selector marker", async () => {
+  const entrypoint = await readFile(executable);
+  assert.equal(
+    entrypoint.includes(Buffer.from("CLAUDE_SECURESTORAGE_CONFIG_DIR")),
+    true,
+  );
 });
 
 test("SDK -v output is passed through while doctor alone enforces the pin", async () => {

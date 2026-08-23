@@ -1,6 +1,7 @@
 <!-- [Input] Bun lock, build/verify/pack scripts, platform manifest, and immutable release policy. -->
 <!-- [Output] Give reproducible build, packaging, platform, and release verification commands. -->
 <!-- [Pos] Build and release operator guide. -->
+<!-- [Sync] 2026-08-23: add the Dream macOS MCP management identity activation contract. -->
 
 # Build and package
 
@@ -18,4 +19,4 @@ The package is generated at `dist/release/ink-claude-runtime-0.1.0`; the determi
 
 The build targets Node 22 ESM and uses split dynamic chunks. Linux deployments are supported only for glibc x64/arm64 after validating the exact platform entry in `runtime/platforms.json`. This Mac-generated Node release proves bundle portability, not the external Linux binary's dynamic-library compatibility; scan and verify the official package on its deployment platform.
 
-Activation must use an immutable path and deployment-specific `CLAUDE_CODE_CLI_PATH`. Run `--runtime-doctor` against the verified external `2.1.241` artifact before changing configuration. The wrapper must not patch, bundle, rename, or alter authentication. Default rollback points directly to the prior official executable.
+Activation must use an immutable path and deployment-specific `CLAUDE_CODE_CLI_PATH`. Run `--runtime-doctor` against the verified external `2.1.241` artifact before changing configuration. On macOS Dream deployments, also put that exact official artifact directory first on the backend service `PATH`: Dream isolates MCP management identity and removes the wrapper-only `INK_CLAUDE_CODE_EXECUTABLE` selector before launching `mcp` management commands. The wrapper exposes the official `CLAUDE_SECURESTORAGE_CONFIG_DIR` capability marker for Dream's static gate but does not implement, read, or redirect credential storage. The wrapper must not patch, bundle, rename, or alter authentication. Default rollback points directly to the prior official executable.

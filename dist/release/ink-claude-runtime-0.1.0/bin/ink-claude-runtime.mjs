@@ -37,6 +37,11 @@ async function main() {
   }
   process.exitCode = result.exitCode ?? 70;
 }
+Object.defineProperty(main, "upstreamSecureStorageSelector", {
+  value: "CLAUDE_SECURESTORAGE_CONFIG_DIR",
+  enumerable: false,
+  writable: false
+});
 main().catch((error) => {
   process.stderr.write(`ink-claude-runtime: ${safeErrorMessage(error)}
 `);

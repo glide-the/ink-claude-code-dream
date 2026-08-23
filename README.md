@@ -1,6 +1,7 @@
 <!-- [Input] Runtime source, release manifests, Dream evidence, and executable acceptance results. -->
 <!-- [Output] Explain what this repository ships, how to build/test it, and why it is not a core optimization. -->
 <!-- [Pos] Operator-facing entry point for the Claude Code compatibility envelope. -->
+<!-- [Sync] 2026-08-23: document the macOS MCP identity gate and completed real OAuth/HTTP MCP journey. -->
 
 # Ink Runtime envelope
 
@@ -19,6 +20,14 @@ export INK_CLAUDE_CODE_EXECUTABLE=/path/to/verified/official/claude
 
 "$CLAUDE_CODE_CLI_PATH" --runtime-doctor
 ```
+
+On macOS, Dream's MCP identity manager inspects the selected CLI entrypoint for
+the official secure-storage selector marker and intentionally removes
+`INK_CLAUDE_CODE_EXECUTABLE` from its isolated management identity. The
+envelope retains that static marker, and the same verified official `2.1.241`
+directory must therefore be first on the Dream service `PATH` as well as being
+the envelope's formal child. This is a deployment identity contract, not a
+credential implementation in the wrapper.
 
 The wrapper transparently forwards SDK headless stream-json, MCP management, built-in authentication commands, version, and help. Thread launches require Dream's server-owned `CLAUDE_CODE_TMPDIR`; management commands do not. Authentication environment and built-in methods are never selected, removed, disabled, or restricted by the wrapper.
 

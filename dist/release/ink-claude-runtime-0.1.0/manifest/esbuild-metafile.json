@@ -1,7 +1,7 @@
 {
   "inputs": {
     "src/cli.ts": {
-      "bytes": 1841,
+      "bytes": 2413,
       "imports": [
         {
           "path": "src/manifest.ts",
@@ -89,16 +89,16 @@
       "entryPoint": "src/cli.ts",
       "inputs": {
         "src/cli.ts": {
-          "bytesInOutput": 1530
+          "bytesInOutput": 1680
         }
       },
-      "bytes": 1544
+      "bytes": 1694
     },
     "dist/release/ink-claude-runtime-0.1.0/bin/ink-claude-runtime.mjs.map": {
       "imports": [],
       "exports": [],
       "inputs": {},
-      "bytes": 1129
+      "bytes": 1212
     },
     "dist/release/ink-claude-runtime-0.1.0/lib/launcher-LET44XUT.mjs": {
       "imports": [
