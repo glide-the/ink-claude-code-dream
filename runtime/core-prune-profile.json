@@ -1,0 +1,656 @@
+{
+  "schemaVersion": "ink-core-prune-profile/v1",
+  "sourceVersionEvidence": "2.1.88",
+  "cliCompatibilityVersion": "2.1.241",
+  "sourceRootEnvironment": "INK_AUTHORIZED_CORE_SOURCE_ROOT",
+  "packageRootEnvironment": "INK_AUTHORIZED_CORE_PACKAGE_ROOT",
+  "outputDirectory": "dist/core-local",
+  "entrypoints": [
+    "src/entrypoints/cli.tsx"
+  ],
+  "runtimeAssets": [
+    {
+      "source": "vendor/ripgrep/arm64-darwin/rg",
+      "output": "chunks/vendor/ripgrep/arm64-darwin/rg",
+      "sha256": "051d22c8d7f1139f2953c34ca82f216299f79955553158f8c5a215e99d66684f",
+      "mode": 493,
+      "license": "MIT OR Unlicense"
+    },
+    {
+      "source": "vendor/ripgrep/COPYING",
+      "output": "chunks/vendor/ripgrep/COPYING",
+      "sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f",
+      "mode": 420,
+      "license": "MIT OR Unlicense"
+    }
+  ],
+  "builder": {
+    "runtime": "bun",
+    "version": "1.4.0",
+    "target": "bun",
+    "format": "esm",
+    "splitting": true,
+    "sourcemap": "none",
+    "minifySyntax": true
+  },
+  "features": {
+    "enabled": [
+      "IS_LIBC_GLIBC"
+    ],
+    "disabled": [
+      "ABLATION_BASELINE",
+      "AGENT_MEMORY_SNAPSHOT",
+      "AGENT_TRIGGERS",
+      "AGENT_TRIGGERS_REMOTE",
+      "ALLOW_TEST_VERSIONS",
+      "ANTI_DISTILLATION_CC",
+      "AUTO_THEME",
+      "AWAY_SUMMARY",
+      "BASH_CLASSIFIER",
+      "BG_SESSIONS",
+      "BREAK_CACHE_COMMAND",
+      "BRIDGE_MODE",
+      "BUDDY",
+      "BUILDING_CLAUDE_APPS",
+      "BUILTIN_EXPLORE_PLAN_AGENTS",
+      "BYOC_ENVIRONMENT_RUNNER",
+      "CACHED_MICROCOMPACT",
+      "CCR_AUTO_CONNECT",
+      "CCR_MIRROR",
+      "CCR_REMOTE_SETUP",
+      "CHICAGO_MCP",
+      "COMMIT_ATTRIBUTION",
+      "COMPACTION_REMINDERS",
+      "CONNECTOR_TEXT",
+      "CONTEXT_COLLAPSE",
+      "COORDINATOR_MODE",
+      "COWORKER_TYPE_TELEMETRY",
+      "DAEMON",
+      "DIRECT_CONNECT",
+      "DOWNLOAD_USER_SETTINGS",
+      "DUMP_SYSTEM_PROMPT",
+      "ENHANCED_TELEMETRY_BETA",
+      "EXPERIMENTAL_SKILL_SEARCH",
+      "EXTRACT_MEMORIES",
+      "FILE_PERSISTENCE",
+      "FORK_SUBAGENT",
+      "HARD_FAIL",
+      "HISTORY_PICKER",
+      "HISTORY_SNIP",
+      "HOOK_PROMPTS",
+      "IS_LIBC_MUSL",
+      "KAIROS",
+      "KAIROS_BRIEF",
+      "KAIROS_CHANNELS",
+      "KAIROS_DREAM",
+      "KAIROS_GITHUB_WEBHOOKS",
+      "KAIROS_PUSH_NOTIFICATION",
+      "LODESTONE",
+      "MCP_RICH_OUTPUT",
+      "MCP_SKILLS",
+      "MEMORY_SHAPE_TELEMETRY",
+      "MESSAGE_ACTIONS",
+      "MONITOR_TOOL",
+      "NATIVE_CLIENT_ATTESTATION",
+      "NATIVE_CLIPBOARD_IMAGE",
+      "NEW_INIT",
+      "OVERFLOW_TEST_TOOL",
+      "PERFETTO_TRACING",
+      "POWERSHELL_AUTO_MODE",
+      "PROACTIVE",
+      "PROMPT_CACHE_BREAK_DETECTION",
+      "QUICK_SEARCH",
+      "REACTIVE_COMPACT",
+      "REVIEW_ARTIFACT",
+      "RUN_SKILL_GENERATOR",
+      "SELF_HOSTED_RUNNER",
+      "SHOT_STATS",
+      "SKILL_IMPROVEMENT",
+      "SLOW_OPERATION_LOGGING",
+      "SSH_REMOTE",
+      "STREAMLINED_OUTPUT",
+      "TEAMMEM",
+      "TEMPLATES",
+      "TERMINAL_PANEL",
+      "TOKEN_BUDGET",
+      "TORCH",
+      "TRANSCRIPT_CLASSIFIER",
+      "TREE_SITTER_BASH",
+      "TREE_SITTER_BASH_SHADOW",
+      "UDS_INBOX",
+      "ULTRAPLAN",
+      "ULTRATHINK",
+      "UNATTENDED_RETRY",
+      "UPLOAD_USER_SETTINGS",
+      "VERIFICATION_AGENT",
+      "VOICE_MODE",
+      "WEB_BROWSER_TOOL",
+      "WORKFLOW_SCRIPTS"
+    ]
+  },
+  "defines": {
+    "MACRO.BUILD_TIME": "1970-01-01T00:00:00.000Z",
+    "MACRO.FEEDBACK_CHANNEL": "",
+    "MACRO.ISSUES_EXPLAINER": "",
+    "MACRO.NATIVE_PACKAGE_URL": "",
+    "MACRO.PACKAGE_URL": "",
+    "MACRO.VERSION": "2.1.241",
+    "MACRO.VERSION_CHANGELOG": "",
+    "process.env.NODE_ENV": "production",
+    "process.env.USER_TYPE": "external"
+  },
+  "requiredCapabilities": [
+    "sdk.stream-json-jsonl",
+    "sdk.bidirectional-control",
+    "session.transcript-resume",
+    "tools.permissions",
+    "workspace.cwd",
+    "sandbox",
+    "tmpdir.CLAUDE_CODE_TMPDIR",
+    "mcp.stdio-http-oauth-resources",
+    "extensions.plugins-skills-hooks",
+    "subagents.agent-task",
+    "attachments.images",
+    "authentication.gateway"
+  ],
+  "capabilityInputAssertions": {
+    "sdk.stream-json-jsonl": [
+      "src/cli/print.ts",
+      "src/cli/structuredIO.ts",
+      "src/query.ts"
+    ],
+    "sdk.bidirectional-control": [
+      "src/cli/structuredIO.ts",
+      "src/cli/print.ts"
+    ],
+    "session.transcript-resume": [
+      "src/utils/sessionStorage.ts",
+      "src/utils/sessionRestore.ts"
+    ],
+    "tools.permissions": [
+      "src/tools.ts",
+      "src/utils/permissions/permissions.ts"
+    ],
+    "workspace.cwd": [
+      "src/utils/cwd.ts",
+      "src/utils/permissions/filesystem.ts"
+    ],
+    "sandbox": [
+      "src/utils/sandbox/sandbox-adapter.ts"
+    ],
+    "tmpdir.CLAUDE_CODE_TMPDIR": [
+      "src/utils/permissions/filesystem.ts"
+    ],
+    "mcp.stdio-http-oauth-resources": [
+      "src/services/mcp/client.ts",
+      "src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts",
+      "src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts"
+    ],
+    "extensions.plugins-skills-hooks": [
+      "src/utils/plugins/pluginLoader.ts",
+      "src/skills/loadSkillsDir.ts",
+      "src/utils/hooks.ts"
+    ],
+    "subagents.agent-task": [
+      "src/tools/AgentTool/AgentTool.tsx",
+      "src/tools/AgentTool/runAgent.ts",
+      "src/tools/TaskCreateTool/TaskCreateTool.ts",
+      "src/tools/TaskUpdateTool/TaskUpdateTool.ts"
+    ],
+    "attachments.images": [
+      "src/utils/attachments.ts",
+      "src/utils/imageValidation.ts",
+      "src/utils/imageResizer.ts"
+    ],
+    "authentication.gateway": [
+      "src/utils/auth.ts",
+      "src/services/api/client.ts"
+    ]
+  },
+  "featureDisposition": {
+    "BASH_CLASSIFIER": "disabled external-build classifier overlay; base tool permission rules and bidirectional confirmation remain required metafile roots",
+    "FILE_PERSISTENCE": "disabled HYOC file-persistence service; local JSONL transcript and resume roots remain required",
+    "FORK_SUBAGENT": "disabled interactive slash-command fork; ordinary Agent and Task tools are not controlled by this feature",
+    "HOOK_PROMPTS": "disabled REPL prompt-request UI; SDK/file hook execution remains required",
+    "MCP_RICH_OUTPUT": "disabled interactive MCP rendering variant; MCP transport and structured protocol roots remain required",
+    "MCP_SKILLS": "disabled optional skill:// resource adapter; ordinary filesystem/plugin skills and MCP tools/resources remain required"
+  },
+  "emptyModuleAllowlist": [],
+  "mcpCompatibility": {
+    "artifactKind": "headless",
+    "requiredTransformIds": [
+      "client-transient-5xx-surface-v1",
+      "disabled-central-inventory-v1",
+      "headers-helper-launch-policy-v1",
+      "print-headless-control-reconnect-v1",
+      "sdk-set-mcp-servers-reconcile-retry-v1",
+      "stdio-initialize-before-discovery-v1"
+    ]
+  },
+  "sourceTransforms": [
+    {
+      "path": "src/cli/print.ts",
+      "sha256": "77bb8bed6ebe3e5fbc3c6521dcddab479af8ce9e3df82b2a103c27bf14cc573d",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Preserve SDK structured I/O and local resume while physically removing remote-control bridge creation and Remote Session teleport flows."
+    },
+    {
+      "path": "src/setup.ts",
+      "sha256": "43a7f88331f6136e5bb096c63a33ce99bbbdb5108696a97f017d3c1eb8ef1e35",
+      "transform": "headless-closure-v1",
+      "reason": "Remove teammate backend snapshot initialization while preserving ordinary SDK-headless setup, plugins, hooks, workspace, and sandbox initialization."
+    },
+    {
+      "path": "src/entrypoints/cli.tsx",
+      "sha256": "87d4d49ed7512cf225d074e8f41aa3fb2f69eed19b9199e7eb30ddfd252a324f",
+      "transform": "headless-cli-entry-v1",
+      "reason": "Keep the version fast path, then fail closed unless argv selects -p/--print before loading the full CLI."
+    },
+    {
+      "path": "src/main.tsx",
+      "sha256": "ad018cfab3cd3d55878176e43cd5facd300ed649d2910070a3fae257604dc407",
+      "transform": "headless-main-v1",
+      "reason": "Force the SDK print path and return before all management-subcommand registration and interactive startup branches."
+    },
+    {
+      "path": "src/commands.ts",
+      "sha256": "3bfd54c3cfcaed9f10d5dc15334cc49e42d0c9374e92d9a7058897701d95df64",
+      "transform": "headless-commands-v1",
+      "reason": "Retain dynamic filesystem, plugin, bundled, and MCP skill command loading while physically deleting the interactive built-in slash-command registry and remote TUI command tables."
+    },
+    {
+      "path": "src/tools.ts",
+      "sha256": "4307f3f7dec2916299cc2fa5c45df8b95fd9a1945be7ac918ccd3d47a42f18cb",
+      "transform": "headless-closure-v1",
+      "reason": "Physically remove external-user-disabled Tungsten, VerifyPlanExecution, and Workflow tool branches before resolution."
+    },
+    {
+      "path": "src/constants/tools.ts",
+      "sha256": "2128aedb9192911439d0fa79ba887a3b5f47dfe278ff50be596ccd2be2a44a6d",
+      "transform": "headless-closure-v1",
+      "reason": "Remove the disabled Workflow tool name from the headless subagent policy closure."
+    },
+    {
+      "path": "src/services/api/logging.ts",
+      "sha256": "2d5effa9bc7b52c8c20a57a1fd9666e4925e40ee624a26e3641522a048c5d535",
+      "transform": "headless-closure-v1",
+      "reason": "Remove disabled connector-text telemetry from the external-user API logging path."
+    },
+    {
+      "path": "src/services/api/withRetry.ts",
+      "sha256": "143f24f205830fd464cc3994e7e531674bdde7bd7455017a61708b2de7223647",
+      "transform": "headless-closure-v1",
+      "reason": "Remove Bedrock and Vertex credential-cache retry handling while retaining generic gateway and OAuth retry behavior."
+    },
+    {
+      "path": "src/state/onChangeAppState.ts",
+      "sha256": "051bedffc6a97e98a07fa104961843562b3891394c02c6e0dedca4aebf116299",
+      "transform": "headless-closure-v1",
+      "reason": "Stop app-state refresh from referencing physically removed AWS and GCP credential caches."
+    },
+    {
+      "path": "src/utils/messages.ts",
+      "sha256": "24e36a51f351df9687cdac084d9b9573549a7bb5b8859b4ff39cc2d02ec7095a",
+      "transform": "headless-closure-v1",
+      "reason": "Remove disabled connector-text and history-snip branches before deterministic resolution."
+    },
+    {
+      "path": "src/utils/attachments.ts",
+      "sha256": "fa103be6cc512b9210fe50695c8de5554d7438d5f0cba831d42b08d134b3401f",
+      "transform": "headless-closure-v1",
+      "reason": "Make the disabled history-snip context-efficiency attachment path an explicit no-op."
+    },
+    {
+      "path": "src/services/compact/microCompact.ts",
+      "sha256": "4509572de2be2f8024820df3e1e1f79e32074c708e56b3f5de0b37764f0d7bf2",
+      "transform": "headless-closure-v1",
+      "reason": "Remove ant-only cached microcompact while retaining the time-based external-user compaction path."
+    },
+    {
+      "path": "src/entrypoints/sdk/coreTypes.ts",
+      "sha256": "1ffd4643759f1e2342b07d6fe0d6627463b1d39ffa1775a11f10aab17dae2bcd",
+      "transform": "headless-closure-v1",
+      "reason": "Remove generated type-only re-exports that have no runtime role in the executable core."
+    },
+    {
+      "path": "src/entrypoints/agentSdkTypes.ts",
+      "sha256": "1a19463435743cba6e76d7104bf5efc83879403bf3c9af6b8452aca22b019d86",
+      "transform": "headless-closure-v1",
+      "reason": "Remove absent runtime/tool type barrels while retaining the executable SDK compatibility exports."
+    },
+    {
+      "path": "src/utils/filePersistence/filePersistence.ts",
+      "sha256": "7a2ac8c9d100fbc5b4cbef474bfcb17e099ab77d59bb0d5ce02c1c2824367565",
+      "transform": "headless-closure-v1",
+      "reason": "Replace the disabled BYOC file-persistence orchestrator with explicit headless no-op exports."
+    },
+    {
+      "path": "src/tools/FileReadTool/imageProcessor.ts",
+      "sha256": "6bd5bfb3cb1bfcee281024eee85947c39c3b3d98ee279dae10da260ea122cbc7",
+      "transform": "headless-closure-v1",
+      "reason": "Use the exact clean-room sharp dependency for real image processing instead of an unavailable embedded native module."
+    },
+    {
+      "path": "src/QueryEngine.ts",
+      "sha256": "7df34a6a6d106927403d49e3405dfaf70da37cae5b644b658ebaf0b877988af6",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Retain query execution while physically removing the unused lazy MessageSelector dependency that otherwise resolves the interactive React message graph."
+    },
+    {
+      "path": "src/entrypoints/init.ts",
+      "sha256": "b51306adbd082bfa8eea3903314db7b12bd530fbf7303daecf8c68151a7193d5",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Retain initialization and fail-closed configuration error reporting while deleting the impossible interactive InvalidConfigDialog branch."
+    },
+    {
+      "path": "src/services/mcp/client.ts",
+      "sha256": "787bba952e1f37dead67afab114b4ee71f66c95e8dba4559afa55679b113b8d2",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Retain MCP transports, tools, resources, and calls while removing only Claude-in-Chrome Ink rendering overrides from the headless tool definitions."
+    },
+    {
+      "path": "src/services/mcp/config.ts",
+      "sha256": "fd78fd3d5b9c18245e8ad14b152463ac7bc21e27ab0c8263a42a47d94ee9a151",
+      "transform": "headless-closure-v1",
+      "reason": "Extend only the MCP persistence-name whitelist to preserve Dream colon-scoped identities across add/get/list/remove while retaining reserved-name, scope, policy, and config validation."
+    },
+    {
+      "path": "src/utils/terminal.ts",
+      "sha256": "6c3366c528f1e7f93b495a8b88ebadb3dfecacf17951c02d71ac519837d2f359",
+      "transform": "headless-closure-v1",
+      "reason": "Retain ANSI-aware text truncation while deleting the interactive Ctrl+O expansion hint and its component/keybinding closure."
+    },
+    {
+      "path": "src/cli/handlers/auth.ts",
+      "sha256": "c7058aa81f0a042a4802ee9df359f4d117306a97f59bac8c6ebf9d014a8b93f3",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Retain the OAuth token installation transaction used by print mode while deleting management-only login, status, and UI diagnostic handlers."
+    },
+    {
+      "path": "src/commands/logout/logout.tsx",
+      "sha256": "2317879a7026cb429c13424d38f09ff5b5ab3893ff741c2952335c528d246a3b",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Retain credential clearing and auth-cache invalidation used by token installation while deleting only the interactive logout JSX result handler."
+    },
+    {
+      "path": "src/cli/handlers/mcp.tsx",
+      "sha256": "694aa1a5dea2fbad368290290eecbb90a72e5398058c9f3cfd0e5b932f014859",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Retain non-interactive MCP list/get/add/remove/serve/reset handlers while removing the desktop import dialog React closure."
+    },
+    {
+      "path": "src/utils/processUserInput/processSlashCommand.tsx",
+      "sha256": "56b12ed45c20c6afe2968b8510609515edbd065c0e7fa4a5edf9f0118bb45182",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Retain forked skill Agent execution while deleting only the setToolJSX Agent progress rendering that is inapplicable to print mode."
+    },
+    {
+      "path": "src/utils/processUserInput/processBashCommand.tsx",
+      "sha256": "c9aad9f00be458474cfc684e7107e6673ae5c9af2a56c5e92b74a0939dd0ff21",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Retain user-initiated Bash and PowerShell execution, result mapping, and error semantics while deleting only progress JSX callbacks."
+    },
+    {
+      "path": "src/tools/FileWriteTool/UI.tsx",
+      "sha256": "defc7a75ad00e358316456f609a34a422876c2d70c5265b1ecddea4c00375c67",
+      "transform": "headless-runtime-ui-v1",
+      "reason": "Retain the exact isResultTruncated protocol helper while deleting unrelated Ink rendering exports from the mixed UI module."
+    },
+    {
+      "path": "src/utils/model/providers.ts",
+      "sha256": "91a822219ac489a8252ff45ffbc04dce6f3b7dbdfa6148973cee76bdd1db922c",
+      "transform": "headless-provider-v1",
+      "reason": "Bind the authorized Dream gateway topology to the generic first-party Anthropic client path; provider-selector environment variables are not propagated by the production SDK contract."
+    },
+    {
+      "path": "src/services/api/client.ts",
+      "sha256": "1446470ddd046c95d8254dfd0d6af821cd5b6f4b6eaddd43a8859e5e93d4966a",
+      "transform": "headless-provider-v1",
+      "reason": "Retain ANTHROPIC_BASE_URL, auth-token, API-key, OAuth, proxy, timeout, and request-header behavior while physically deleting unused Bedrock, Vertex, and Foundry client branches."
+    },
+    {
+      "path": "src/utils/model/modelStrings.ts",
+      "sha256": "07cbaf7cf93519d511159d66d1d303c87f1737fd3babe0c82fa0e4f378d8e926",
+      "transform": "headless-provider-v1",
+      "reason": "Retain first-party model configuration and user overrides while deleting unused Bedrock inference-profile discovery and AWS client initialization."
+    },
+    {
+      "path": "src/services/tokenEstimation.ts",
+      "sha256": "f2027b551a4c2b540ba293478be892c5b3de4f8afef4173e41fdcad7295e0dd9",
+      "transform": "headless-provider-v1",
+      "reason": "Retain Anthropic API token counting and rough local estimates while deleting the unused Bedrock CountTokens client branch."
+    },
+    {
+      "path": "src/utils/auth.ts",
+      "sha256": "930070a5da4b70c3e5ccd1853d028aaa72f7bdd437f32145a73552a8eb8555de",
+      "transform": "headless-provider-v1",
+      "reason": "Retain gateway API-key, auth-token, OAuth, keychain, and subscription behavior while physically deleting unused AWS and GCP credential refresh machinery."
+    },
+    {
+      "path": "src/utils/proxy.ts",
+      "sha256": "205b528a8555706e802ea15682e378d1bc98c0e39066bae2ff82688b2bbb8e3a",
+      "transform": "headless-provider-v1",
+      "reason": "Retain HTTP(S), NO_PROXY, mTLS, Axios, and Undici proxy behavior while deleting the AWS-SDK-specific proxy client factory."
+    },
+    {
+      "path": "src/utils/model/bedrock.ts",
+      "sha256": "7d3c8b5cd0fede90abbac1cb36358d15d70d910b32be0431ea368d193094a93b",
+      "transform": "headless-provider-v1",
+      "reason": "Retain pure model-ID and region-prefix normalization used by shared model logic while physically deleting all Bedrock SDK operations."
+    },
+    {
+      "path": "src/services/api/claude.ts",
+      "sha256": "6d3fd16e608120d502e70ec461ffb66bcbca12fa86862859606c9118f977a999",
+      "transform": "headless-provider-v1",
+      "reason": "Retain the full Anthropic/gateway message pipeline while deleting only Bedrock inference-profile model resolution."
+    },
+    {
+      "path": "src/tools/AgentTool/AgentTool.tsx",
+      "sha256": "322e8d097352d61d42bc2aa30b7e2509c3a9782d8d77434f960f7f650143401a",
+      "transform": "headless-agent-tool-v1",
+      "reason": "Retain synchronous Agent schema, permission, call, and runAgent behavior while removing team/remote/render paths and compiling background execution fail-closed because TaskOutput/TaskStop are absent."
+    },
+    {
+      "path": "src/tools/AskUserQuestionTool/AskUserQuestionTool.tsx",
+      "sha256": "59bbc688afbecfbac62f9104cfeb626b8eeea9947b723ed6fc02a33d0b78c4ea",
+      "transform": "headless-tool-v1",
+      "reason": "Retain foreground Bash protocol/call behavior while compiling background execution fail-closed because TaskOutput/TaskStop are absent and removing headless render properties."
+    },
+    {
+      "path": "src/tools/BashTool/BashTool.tsx",
+      "sha256": "8a4c50056686e97c1887b7eb510673346889621bcd36eb341145471f9ee18392",
+      "transform": "headless-tool-v1",
+      "reason": "Retain foreground PowerShell protocol/call behavior while compiling background execution fail-closed because TaskOutput/TaskStop are absent and removing headless render properties."
+    },
+    {
+      "path": "src/tools/BriefTool/BriefTool.ts",
+      "sha256": "388ead06a3bb4c0f79562fc90c8c8c762ced60bfb5ee8cddfd542756fcefa3ed",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/ConfigTool/ConfigTool.ts",
+      "sha256": "f0e079dc465d34b0bb75121e2c4d4be3c8d7c4f5ba941c24acf930c8b4f87c92",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/EnterPlanModeTool/EnterPlanModeTool.ts",
+      "sha256": "47171a050c1f6cc754c5eb52bbee1511a33cee19e71cbd25667e0e8fdc1363b9",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/EnterWorktreeTool/EnterWorktreeTool.ts",
+      "sha256": "2eb696a8d2c170d4ac9e58868868cc94807078630e654a7ba753fecc999e70a8",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts",
+      "sha256": "4271474e7d870735b65e2db97476399519df5504873977a429862a0c096926e7",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/ExitWorktreeTool/ExitWorktreeTool.ts",
+      "sha256": "39934412329823571756e8cd38cf80e29bc169179c07de18faf29fe54010a865",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/FileEditTool/FileEditTool.ts",
+      "sha256": "a9fa2ac618273f5b1d48b20ae54e6a3b06d4be2c731daa78dfae654c1ca6652e",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/FileReadTool/FileReadTool.ts",
+      "sha256": "09d6bc8554732ce7f1abbb7edda07dfb6cb97b0413ade26d78f37f1499098e36",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/FileWriteTool/FileWriteTool.ts",
+      "sha256": "996a5284e0376c8686bdd2f8d2e66f740c5e1d8cebf3ca95a79f92876d91fe80",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/GlobTool/GlobTool.ts",
+      "sha256": "cae4084494e514c2dbe95f62e25287c90abd13dcebf9ebdd85ed6652aed7f95e",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/GrepTool/GrepTool.ts",
+      "sha256": "80300c3119836315b802de705a5732c8377f36b05dee31ddcbb38a9abf0bfc07",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/ListMcpResourcesTool/ListMcpResourcesTool.ts",
+      "sha256": "18f2cd951d8de93a9f7cbfd1a78b679fc8d3a2700565529801369693dba04467",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/MCPTool/MCPTool.ts",
+      "sha256": "e8c8695f9109ed02790d3ab66c247736a9fc5fe6b8f6b6ebf35385a55fe52228",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/NotebookEditTool/NotebookEditTool.ts",
+      "sha256": "10471642bbec286f1b67903b300acab520ada04c5f26b944971a43cba5900a57",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/PowerShellTool/PowerShellTool.tsx",
+      "sha256": "e129e4742a53eee646b6007656c4da8eaca1a4189a2f5b1842ad7b9a8839149b",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts",
+      "sha256": "a4155489a2d6c2ce218673358e92dd305bed1b3ed4330768e2b4704edd0d3c97",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/SkillTool/SkillTool.ts",
+      "sha256": "5ac5ec6af747cb9665055076aa70e0a9270dc2b131f90d231ba7d181f96371b4",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/WebFetchTool/WebFetchTool.ts",
+      "sha256": "5f864861aec8bca2f19e2f5517d2e80aa4a4aa0d26c0ed07cb89dfcff12c4929",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    },
+    {
+      "path": "src/tools/WebSearchTool/WebSearchTool.ts",
+      "sha256": "572da41c174fd78b4ab0e43534a16ee59b68c01e2b687e983f50bb6899dd6e94",
+      "transform": "headless-tool-v1",
+      "reason": "Retain the reviewed tool protocol and call behavior while physically removing headless-inapplicable render properties and their now-unused UI imports."
+    }
+  ],
+  "dceAssertions": {
+    "forbiddenInputPrefixes": [
+      "src/bridge/",
+      "src/cli/transports/",
+      "src/utils/teleport/",
+      "src/utils/swarm/",
+      "src/utils/teammate",
+      "src/services/teamMemorySync/",
+      "src/tools/TeamCreateTool/",
+      "src/tools/TeamDeleteTool/",
+      "src/tools/SendMessageTool/",
+      "src/tools/TaskOutputTool/",
+      "src/tools/TaskStopTool/",
+      "src/utils/ide",
+      "src/services/lsp/",
+      "src/utils/plugins/lspPluginIntegration",
+      "src/utils/background/remote/",
+      "node_modules/@ant/claude-for-chrome-mcp/",
+      "src/utils/claudeInChrome/",
+      "src/services/remoteManagedSettings/",
+      "src/services/settingsSync/",
+      "src/cli/remoteIO",
+      "src/components/CtrlOToExpand",
+      "src/skills/bundledSkills"
+    ],
+    "forbiddenInputSuffixes": [
+      "src/cli/bg.ts",
+      "src/cli/handlers/templateJobs.ts",
+      "src/daemon/main.ts",
+      "src/daemon/workerRegistry.ts",
+      "src/environment-runner/main.ts",
+      "src/self-hosted-runner/main.ts",
+      "src/screens/REPL.tsx",
+      "src/ink/ink.tsx",
+      "src/dialogLaunchers.tsx",
+      "src/commands/ide/ide.tsx",
+      "src/commands/feedback/feedback.tsx",
+      "src/cli/update.ts",
+      "src/services/analytics/firstPartyEventLogger.ts",
+      "src/services/analytics/growthbook.ts",
+      "src/services/lsp/manager.ts",
+      "src/services/policyLimits/index.ts",
+      "src/services/remoteManagedSettings/index.ts",
+      "src/utils/apiPreconnect.ts",
+      "src/utils/detectRepository.ts",
+      "src/utils/telemetry/instrumentation.ts",
+      "src/bridge/bridgeUI.ts",
+      "src/components/teams/TeamsDialog.tsx",
+      "src/utils/backgroundHousekeeping.ts",
+      "src/utils/swarm/backends/ITermBackend.ts",
+      "src/utils/swarm/backends/TmuxBackend.ts",
+      "src/tools/shared/spawnMultiAgent.ts",
+      "src/tools/SendMessageTool/SendMessageTool.ts",
+      "src/tools/TeamCreateTool/TeamCreateTool.ts",
+      "src/tools/TeamDeleteTool/TeamDeleteTool.ts"
+    ],
+    "forbiddenOutputSubstrings": [
+      "forwardMessagesToBridge",
+      "bridgeHandle",
+      "remote_control",
+      "initReplBridge"
+    ],
+    "forbiddenResolutionSpecifiers": [
+      "../cli/bg.js",
+      "../cli/handlers/templateJobs.js",
+      "../daemon/main.js",
+      "../daemon/workerRegistry.js",
+      "../environment-runner/main.js",
+      "../self-hosted-runner/main.js",
+      "@grpc/grpc-js",
+      "@grpc/proto-loader",
+      "@opentelemetry/exporter-logs-otlp-grpc",
+      "@opentelemetry/exporter-metrics-otlp-grpc",
+      "@opentelemetry/exporter-trace-otlp-grpc"
+    ]
+  }
+}

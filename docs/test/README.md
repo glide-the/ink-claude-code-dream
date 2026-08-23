@@ -1,53 +1,78 @@
-<!-- [Input] Provider-free paired fixtures, installed Dream SDK, optional official core, and MCP matrix runner. -->
-<!-- [Output] Explain repeatable differential tests, environment overrides, claims, and non-claims. -->
-<!-- [Pos] Test execution and interpretation guide. -->
-<!-- [Sync] 2026-08-24: add direct-fake/envelope SDK and raw process-boundary differential guidance. -->
+<!-- [Input] Core build receipts, paired SDK/CLI fixtures, MCP compatibility tests, official comparator, and real Dream topology. -->
+<!-- [Output] Define three ordered test layers, commands, interpretation, and non-claims. -->
+<!-- [Pos] Test execution and compatibility-claim guide. -->
+<!-- [Sync] 2026-08-24: record completed static/interface gates and keep current-core real business QA explicit. -->
 
 # Test guide
 
-Run the deterministic local suite:
+Runtime compatibility is an interface contract. A Dream business test is the third layer, not a substitute for exhaustive protocol comparison.
+
+## Layer 1: static and build evidence
+
+```sh
+node --test tests/core-prune-contract.test.mjs
+
+INK_AUTHORIZED_CORE_SOURCE_ROOT=/absolute/path/to/claude-code-sourcemap/restored-src \
+  bun run verify:core-local
+```
+
+Required result before moving on:
+
+- source digest and Bun/profile pins match;
+- all 89 features have dispositions;
+- `resolution-gaps.json` has zero edge and unique gaps;
+- selected CCR/daemon/background/template/BYOC/self-hosted inputs are absent;
+- streaming/control/resume/tools/permissions/Workspace/sandbox/TMPDIR/MCP/extensions/auth inputs are present;
+- deterministic bundle/checksum succeeds.
+
+Current result: passed for source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `6904d3cd7954ead347cc5f5dd65f1313cfa78e0a080514e9efc874e51ff88893`. The graph has 1,989 inputs, 48 outputs, zero gaps, and passing DCE assertions. The receipt independently binds source provenance `2.1.88` and CLI compatibility `2.1.241`.
+
+## Layer 2: interface-level differential
+
+Send identical inputs through the custom SDK to:
+
+1. verified official Claude CLI `2.1.241`;
+2. the local minimal Runtime.
+
+Compare at least:
+
+| Contract | Required comparison |
+| --- | --- |
+| process | argv order, cwd, selected environment carriers, stdin lifetime, stdout/stderr bytes/DTOs, exit/signal/timeout |
+| stream | init/session ID, partials, content blocks, result/error, SSE projection |
+| control | permission callback, tool confirmation, cancel, logout |
+| persistence | transcript write, multi-turn, resume, workspace/plugin metadata restore |
+| tools | built-in/file/MCP tool use and result, safe error DTOs |
+| workspace | exact cwd, file tools, sandbox enforcement, `CLAUDE_CODE_TMPDIR` 0700/no-symlink boundary |
+| MCP | stdio, HTTP, OAuth, Resources, inventory, plugin scope, colon-containing name, transient-5xx reconnect |
+| extensions | plugin, Slash Skill, hooks, ordinary Agent/Task subagents |
+| auth/provider | built-in auth/gateway behavior without logging credentials |
+
+Any intentional delta must be documented with evidence and an explicit rollback. Exit code 0 or a matching final message alone is insufficient.
+
+The existing commands remain useful for the legacy envelope and provider-free carrier baseline:
 
 ```sh
 bun run test
 bun run test:upstream-sdk
 bun run test:acceptance
-node scripts/verify-release.mjs
-bun run test:reproducible
-```
-
-The SDK test defaults to a sibling `ink-dream-memory` checkout and its `backend/.venv`. Override without editing files:
-
-```sh
-INK_DREAM_REPO=/path/to/ink-dream-memory \
-INK_DREAM_PYTHON=/path/to/venv/bin/python \
-bun run test:upstream-sdk
-```
-
-Default verification requires `ink-claude-dream-agent-sdk==0.2.143` as the only installed distribution providing the `claude_agent_sdk` namespace and fails if the official `claude-agent-sdk` distribution coexists. The earlier official `0.2.140` observation is historical evidence only and is not an accepted release-verify fallback. The harness sends one identical JSONL request through `SubprocessCLITransport` directly to the deterministic fake core and through the release selected by Dream's existing `CLAUDE_CODE_CLI_PATH` helper. It compares SDK argv, input, parsed message, cwd/environment receipt, and process counts without installing or modifying Python packages.
-
-`bun run test` also performs a lower-level paired differential. It compares direct fake core versus envelope argv, JSONL stdin/stdout, stderr, cwd, session/resume flags, MCP/plugin/tool/sandbox/workspace/auth carriers, and nonzero exit. SIGTERM is intentionally not byte-for-byte identical: direct fixture exit is its own `0`, while the supervisor returns `128 + SIGTERM = 143` and removes the descendant process group. Envelope timeout similarly returns `124`. These are declared supervision semantics, not a core behavior change.
-
-| Contract | Current automated evidence | Boundary |
-| --- | --- | --- |
-| SDK startup argv and JSONL | Same `SubprocessCLITransport` payload, direct fake vs envelope | Provider-free; not an official model response |
-| raw stdin/stdout/stderr and exit | Paired bytes plus success and exit `19` | Fake core only; official `--help`/`--version` are separately compared |
-| cancel, signal, timeout | SIGTERM direct/envelope differential plus envelope timeout/process-group tests | Supervision intentionally maps SIGTERM to `143` and timeout to `124` |
-| session/resume | Exact `--resume` carrier and persistence-preserving gate | Does not prove official transcript storage or resume behavior |
-| MCP and tools | Exact config/plugin/tool argv and selected environment carriers | Does not execute an MCP provider or tool callback |
-| sandbox and workspace | Exact settings/add-dir/cwd/TMPDIR carriers and fail-closed path checks | Does not prove official sandbox enforcement |
-| authentication | Built-in auth selector presence and management argv; values are not recorded | No login, token exchange, refresh, or account use |
-| OAuth, Remote Control, provider/model | None in the provider-free differential | Requires authorized credentials, network/external state, and a separately scoped business test |
-
-The networked MCP regression creates disposable temp environments, validates that the created root is a direct `ink-mcp-matrix-*` child of the OS temp directory, and removes it in `finally`; it changes no checkout:
-
-```sh
-UV_DEFAULT_INDEX=https://your-approved-pypi-mirror/simple bun run test:mcp-matrix
-```
-
-To compare a locally available verified official `2.1.241` executable:
-
-```sh
 INK_ACCEPTANCE_REAL_CLAUDE=/path/to/official/claude bun run test:official-difference
+bun run test:mcp-matrix
+bun run test:mcp-auth-compat
 ```
 
-The real official executable comparison is deliberately limited to credential-free `--version`, `--help`, and doctor checks. A real SDK JSONL prompt, model/provider response, MCP tool execution, OAuth refresh, Remote Control, transcript/resume persistence, or sandbox enforcement requires external state and is not reproduced by the provider-free fixture. Carrier equality must not be reported as behavioral acceptance for those delegated features. See [impact](impact.md) and [acceptance results](acceptance-results.md).
+The current real-process SDK differential, MCP differential, MCP management receipt, and aggregate qualification all pass and bind the exact hashes above. OAuth help/management behavior is covered; a complete real OAuth browser login is deliberately outside that technical receipt. The older envelope/fake-core suites remain historical carrier baselines rather than additional current-core proof.
+
+## Layer 3: real Dream business acceptance
+
+Layers 1 and 2 now pass. If real-business acceptance is selected, use the normal local Dream, Admin, Gateway, and current PostgreSQL through public production entrypoints. Use the specified existing account and Deck. Verify new session, first token, multi-turn, resume, SSE, tool use/result, Workspace files, sandbox, transcript, MCP stdio/HTTP/OAuth/Resources, plugin/Slash Skill/hook, Agent/Task, cancel, timeout, Runtime abnormal exit, persistence, token settlement, and Admin visibility.
+
+Fault injection and destructive testing must remain isolated; those results are technical validation and cannot be reported as real-business acceptance.
+
+## Interpretation and claim boundary
+
+- Layer 1 proves what Bun included/excluded, not behavior.
+- Layer 2 proves Runtime interface parity, not end-user business persistence.
+- Layer 3 proves the integrated business journey, not unexercised protocol branches.
+- Layers 1 and 2 establish the current technical package's local `productionEligible=true` state; they do not authorize publication, redistribution, deployment, or claim layer 3.
+- Old wrapper receipts in `acceptance-results.md` remain historical baselines and do not substitute for a current-core real-business result.

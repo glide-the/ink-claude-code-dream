@@ -3,6 +3,8 @@
 # [Pos] Repository hygiene contract.
 
 node_modules/
+dist/core-local/
+dist/core-package-local/
 dist/*.tar.gz
 dist/*.sha256
 .DS_Store

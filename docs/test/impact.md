@@ -1,35 +1,39 @@
-<!-- [Input] Compatibility envelope, current Dream SDK distribution, official CLI 2.1.241, and paired provider-free evidence. -->
-<!-- [Output] Record the impact surface and explicit differential-test boundaries before executable validation. -->
-<!-- [Pos] Pre-test change-impact receipt for the minimal runtime release. -->
-<!-- [Sync] 2026-08-24: add paired SDK/raw-boundary differential scope and current installed SDK distribution. -->
+<!-- [Input] Local core builder/profile/resolution changes, separate MCP compatibility layer, and unchanged Dream/SDK interface. -->
+<!-- [Output] Record the tested impact, protected capabilities, completed technical/business scope, external blockers, and rollback point. -->
+<!-- [Pos] Impact and qualification-scope receipt for the minimal Runtime work. -->
+<!-- [Sync] 2026-08-24: record custom-core Dream acceptance and the external OAuth MCP/Admin browser blockers. -->
 
 # Test impact record
 
-Recorded before the first build/test run on 2026-08-23.
+Recorded after minimal-core technical qualification on 2026-08-24.
 
-Updated before the `2.1.241`/SDK `0.2.143` clean-room run on 2026-08-23. Rollback point is branch base `26edc45f89a8`; no vendor/reference repository is writable in this task.
+## Changed files and modules
 
-Changed surface:
+- repository-authored, source-bound Bun `1.4.0` core builder/verifier;
+- 89-feature capability profile and recovered-package resolution map;
+- local ignored `dist/core-local` receipt/metafile/gap output;
+- core-prune contract tests;
+- independent MCP `2.1.238`/`2.1.239` headers/reconnect/redaction policies and patch manifest;
+- architecture, build, test, and repository documentation.
 
-- New Node 22 compatibility envelope executable; it does not replace or rewrite Claude Code stream-json/control framing.
-- Runtime-owned release/evidence manifests; neither is an SDK handshake or an SDK-parsed schema.
-- New fail-closed `CLAUDE_CODE_TMPDIR` validation for formal launches.
-- New process-group signal, optional timeout, crash exit, and cleanup behavior around the official child.
-- New Bun-managed deterministic build, split dynamic imports, source maps, checksums, SBOM, platform pins, and immutable release directory.
-- Current locked baseline is external official Claude Code `2.1.241` and `ink-claude-dream-agent-sdk==0.2.143`; the earlier official SDK `0.2.140` run remains only in explicit historical receipts.
-- Version/help/MCP/auth commands now pass through exactly; only `--runtime-doctor` enforces the deployment pin.
-- Legal, external-artifact, entrypoint, Runtime-data, bare-profile, and dependency-license contracts are copied into and verified in the release.
-- Explicit `--bare` is never injected; it requires caller opt-in and absolute settings/MCP/plugin carriers, exact workspace/TMPDIR, and session persistence.
-- Paired provider-free tests now send the same raw and SDK JSONL request directly to the fake core and through the envelope; current Dream provides `ink-claude-dream-agent-sdk==0.2.143` under the unchanged `claude_agent_sdk` namespace.
+The authorized `restored-src` input is read-only to this repository. Dream production code, Python SDK protocol/state implementation, schemas, databases, user data, and the official CLI are not modified by this work.
 
-Must remain unchanged at the official SDK/CLI boundary:
+## Potentially affected capabilities
 
-- argv order and values;
-- stdin/stdout/stderr bytes and open stdin for control/MCP callbacks;
-- process cwd and non-runtime environment, including Claude config, MCP, plugin, sandbox, and credential selectors;
-- all built-in authentication methods and authentication environment; the wrapper must not select, remove, disable, restrict, or log values;
-- JSON/JSONL/streaming, permissions, MCP stdio/HTTP/SSE/SDK/OAuth/Resources, plugins/skills/hooks, transcript/resume, and exit semantics.
+The build can break any import or side effect in the recovered source. Highest-risk protected contracts are JSONL/control, session/transcript/resume, permission/tool confirmation, Workspace/files, sandbox/TMPDIR, MCP discovery/OAuth/Resources/reconnect, plugin/Slash Skill/hook, ordinary Agent/Task, authentication, and gateway/provider behavior.
 
-Provider-free acceptance can prove paired boundary preservation, the installed compatible SDK `cli_path` launch, both MCP regression declarations (`1.27.0`, `1.27.1`), lifecycle cleanup, Runtime manifest validation, lazy envelope imports, and release exclusions. Carrier forwarding does not prove a real model turn, official-core session/resume persistence, MCP tool behavior, sandbox enforcement, Dream database persistence, OAuth/Remote behavior, or current native core internals. Those remain explicitly unclaimed.
+Selected removal targets are CCR/Remote Control, swarm/team UI, interactive REPL, IDE UI/auto-connect, updater command/UI, and feedback/reporting UI. Telemetry, shared diagnostics, and shared updater logic are deferred until the graph proves a safe boundary.
 
-The bounded test scope is lint, build, Node unit tests, current Dream SDK-path compatibility, provider-free acceptance, release verification, package, and reproducibility. It may break wrapper startup, management/auth forwarding, strict TMPDIR enforcement, bare opt-in validation, manifest generation, or deterministic hashes; it cannot alter the external official binary or Dream/reference checkouts.
+## Test scope and order
+
+1. static source/digest/profile/resolution/DCE/metafile validation;
+2. official-vs-custom SDK/Runtime protocol differential;
+3. real Dream/Admin/Gateway/PostgreSQL business acceptance.
+
+Layers 1 and 2 are complete for bundle SHA-256 `6904d3cd7954ead347cc5f5dd65f1313cfa78e0a080514e9efc874e51ff88893` and source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`: 1,989 inputs, 48 outputs, zero gaps, DCE pass, and digest-bound SDK/MCP/MCP-management/full qualification passes. Source provenance `2.1.88` and qualified CLI compatibility `2.1.241` are separate release facts. The package is reproducible and locally production-eligible under its contract. The Dream manifest gate and backend suite passed (1,954 passed, 24 skipped, 607 subtests).
+
+Layer 3 passed for the current custom-core Dream main journey: the public UI created a real Run, streamed output, persisted three turns, resumed the same Claude session across a Runtime rebuild, and produced real Workspace/TMPDIR/sandbox/transcript/Gateway/ledger/Story evidence in the normal topology. The existing remote MCP URL returned 404 to `initialize`, so a complete real OAuth/Resources read is externally blocked; authenticated Admin UI evidence is also pending an administrator session. Historical official/envelope runs remain comparators, not substitutes for this current result.
+
+## Rollback point
+
+Delete ignored `dist/core-local/` and point the unchanged SDK CLI path to verified official `2.1.241`. No Dream code, database, transcript format, Workspace layout, or SDK public API rollback is required.

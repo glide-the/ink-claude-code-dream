@@ -1,334 +1,279 @@
-<!-- [Input] Official 2.1.241/SDK 0.2.143 evidence, Dream read-only evidence, legal terms, and clean-room contracts. -->
-<!-- [Output] Define the evidence-led minimal Runtime decision, explicit bare profile, packaging, compatibility, and rollback. -->
-<!-- [Pos] Canonical design for the independent Runtime envelope; it is not Claude Code source or a Claude Code product. -->
-<!-- [Sync] 2026-08-24: record the custom SDK lock, paired protocol differential, current legal/brand gate, and unchanged pruning blocker. -->
+<!-- [Input] Dream call-chain evidence, Claude Code 2.1.88 restored source, Bun 1.4 feature-DCE evidence, current SDK/CLI contracts, and MCP 2.1.238/2.1.239 deltas. -->
+<!-- [Output] Define the local minimal Runtime architecture, capability boundary, build/publish gate, compatibility layers, and three-level acceptance contract. -->
+<!-- [Pos] Canonical 20-section design for the locally built ink-claude-code-dream Runtime. -->
+<!-- [Sync] 2026-08-24: record the qualified zero-gap core, applied MCP compatibility, local package policy, and separate business/publication decisions. -->
 
-# Claude Code Runtime minimalization decision
+# Claude Code Runtime minimalization
 
-Evidence date: 2026-08-24. This document describes the `ink-claude-code-dream` feasibility distribution, an independent supervisor that runs a user-supplied official artifact. It does not contain, rebuild, patch, or rename Claude Code. The release is machine-gated as `corePruned=false` and `productionEligible=false`; no Dream default switch is authorized.
+Evidence date: 2026-08-24.
 
-The pruning blocker is concrete: the current official platform package is a single native executable, no official 2.1.241 source/build/import graph was available, and the observed license is all-rights-reserved. The historical 2.1.88 restored tree is read-only evidence only. Its fixed recursive inventory is 1,902 files under `src`, including 1,884 TS/TSX files, with 1,902 git-tracked `src` files. `runtime/pruning-decision.json` records every candidate path and the exact written authorizations/build inputs required to proceed.
+Decision status: **technical implementation and qualification complete for the current local artifact**. The user-authorized Claude Code `2.1.88` restored tree is an explicit local reference and build input. Bun `1.4.0` compile-time features remove IM-irrelevant branches into Git-ignored `dist/core-local/`. The repository stores only repository-authored source-bound transformation code, capability profiles, resolution metadata, tests, and documentation; it does not store the restored tree or the derived core artifact. These are technical provenance claims, not a finding of redistribution permission.
 
-## 1. Background and problem
+The exact artifact has source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `6904d3cd7954ead347cc5f5dd65f1313cfa78e0a080514e9efc874e51ff88893`. Its sanitized graph contains 1,989 inputs and 48 outputs with zero resolution gaps; feature-DCE and required-input assertions pass. SDK, MCP protocol, MCP management, and aggregate qualification receipts bind those same hashes. The build and release manifests keep `sourceVersionEvidence=2.1.88` distinct from the qualified Dream-facing `cliCompatibilityVersion=2.1.241`. The reproducible 62-file package has tree SHA-256 `90e205c41a4fcda5c4ba72a2cd84b6f82e8a7fd1b0b7055b50ea4ef7cd7f5a78` and records `productionEligible=true`, `publicationAllowed=false`, and `redistributionAllowed=false`.
 
-Dream needs Claude Agent SDK headless streaming, tools, workspace/sandbox, MCP, plugins/skills/hooks, transcript, and resume. The requested optimization was to reduce Runtime loading without changing Dream business code. Current Claude Code `2.1.241` is an opaque, native Bun single executable. Historical restored source is not a current or licensed build input, so a minimized core cannot be produced or claimed.
+## 1. Background and problem definition
+
+Dream currently reaches Claude through the Python Agent SDK and a CLI path/process boundary. It needs headless JSON/JSONL streaming, control messages, tools, permissions, Workspace, sandbox, transcript/resume, plugins/skills/hooks, authentication/gateway behavior, and MCP. It does not need the full interactive Claude Code product surface.
+
+The task is to produce a separately named SDK distribution and a locally packaged minimal Runtime without copying the Agent protocol or adding a Dream-only state machine. Core pruning must be decided from Dream's real call graph and then verified at the Runtime interface. A successful UI journey is necessary but cannot prove Runtime protocol completeness by itself.
 
 ## 2. Current version matrix
 
-| Component | Evidence baseline | Applicability |
+| Component | Baseline | Applicability |
 | --- | --- | --- |
-| Latest acceptance target | Claude Code `2.1.241`; platform packages are native executables | Required external artifact; unmodified and run as published |
-| Dream deployment toolchain | official rollback Claude CLI `2.1.241`, Node `22.18.0`, Python `3.12` | Current container baseline; the official CLI is an explicitly selected absolute-path rollback, not the default self Runtime |
-| Local default CLI | Claude Code `2.1.220` | Existing workstation default only; not accepted as the latest target |
-| Agent SDK Python mirror | upstream main `0.2.143`, bundled CLI `2.1.241` | Current mirror/interface baseline |
-| Dream locked SDK | `ink-claude-dream-agent-sdk==0.2.143` from immutable commit `bcdfbcf9f72bc34865d0efeb5f971d6df005f5b4` | Current unique provider of the unchanged `claude_agent_sdk` namespace; official distribution coexistence is rejected |
-| Dream self Runtime selection | requires production-eligible `ink-claude-code-dream`; current envelope is `0.1.0` and ineligible | Production path fails closed while `corePruned=false`; direct official `2.1.241` remains explicit rollback only |
-| Bun | `1.2.20` | Lock/build orchestration only |
-| Archive packer Node | exact `24.13.0` | Pins `node:zlib` gzip bytes; enforced before packaging |
-| Produced wrapper | Node `>=22,<25` ESM | Independent supervisor; no Claude protocol parsing |
-| Restored source | historical Claude Code `2.1.88` | Read-only historical evidence; never copied or built |
+| Official rollback CLI | Claude Code `2.1.241` | Current black-box behavior and rollback target |
+| Restored Runtime source | Claude Code `2.1.88`; sourcemap repository commit `a8a678cb6244e6770e1e421767ff0987a1d95549` | Explicitly authorized external local reference/build input; historical implementation, not evidence of `2.1.241` parity |
+| Restored source digest | SHA-256 `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`; 4,471 files; 46,447,794 bytes | Builder receipt must bind the exact input without copying it into Git |
+| Agent SDK mirror | `ink-claude-dream-agent-sdk==0.2.143`, public namespace `claude_agent_sdk` unchanged | Dream's self-packaged SDK baseline; uses upstream CLI-path injection |
+| SDK bundled CLI baseline | `2.1.241` | Current SDK/official CLI compatibility comparator |
+| Core builder | Bun `1.4.0` | Required for `bun:bundle` compile-time `feature()` DCE |
+| Existing envelope build | Bun `1.2.20`, Node-target wrapper | Historical process-boundary baseline; not the pruned core |
+| Core entrypoint | `${INK_AUTHORIZED_CORE_SOURCE_ROOT}/src/entrypoints/cli.tsx` → external `src/main.tsx` → external `src/cli/print.ts` | Recovered headless build graph; these are not this repository's `src/` files |
+| Core output | `dist/core-local/` and `dist/core-package-local/` | Local, generated, Git-ignored, technically qualified, and not publishable or redistributable |
 
-Official package metadata and SDK source are primary version evidence. Dream's container rollback pin and the extracted acceptance artifact are both unmodified `2.1.241`; the workstation default `2.1.220` is recorded only as a rejected ambient path. The self Runtime default remains fail closed because the feasibility envelope is not a pruned or production-eligible core.
-
-Current official `2.1.241` distribution-shape evidence:
-
-| Evidence | Observed result | Applicability |
-| --- | --- | --- |
-| npm wrapper package | 7 files, 26,357-byte tarball, 175,849 bytes unpacked; `bin.claude=bin/claude.exe` | The small package is an installer/selector, not the Runtime core |
-| platform selection | eight exact `2.1.241` optional packages for Darwin, Linux glibc/musl, and Windows | Deployment must pin the selected platform artifact, not only the wrapper |
-| Darwin arm64 artifact | one 325,055,632-byte Mach-O `claude` plus package metadata | Native single-file core; no public module/tree-shaking boundary |
-| Linux x64 glibc artifact | one 342,636,848-byte ELF `claude`; SHA-256 `0771bd866cff82b76581fc0499f6529e1a36845078f144f8c81dccb3bc7037b8` | Production-shape evidence for the Debian/glibc target |
-| packaged source maps/resources | no `.map`, `.wasm`, `.node`, or separate dynamic JavaScript resources in either inspected platform package | Restored maps are not current-package build inputs |
-| Darwin dynamic libraries | `libicucore`, `libresolv`, `libc++`, `libSystem` | Supplied by the host OS; never copied into this envelope |
-| Linux dynamic libraries | `librt`, `libc`, dynamic loader, `libpthread`, `libdl`, `libm` | glibc host contract; vendor executable remains external |
-
-These are package/file-format observations, not permission to reverse engineer,
-modify, or redistribute the executable. Static/dynamic feature registration
-inside the native core remains opaque; current behavior is proven only through
-official flags, protocol observations, and black-box tests.
+Official `2.1.241` package metadata and behavior remain primary evidence for current external compatibility. Restored `2.1.88` code is primary evidence only for its own source graph. Recent MCP behaviors are maintained as separate, source-hash-bound compatibility patches rather than being assumed present in the old source.
 
 ## 3. Claude Code and IM capability matrix
 
 | 能力 | IM 是否使用 | 调用入口 | 加载时机 | 必需/可选 | 禁用影响 | 当前版本证据 |
 | --- | --- | --- | --- | --- | --- | --- |
-| Headless/SDK client | 已证实使用 | `ClaudeAgentRunner` → `SimpleClaudeAgentSDKClient` → `ClaudeSDKClient` | 每个 Agent turn 启动/连接 | 必需 | 无法运行 Dream/Chat | RUN, CLIENT；自有 SDK `0.2.143` paired 合同夹具 |
-| SDK one-shot `query()` | 已证实未使用 | Dream 生产链路无此入口 | 不加载 | 可选 | 无当前业务影响 | CLIENT 使用双向 client；源码搜索无生产调用 |
-| streaming 输入/输出与 SSE | 已证实使用 | SDK stream-json → runner/parser → EventBus/SSE router | turn 全程 | 必需 | 首 Token、增量正文和终态丢失 | RUN, ROUTER；Dream SSE 回归 |
-| session ID 与 transcript | 已证实使用 | SDK result/init → thread 持久化；本地 JSONL 探针 | init、turn 结束、后续启动 | 必需 | 无法建立会话连续性 | SVC, RUN, ENV；Dream session 回归 |
-| resume | 条件使用 | persisted session ID + transcript contract → SDK `resume` | guidance/confirmation 或服务重启后的后续 turn | 必需于续聊 | 续聊退化或错误串线 | SVC, RUN；首次 turn 明确不 resume |
-| tool use/result | 已证实使用 | SDK content/control frames → runner → persisted parts | 模型产生 tool use 时 | 必需 | 文件/MCP/业务工具链失效 | RUN, ROUTER；tool DTO 回归 |
-| permission 与 tool confirmation | 已证实使用 | `PreToolUse`/`can_use_tool` → confirmation API | 受控工具调用时 | 必需 | 权限合同或交互确认被绕过/阻断 | RUN, ROUTER；批准/拒绝回归 |
-| Workspace、cwd 与文件工具 | 条件使用 | thread factory/server-owned cwd → SDK options | Workspace Mode 或文件工具启用时 | 条件必需 | Workspace/Read/Grep 等失效 | TF, SVC, RUN |
-| sandbox | 条件使用 | SDK sandbox options + settings | turn 启动时 | 条件必需 | 启用场景越权或无法执行 | RUN；生产 settings 内容仍需真实验收 |
-| `CLAUDE_CODE_TMPDIR` | 已证实使用 | ENV 创建 `{thread}/.claude-tmp`；launcher 校验 | 每次 CLI 启动前 | 必需 | 违反 thread 隔离安全合同 | ENV；0700/no-symlink/exact-child 回归 |
-| 内置/产品 MCP | 已证实使用 | runner 组合 Editor、Story Workspace、Memory/Necklace 等 | options 构造/连接时 | 条件必需 | 对应编辑、故事、记忆能力失效 | RUN, SVC；真实 Dream 工具调用/result 已验，Memory/Necklace 默认关闭 |
-| 用户级 stdio MCP | 条件使用 | user MCP config → `mcp_servers`/CLI config | Agent 连接时 | 必需于已配置用户 | 用户工具不可用 | RUN；MCP driver/service 回归；本次真实 actor 未配置用户级 server |
-| 用户级 HTTP/SSE MCP | 条件使用 | remote MCP config → official Runtime | 远端 server 被配置/连接时 | 条件必需 | 远端工具不可用 | RUN；真实 OAuth HTTP server 在公开 Dream Chat 两轮调用通过；legacy SSE add 未支持 |
-| MCP OAuth | 条件使用 | MCP resources API → official `mcp login/logout` | 用户发起授权/注销时 | 条件必需 | OAuth server 无法使用 | ROUTER/SVC；真实 DCR/PKCE 授权、连接、logout/remove 通过 |
-| MCP Resources | 条件使用 | Dream MCP Resources 页面与 server config API | 页面查询/Agent 复用时 | 条件必需 | Resources 页面和复用合同退化 | MCP router/service 与 provider-free resources 回归通过；真实外部 provider 声明 resource，但当前 Dream detail/inventory 未报告 Resources/Prompts，不能声明页面读取通过 |
-| MCP server/tool inventory | 已证实使用 | inventory service → Runtime/SDK init metadata | 配置校验与会话 init | 必需 | 无法展示/校验可用工具 | MCP inventory 回归；tools 已报告 |
-| plugin-scope MCP | 条件使用 | locked plugin materialization → official plugin discovery | plugin 装载时 | 条件必需 | plugin 内 MCP 不可用 | SVC/RUN；真实 plugin MCP 待 E2E |
-| plugins | 已证实使用 | Deck 锁定 plugin → `--plugin-dir` | Dream turn 启动时 | Dream 必需 | Dream Deck 合同失效 | SVC, RUN；真实 Dream plugin load receipt 与业务链通过 |
-| skills | 条件使用 | plugin/explicit skill carriers | 发现或调用 skill 时 | 条件必需 | 已配置 skill 不可见 | SVC/RUN；语义 E2E 待验 |
-| hooks | 已证实使用 | SDK Python hooks 与 Dream artifact turn hook | tool/turn lifecycle | 必需于 Dream artifact | artifact/策略钩子失效 | RUN；真实 Dream Episode artifact 链与回归通过；file SessionStart/Stop 未注册 |
-| slash commands | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
-| subagents | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
-| Remote Session | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
-| swarm/team/teammate | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
-| IDE integrations | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | headless 生产链路证据 |
-| telemetry | 暂无证据 | Dream 不直接调用；官方 core 内部行为不透明 | 未确认 | 不可擅改 | 修改可能破坏支持/合规 | `2.1.241` native artifact；无稳定 patch surface |
-| updater | 已证实未使用 | 部署使用固定外部 artifact，无 update 调用 | 不加载于 Dream 入口 | 可选 | 无当前业务影响；仍不修改 core | Docker pin 与 CLI resolver |
-| feedback/reporting | 暂无证据 | 无 Dream 生产调用入口证据 | 未确认 | 可选 | 未知；不得据此删除 core | 调用链与源码搜索 |
-| diagnostics | 条件使用 | `--version`、doctor、MCP/auth 管理透传 | 部署检查或管理操作 | 运维必需 | 无法验证版本/定位启动问题 | envelope acceptance + real `2.1.241` doctor |
-| authentication | 已证实使用 | 官方 CLI auth/env 与 Gateway 凭据透传 | Runtime 启动/请求时 | 必需 | 无法认证且可能违反法律门禁 | RUN；官方法律要求不得移除/限制 |
-| gateway/provider 适配 | 已证实使用 | Dream options/env → Admin Gateway → provider | 每次推理请求 | 必需 | 无模型推理与结算 | RUN/SVC；本轮不改 Gateway |
-| services registry | 暂无证据 | 无 Claude Code services-registry 直接调用证据 | 未确认 | 可选 | 未知；不得据此删除 core | Dream 只证实 Admin Gateway 资产 |
-| workspace/plugin materialization | 条件使用 | SVC 在启动前同步 server-owned workspace 与 locked plugin | Workspace/Deck turn 前 | 条件必需 | 文件、plugin、resume 元数据不一致 | TF/SVC/RUN；materialization 回归 |
+| Headless/SDK client | 已证实使用 | `ClaudeAgentRunner` → `ClaudeSDKClient` → CLI path | 每个 turn | 必需 | Dream/Chat 无法运行 | Dream RUN/CLIENT；SDK transport contract |
+| streaming JSON/JSONL 与 SSE | 已证实使用 | CLI stream-json → SDK → Dream EventBus/SSE | turn 全程 | 必需 | 首 Token、增量内容、终态丢失 | `print.ts`/`structuredIO.ts`/`query.ts`；Dream SSE tests |
+| 双向 control/cancel | 已证实使用 | SDK stdin control → permission/cancel | 工具确认与取消时 | 必需 | 无法确认或取消 | `structuredIO.ts`；Dream runner/router |
+| session、transcript、resume | 已证实使用 | SDK session ID + Runtime transcript → later `--resume` | init、结束、续聊 | 必需 | 会话连续性失效 | `sessionStorage.ts`/`sessionRestore.ts`; Dream service |
+| tool use/result | 已证实使用 | Runtime tool frames → SDK → persisted parts | 模型调用工具时 | 必需 | 文件/MCP/业务工具失效 | `tools.ts`; Dream parser/router |
+| permission/tool confirmation | 已证实使用 | permission rules + SDK callback | 受控工具调用时 | 必需 | 越权或错误阻断 | `permissions.ts`; Dream confirmation API |
+| Workspace/cwd/文件工具 | 条件使用 | thread workspace → `cwd`/filesystem tools | Workspace Mode/文件工具启用 | 条件必需 | 文件上下文失效 | `cwd.ts`/filesystem permissions; Dream thread factory |
+| sandbox | 条件使用 | SDK settings + Runtime sandbox adapter | turn 启动 | 条件必需 | 隔离合同退化 | `sandbox-adapter.ts`; Dream options |
+| `CLAUDE_CODE_TMPDIR` | 已证实使用 | `{thread}/.claude-tmp` | CLI 启动前 | 必需 | 违反 thread 边界 | Dream `sdk_env.py`; filesystem roots retained |
+| MCP stdio/HTTP/OAuth/Resources | 已证实使用或条件使用 | Dream MCP config/resources API → SDK/Runtime | init、连接、授权、工具调用 | 必需于已配置能力 | MCP 页面/工具失效 | restored MCP client/auth/resource tools; Dream MCP suites |
+| MCP inventory 与 tool result | 已证实使用 | Runtime init metadata + tool frames | discovery/tool call | 必需 | 无法展示/执行 MCP tool | MCP service/inventory tests |
+| plugins | 已证实使用 | locked Deck plugin → `--plugin-dir` | turn 启动 | 必需 | Deck 能力失效 | Dream service/runner; plugin loader retained |
+| Slash Skill / filesystem/plugin skills | 已证实使用或条件使用 | slash Skill 与 plugin skill discovery | discovery/invocation | 必需于 Dream extension contract | skill 调用失效 | `loadSkillsDir.ts`; Dream plugin/skill carriers |
+| hooks | 已证实使用 | SDK hooks + Dream artifact hook | tool/turn lifecycle | 必需 | artifact/policy lifecycle 失效 | Runtime hooks + Dream runner |
+| ordinary Agent/Task subagents | 条件使用，必须保留 | Agent/Task tools | 模型委派时 | 条件必需 | Agent 工作流失效 | Dream allowed tools; restored Agent/Task paths |
+| Remote Control / CCR bridge | 已证实未使用 | Dream 无入口 | 不应加载 | 可删 | 无 IM 影响 | Dream call graph；CCR/bridge feature graph |
+| swarm/team/teammate UI | 已证实未使用 | Dream 无 team UI/control plane | 不应加载 | 可删 | 无 IM 影响 | Dream call graph；TEAMMEM/coordinator/buddy features |
+| interactive Ink REPL | 已证实未使用 | Dream 只走 `-p` headless | 不应加载 | 可删 | 无 IM 影响 | Dream CLI argv；headless `print.ts` |
+| IDE auto-connect/UI surface | 已证实未使用 | Dream 无 IDE bridge | 不应加载 | 可删 | 无 IM 影响 | headless production graph |
+| updater command/UI | 已证实未使用 | immutable package/CLI path | 不应加载 | 可删 command/UI | 无 IM 影响 | deployment pin；interactive command graph |
+| feedback/reporting command/UI | 已证实未使用 | Dream 无入口 | 不应加载 | 可删 | 无 IM 影响 | Dream call graph；feedback command/UI graph |
+| telemetry/shared diagnostics | 暂无足够图证据 | shared initialization/side effects possible | 未确认 | 暂缓 | 可能破坏 gates/support | 必须等 metafile/import-side-effect evidence |
+| shared `autoUpdater.ts` logic | 暂无足够图证据 | 可能包含最低版本/共享检查 | 未确认 | 暂缓 | 可能破坏版本合同 | 仅删除 updater command/UI，不按文件名推断共享逻辑 |
+| authentication/gateway | 已证实使用 | Runtime auth/API client → configured gateway/provider | 每次推理 | 必需 | 无法推理 | `auth.ts`/API client; Dream gateway config |
+| workspace/plugin materialization | 条件使用 | Dream 启动前 materialize，Runtime discovery | turn/resume | 条件必需 | workspace/plugin 恢复不一致 | Dream service/thread factory |
 
-Evidence anchors: TF=`backend/claude_agent/thread_factory.py`; SVC=`backend/claude_agent/service.py`; RUN=`backend/libs/claude_agent_kit/server/agent_runner.py`; ENV=`backend/libs/claude_agent_kit/server/sdk_env.py`; CLIENT=`backend/libs/claude_agent_kit/server/simple_cas_client.py`; ROUTER=`backend/routers/claude_agent.py` in the read-only Dream repository. “暂无证据” never authorizes deletion: the official core remains whole and opaque.
+Dream evidence anchors: `backend/claude_agent/thread_factory.py`, `backend/claude_agent/service.py`, `backend/libs/claude_agent_kit/server/agent_runner.py`, `sdk_env.py`, `simple_cas_client.py`, and `backend/routers/claude_agent.py` in the read-only Dream repository. “暂无足够图证据” means **retain**, not delete.
 
-## 4. Current start and resume call chains
+## 4. Current launch and resume call chains
 
 ```mermaid
 sequenceDiagram
     participant U as User
     participant F as Dream Frontend
     participant A as Dream API
-    participant S as Agent SDK
-    participant W as Ink Runtime Envelope
-    participant C as Official Claude Code 2.1.241
+    participant S as Ink Agent SDK
+    participant R as Minimal or Official Runtime
     participant M as MCP Runtime
     participant G as Admin Gateway
-    participant X as Workspace
+    participant W as Workspace
     participant T as Transcript Store
     U->>F: query
-    F->>A: request
-    A->>S: ClaudeAgentOptions(cli_path, cwd, tools, hooks)
-    S->>W: headless stream-json argv/stdin
-    W->>W: validate external artifact/TMPDIR/optional bare carriers
-    W->>C: exact argv, cwd, stdio, environment
-    C->>M: explicit or discovered MCP
-    M-->>C: tool result/resources
-    C->>G: inference through configured provider/gateway
-    G-->>C: streamed response
-    C-->>S: JSONL
-    S-->>A: events
+    F->>A: public production request
+    A->>S: options(cli_path,cwd,tools,hooks,sandbox)
+    S->>R: headless JSONL plus open control stdin
+    R->>M: load configured MCP on demand
+    M-->>R: inventory/resource/tool result
+    R->>G: inference request
+    G-->>R: streamed response
+    R-->>S: init/content/tool/result JSONL
+    S-->>A: typed events
     A->>T: persist session/transcript projection
-    A->>X: retain thread workspace lifecycle
+    A->>W: retain thread workspace
     A-->>F: SSE
-    F-->>U: streamed UI
+    F-->>U: first token through completion
 ```
 
 ```mermaid
 sequenceDiagram
     participant A as Dream API
     participant T as Transcript Store
-    participant S as Agent SDK
-    participant W as Ink Runtime Envelope
-    participant C as Official Claude Code 2.1.241
+    participant S as Ink Agent SDK
+    participant R as Minimal or Official Runtime
+    participant W as Workspace
     participant M as MCP Runtime
-    A->>T: load session id and transcript eligibility
+    A->>T: load session ID/resume eligibility
     T-->>A: resume inputs
-    A->>S: options.resume + cwd/plugin/MCP/hooks
-    S->>W: exact resume argv and stream-json
-    W->>W: validate same workspace/TMPDIR and optional bare carriers
-    W->>C: unmodified resume invocation
-    C->>M: restore/connect required servers
-    C-->>S: first token and subsequent events
-    S-->>A: completion
-    A->>T: update transcript/session projection
+    A->>W: restore workspace/plugin metadata
+    A->>S: options.resume plus same cwd/plugins/hooks
+    S->>R: resume JSONL invocation
+    R->>T: load Runtime transcript
+    R->>M: restore required MCP connections
+    R-->>S: init and first token
+    S-->>A: streamed events and result
+    A->>T: update session/transcript projection
 ```
 
 ## 5. Goals and non-goals
 
-Goals: reproducible clean-room wrapper build; immutable manifest/checksum/SBOM/license receipts; unchanged CLI/SDK process boundary; explicit Runtime data ownership; safe rollback; bounded `--bare` evaluation.
+Goals: prune IM-irrelevant core branches; keep the full Dream interface contract; use the renamed upstream-compatible SDK; produce a deterministic local Bun build and evidence manifest; keep MCP upgrades separate and auditable; permit direct official CLI rollback.
 
-Non-goals: modifying Dream, Python SDK, schemas, vendor binary/source, authentication behavior, Claude protocol/state machine, or claiming memory/startup improvement without measurement.
+Non-goals: Dream business changes, Schema/migration work, a second Agent/MCP state machine, transcript/workspace packaging, remote deployment, or representing the old source as current `2.1.241` implementation.
 
 ## 6. Runtime capability boundary
 
-The wrapper may validate its own deployment contract, supervise a process group, enforce Dream's thread TMPDIR, and pass documented flags. It may not parse JSONL/MCP, modify the official executable, rewrite version output, intercept credentials, disable authentication methods, materialize user data, or brand itself as Claude Code.
+The minimal Runtime owns the existing CLI/JSONL/process contract. It may remove source modules only after the Dream matrix and Bun metafile prove they are unreachable or explicitly disabled. It must retain the profile's asserted inputs for streaming, bidirectional control, transcript/resume, permissions, workspace, sandbox, TMPDIR, MCP, extensions, and authentication/gateway.
 
-## 7. Patch feasibility
+The Python SDK remains an upstream-compatible distribution. It selects either the official CLI or the custom Runtime through the upstream `cli_path`/transport/process launcher injection point. It does not copy Runtime state, parse a second wire protocol, or own user data.
 
-No supported current source build, tree-shaking boundary, or stable patch surface was evidenced for the native `2.1.241` executable. Vendor/restored patching is rejected by version mismatch, maintainability, and redistribution gates. Tree shaking applies only to this small wrapper.
+## 7. Patch and build feasibility
 
-Documented current extension points are runtime inputs, not core build inputs:
-Agent SDK `cli_path` and custom transport; CLI `--settings`, `--mcp-config`,
-`--strict-mcp-config`, `--plugin-dir`, `--add-dir`, `--agents`, and `--bare`.
-No official source-build entry, feature/build flag, module exclusion list, or
-postinstall-patch contract was found. Because the current platform package is
-a native executable without a source map or separate JS module graph, static
-imports, dynamic imports, registration order, and import side effects cannot be
-reliably classified or tree-shaken. Any internal modification could affect
-stream-json, transcript/resume, MCP, tools, sandbox, authentication, or
-Workspace, and would require modifying vendor implementation.
+The current official `2.1.241` binary has no public core source/build graph suitable for source-level pruning. The restored `2.1.88` tree does expose `bun:bundle feature()` gates and a reconstructable entrypoint. Therefore the selected local implementation is a deterministic source build, not a binary patch:
+
+- Bun is pinned to exactly `1.4.0` because earlier local Bun did not implement the required feature API.
+- `runtime/core-prune-profile.json` declares all 89 observed features, required capabilities, source input assertions, defines, and DCE exclusions.
+- `runtime/core-resolution-map.json` maps recovered package entries and permits only source-digest-bound narrow facades.
+- `scripts/build-core-prune.ts` reads an explicit absolute, normalized, non-symlink source root; writes only ignored `dist/core-local`; records digest, metafile, gaps, and DCE results.
+- `scripts/verify-core-prune.mjs` refuses any artifact unless build status is successful, gaps are zero, forbidden inputs are absent, and every required capability input survives.
+
+Current result: build and verifier pass with 1,989 inputs, 48 outputs, zero gaps, passing DCE assertions, and every required MCP transform applied. The executable core is locally packaged and digest-qualified. This establishes the repository's technical `productionEligible=true` state, not permission to publish, redistribute, deploy, or claim a real-business run.
 
 ## 8. Candidate comparison
 
-| Candidate | Evidence / official support | Maintainability / latest compatibility | IM and MCP impact | Upgrade risk / rollback | Decision |
-| --- | --- | --- | --- | --- | --- |
-| Official configuration minimalization | Supported documented settings/MCP/plugin/agent inputs; no core exclusion | High; valid on `2.1.241` | Reduces configured capabilities only, not core load; wrong config can remove required MCP/plugins | Low; remove config or restore prior file | Use for explicit configuration, not as a core-size claim |
-| Official `--bare` | Supported flag; skips automatic hooks, skills, commands, subagents, plugins, MCP, memory, CLAUDE.md and OAuth/keychain reads | Medium; semantics may evolve with official releases | High unless every Dream carrier is explicit; OAuth and discovery are material risks | Medium; remove flag/profile together | Experimental opt-in only after full business A/B |
-| Runtime lazy loading | Supported only inside this independent wrapper | High for wrapper; no effect on opaque core | Wrapper diagnostics stay off hot path; MCP/core unchanged | Low; direct official CLI path rollback | Implemented, but core reduction is 0 |
-| Compile-time capability flags | No official build flag or current source build found | Not maintainable/applicable to native `2.1.241` | Unknown risk across SDK/MCP/tools/resume | Unbounded; no supported replay | Reject |
-| Bundle tree shaking | No module graph/source map in platform package | Not applicable to native core; valid only for wrapper | Cannot prove unused registrations or side effects | Unbounded for core; rebuild wrapper to roll back | Reject for core |
-| Postinstall binary/source patch | No official patch contract; legal terms require unmodified binary | Low; byte offsets/bundles change per release | High protocol/auth/MCP risk | High; reinstall exact official artifact | Reject / publication blocked |
-| Replayable vendor patch set | Could store diffs without vendor source, but applying them still modifies restricted implementation | Low; every release needs conflict and semantic review | High; unchanged patch application does not prove behavior | High; discard patched artifact and restore official | Reject absent written authorization |
-| Custom vendor-derived Runtime package | Requires copying/modifying official or restored implementation | Incompatible with current legal gate and restored `2.1.88` age | Would own all SDK/MCP/auth compatibility risk | Critical; replace package with official artifact | Blocked |
-| Restored-source Bun rebuild | Historical `2.1.88`; no redistribution authorization; cannot prove parity with `2.1.241` | Low; recovered identifiers/modules are not an upstream build contract | Missing recent MCP/resume/security behavior is likely | Critical; abandon build and return to official | Blocked; restored source remains read-only |
-| Clean-room external supervisor | Uses documented process/CLI path boundary; external core unmodified | High; exact manifest/version tests per release | Opaque forwarding preserves official semantics; adds TMPDIR/process supervision | Low; set `CLAUDE_CODE_CLI_PATH` directly to official | Implemented as an operations option, not an optimization claim |
-| Direct official Runtime / loading-order hygiene | Fully supported published artifact | Highest; exact version pin | Preserves every observed and unknown capability | Lowest; select previous verified official artifact | Production and performance baseline |
-| SDK/Dream protocol fork | Technically possible but not an official Runtime extension point | Low; duplicates state machine and parser | Highest divergence risk | High; revert application code | Rejected by scope and architecture |
+| Candidate | Support/evidence | IM/MCP impact | Upgrade/rollback | Decision |
+| --- | --- | --- | --- | --- |
+| Official configuration only | documented runtime inputs | reduces discovery, not bundle code | easy rollback | useful baseline, not core pruning |
+| Runtime lazy initialization | source graph required | safe when shared side effects are proven | source-bound replay | use after core build closes |
+| Compile-time feature DCE | restored `feature()` graph + Bun 1.4 | explicit KEEP assertions and REMOVE gates | replay profile; official CLI rollback | selected |
+| Generic tree shaking | incomplete recovered dependency graph | may drop side effects | high ambiguity | insufficient alone |
+| postinstall/binary patch | no stable binary contract | high protocol/auth risk | reinstall official | reject |
+| replayable source patch | source hashes and semantic tests possible | appropriate for isolated compatibility deltas | conflict detection + official rollback | use only for clean, bounded deltas |
+| restored-source Bun build | explicit local authorization and real source graph | owns old-to-current compatibility gap | local artifact deletion + official CLI | selected and technically qualified |
+| external official Runtime | current behavior, opaque internals | preserves all capabilities | direct CLI path | comparator and rollback |
 
 ## 9. Recommended solution
 
-Keep direct official `2.1.241` as the performance and rollback baseline. Use this envelope only where manifest/TMPDIR/process supervision/receipts justify its overhead. Do not enable bare mode in production until the explicit carriers and full Dream business matrix pass against `2.1.241`/SDK `0.2.143`.
+The implementation completed two strictly ordered layers:
+
+1. The `2.1.88` source resolver produced a zero-gap minimal core using the reviewed feature profile, with KEEP and REMOVE assertions proven in the Bun metafile.
+2. The MCP `2.1.238`/`2.1.239` compatibility layer was applied independently, bound to exact old-source hashes, and the digest-bound interface and management suites passed.
+
+The custom core now has its own real Dream/Gateway/PostgreSQL main-journey evidence. Remaining decisions are whether to provide a working OAuth MCP endpoint and Admin browser session for the two blocked UI lanes, and whether to authorize deployment/publication. Do not reinterpret the old wrapper's green OAuth lane as evidence for the current core.
 
 ## 10. MCP compatibility strategy
 
-The wrapper never implements MCP. It preserves CLI/config/stdin/stdout and leaves stdio/HTTP/SSE/OAuth/Resources/tool inventory to the official core and Agent SDK.
+Restored `2.1.88` already contains substantial OAuth/DCR/PKCE/token/revoke logic. It must be retained and tested rather than replaced. The separate `compat/mcp-auth/` layer records only newer gaps:
 
-The real compatibility lane used a disposable external server built with the
-official MCP Python SDK `2.0.0` (`6f69a3758ebf2ee55ce050f58b470ce11af71133`).
-Through Dream's public production endpoints and the existing real actor, DCR +
-PKCE connected successfully; the normal Chat UI confirmed and persisted a
-remote tool result, refreshed, resumed the same thread, and persisted a second
-result. Public logout/remove returned the actor to no matching server. This is
-protocol evidence using an isolated provider fixture through the normal
-Dream/Admin/Gateway/PostgreSQL topology; it is not a shadow Dream service.
+- `2.1.238`: stdio MCP initialization before discovery; disabled servers not connected by list/get; trusted `headersHelper` cwd/scoping; credential-like environment removal.
+- `2.1.239`: bounded recovery for transient remote MCP 5xx during mid-session reconnect/cloud/SDK server updates; 401/403 remain non-retryable and error output is redacted.
 
-The selected wrapper initially failed Dream's macOS MCP capability gate because
-Dream scans the CLI entrypoint for the literal
-`CLAUDE_SECURESTORAGE_CONFIG_DIR`. The wrapper now retains that static marker
-while leaving all behavior to the official core. Dream's isolated MCP identity
-removes `INK_CLAUDE_CODE_EXECUTABLE`, so the exact verified official `2.1.241`
-artifact must also be first on the backend service `PATH`. No secret-storage or
-authentication implementation was added to the wrapper.
-
-The authoritative recent evidence is the official main [`CHANGELOG.md`](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md), not release-body text alone:
-
-- `2.1.239`: fixes clipped MCP elicitation forms and recovery of remote MCP servers after transient 5xx during mid-session reconnect, cloud, or SDK `setMcpServers()`.
-- `2.1.238`: initializes stdio MCP before server discovery; changes `headersHelper` trust/credential handling; fixes disabled `mcp list/get` behavior.
-
-Release notes and changelog may differ in detail, so compatibility claims cite the changelog and must be tested. Python MCP `1.27.0`/`1.27.1` remain provider-free regression targets; they are not substitutes for real CLI OAuth/remote reconnect tests.
+The repository-authored compatibility patch is now integrated into the qualified headless artifact through six exact-source-bound transformations. Digest-bound MCP differential and management receipts pass, including stdio/HTTP lifecycle, colon-containing server identity, isolation/redaction, and OAuth help/management commands. Restored `2.1.88` continues to own OAuth/DCR/PKCE/token/revoke behavior; the patch does not implement another OAuth flow, MCP client, or Agent state machine. A complete real OAuth browser login remains a real-business QA decision.
 
 ## 11. Runtime artifact layout
 
 ```text
-ink-claude-code-dream-0.1.0/
-  bin/ink-claude-code-dream
-  lib/*.mjs
-  release-manifest.json
-  manifest/
-    artifact-manifest.json
-    entrypoint-policy.json
-    runtime-data-contract.json
-    bare-profile.json
-    dependency-licenses.json
-    capabilities.json
-    platforms.json
-    build.json
-    discovery.json
-    rollback.json
-    sbom.cdx.json
-    checksums.sha256
+dist/core-local/                 # generated and Git-ignored
+  bundle/                        # Bun ESM output, only after zero-gap build
+  build-receipt.json             # source digest, Bun/profile/resolution/DCE status
+  metafile.json                  # sanitized input/output graph
+  resolution-gaps.json           # contains zero gaps for the qualified build
+  qualification/                 # digest-bound SDK/MCP/management/full receipts
+
+dist/core-package-local/         # reproducible local-only package; Git-ignored
+  ink-claude-code-dream-0.1.0/
+    bin/                         # package launcher
+    lib/core/                    # exact qualified bundle and assets
+    manifest/                    # checksums, SBOM, licenses, policy, qualification summary
 ```
 
-The external official binary and all mutable/user material are absent.
+Git may contain `scripts/build-core-prune.ts`, `scripts/verify-core-prune.mjs`, `runtime/core-prune-profile.json`, `runtime/core-resolution-map.json`, contract tests, source-bound compatibility policies/manifests, and docs. Git and published releases must not contain restored/vendor source, derived core output, source maps with vendor content, user data, credentials, or tokens.
 
-## 12. Runtime data lifecycle
+## 12. Transcript, workspace, and plugin metadata lifecycle
 
-`runtime/runtime-data-contract.json` is authoritative. Dream owns workspace and `.claude-tmp`; the latter must be the exact real workspace child with mode 0700 or stricter. Claude Code/Dream retain transcripts for resume. Users/operators own MCP/plugin/settings/auth material. The wrapper neither reads credentials nor cleans those stores.
+Runtime distribution data is immutable; user/session data is not distribution data. Dream owns the canonical thread workspace and binds `CLAUDE_CODE_TMPDIR={AGENT_CWD}/{thread_id}/.claude-tmp`, a normalized real child with no symlink and mode `0700`. Runtime transcript files remain in the Runtime's session store for resume. Dream owns its persisted projection. Plugin/workspace materialization is recreated or restored by Dream before launch. OAuth credentials and user MCP configuration stay in their existing user/config stores and are never copied into the artifact.
 
 ## 13. SDK and Runtime interface contract
 
-The only SDK interface is upstream `ClaudeAgentOptions.cli_path`, selected through `CLAUDE_CODE_CLI_PATH`. Dream now installs only `ink-claude-dream-agent-sdk==0.2.143`, while preserving the upstream `claude_agent_sdk` namespace and CLI pin `2.1.241`; the official distribution must not coexist. No SDK schema or transport modification is introduced. The paired provider-free test sends the same SDK JSONL request directly to a deterministic fake core and through the envelope, but does not replace official-core or real-provider acceptance.
+Compatibility is defined by observable behavior, not by process exit alone:
 
-Bare activation is caller-supplied `--bare` plus `INK_CLAUDE_BARE_PROFILE=dream-explicit-v1`. The wrapper never injects `--bare`. It requires `-p`, absolute settings/MCP/plugin carriers, strict MCP, exact cwd/workspace, TMPDIR, and session persistence. This checks carriers, not their semantic completeness; E2E remains the final gate.
+- argv ordering, cwd, environment carriers, open stdin, stdout/stderr, and exit/cancel semantics;
+- init/session IDs, streaming message types, tool use/result, permission callbacks, errors, and resume;
+- Workspace/TMPDIR/sandbox boundaries;
+- MCP stdio/HTTP/OAuth/Resources/inventory, plugin-scope MCP, and colon-containing server names;
+- plugins, Slash Skills, hooks, and ordinary Agent/Task tools;
+- authentication/gateway behavior without secret logging.
+
+The custom SDK must exercise the same contract against both the official comparator and the local Runtime via the upstream CLI-path injection point.
 
 ## 14. Build and release flow
 
 ```mermaid
-sequenceDiagram
-    participant U as Upstream SDK 0.2.143
-    participant R as Clean-room Runtime Source
-    participant B as Bun 1.2.20
-    participant P as Python Builder
-    participant T as Test Suite
-    participant M as Manifest/SBOM/Checksums
-    participant G as Git Remote
-    U-->>R: read-only cli_path/version evidence
-    R->>B: frozen lock build
-    P-->>T: external SDK compatibility evidence only
-    B->>T: Node bundle and fixtures
-    T->>M: verified immutable release
-    M-->>G: only clean-room source/contracts; no vendor artifact
+flowchart LR
+    U["Upstream SDK 0.2.143"] --> P["Python wheel and sdist"]
+    S["Authorized restored-src 2.1.88"] --> B["Bun 1.4 feature-DCE builder"]
+    C["Capability profile and resolution map"] --> B
+    B -->|"1,989 inputs / 48 outputs / zero gaps / DCE pass"| L["Qualified Git-ignored dist/core-local"]
+    M["Separate MCP compatibility patch"] -->|"six source-bound transforms applied"| B
+    P --> T["Interface differential suite"]
+    L --> T
+    O["Official CLI 2.1.241 comparator"] --> T
+    T --> A["Bound qualification and reproducible local package"]
+    A -->|"source-bound tooling only"| G["Private Git remote"]
 ```
 
-Commands are `bun install --frozen-lockfile`, `bun run lint`, `bun run build`, `bun run test`, `bun run package`, and `bun run verify`. Packaging and reproducibility run under exact Node `24.13.0`; the produced wrapper remains compatible with Node `>=22,<25`. Python SDK packaging stays in its own repository/wheel flow.
+The current build moved through `blocked` → `built` → `verified` → `qualified`; a DCE pass alone was not sufficient. The package is locally production-eligible under its artifact contract, and its real Dream main journey passed. Publication, redistribution, deployment, external OAuth endpoint readiness, and authenticated Admin UI evidence remain separate decisions.
 
 ## 15. Security and license boundary
 
-Official legal guidance requires the binary remain unmodified and run as published; customers may not remove, disable, or restrict built-in authentication unless separately agreed. The wrapper therefore passes auth commands and auth environment unchanged, never selects a method, and does not inject bare mode. Official naming guidance also warns against using “Claude Code” as part of a customer's own product or feature name. The user-selected package remains private, and any external distribution requires legal and brand review; this document describes it only as an independent envelope, not Claude Code itself.
+The user has explicitly authorized local use of the recovered `2.1.88` source as a reference/build input. That resolves the local task boundary; it does not itself establish public redistribution rights. The target repository therefore records only repository-authored source-bound tooling and evidence, while the derived core stays ignored locally. Private repository visibility is not treated as a license grant.
 
-The official package/restored package license is all-rights-reserved and points to Anthropic legal agreements. The target GitHub repository was verified `PRIVATE`, but repository visibility does not grant redistribution rights. No redistribution permission was established. Vendor source, binary, bundle, map, logo, tokens, transcripts, settings, or workspace content must never enter git or the release.
+No secret, OAuth token, complete environment, transcript body, Workspace body, user config, or materialized plugin content may enter Git, receipts, logs, or artifacts. Source-root absolute paths are sanitized from receipts.
 
-The release-relative manifest is the wrapper's immutable trust root. Runtime environment may select the external official executable, workspace, timeout, and explicit bare profile, but cannot replace the manifest or change the exact `2.1.241` doctor pin. The reserved legacy `INK_CLAUDE_RUNTIME_MANIFEST_PATH` key is stripped before child launch and intentionally ignored by manifest loading.
+## 16. Upgrade and patch replay
 
-## 16. Upgrade and replay
-
-For each upstream release: update exact package/platform metadata; inspect official `CHANGELOG.md`; update SDK/CLI pairing; rebuild from frozen lock; run manifest/legal lint, provider-free tests, official CLI differential tests, and real Dream/MCP validation. There is no vendor patch to replay; any appearance of one is a release blocker.
+Each source baseline must have an explicit version, repository commit, recursive digest, resolution-map digests, feature inventory, and MCP patch target hashes. Replay fails on a source hash mismatch, resolver conflict, nonzero gap, DCE violation, or missing KEEP assertion. A newer official CLI is first diffed at the protocol boundary; only evidenced deltas become narrow compatibility patches.
 
 ## 17. Rollback
 
-Rollback is configuration-only: restore `CLAUDE_CODE_CLI_PATH` to the previously verified official executable. Do not mutate immutable release directories or the external binary. Bare mode rolls back by removing the caller flag/profile together and returning to official default discovery.
+Rollback is independent of Dream business code: set the SDK CLI path to the verified official `2.1.241` executable, remove/ignore `dist/core-local`, and retain the same SDK distribution and Dream configuration. No database rollback, schema change, transcript conversion, or state-machine migration is required.
 
-## 18. Test matrix
+## 18. Test matrix and acceptance layers
 
-| Test | Local status/claim |
+Testing is deliberately layered in this order:
+
+1. **Static/build evidence**: source digest, 89-feature coverage, zero resolution gaps, forbidden REMOVE inputs absent, all KEEP capability inputs present, deterministic output and checksum.
+2. **Interface-level differential**: custom SDK against official and custom Runtime for JSONL/control/session/resume/tools/permissions/errors/cancel/MCP/plugins/skills/hooks/workspace/sandbox/auth carriers and semantics. This is the primary Runtime compatibility gate.
+3. **Real Dream business journey**: public production entry with the local Dream/Admin/Gateway/PostgreSQL topology verifies SSE, persistence, UI, real MCP and Admin visibility. It detects integration/business regressions but cannot replace layer 2.
+
+The current static and interface layers pass through digest-bound local-core receipts. The current custom-core Dream journey also passes for new session, first token, three persisted turns, same-session resume across a Runtime rebuild, SSE, Workspace/TMPDIR/sandbox/transcript, Gateway settlement, ledger, and Story projection. Historical wrapper/official receipts remain comparator evidence only.
+
+## 19. Acceptance criteria
+
+The minimal Runtime's technical artifact gate requires:
+
+- core build and verifier exit 0 with zero resolution gaps;
+- DCE/metafile proves every selected removal and every required KEEP input;
+- the separate MCP patch is applied and source-bound, and its stdio/HTTP/OAuth-management/Resources/inventory/reconnect technical contracts pass;
+- SDK wheel/sdist install and both official/custom CLI-path tests pass;
+- interface differential is clean or every intentional difference is documented and accepted;
+- artifact contains no vendor source or user material and its local/publication license decision is explicit.
+
+The current artifact meets these technical criteria: the Dream manifest gate passed, the Dream backend suite reported 1,954 passed / 24 skipped / 607 subtests, the Runtime lifecycle suite reported 40/40, and the reproducible package reports `productionEligible=true`. The real custom-core Dream main journey passed through the production UI and persisted topology. A complete OAuth/Resources read did not run because the existing remote MCP URL returned 404 to `initialize`; authenticated Admin UI visibility also remains unverified because no administrator session was available. Publication and redistribution remain prohibited without separate authorization.
+
+## 20. Open items and design self-review
+
+| Question | Current answer |
 | --- | --- |
-| JSONL/argv/env/cwd exact forwarding | provider-free fixture |
-| version/help/MCP/auth command forwarding | provider-free fixture |
-| auth environment preservation without value logging | provider-free presence assertions |
-| external path/version doctor | provider-free fixture plus real unmodified official `2.1.241` version/doctor probe; passed |
-| TMPDIR/symlink/mode/workspace | provider-free fixture |
-| bare explicit carriers/no injection/fail closed | provider-free fixture |
-| cancel/timeout/crash/process group | provider-free fixture |
-| checksums/SBOM/license/legal/contracts | release verifier |
-| self SDK `0.2.143` Dream path | paired direct-fake/envelope SDK contract plus Dream provider-free regression |
-| installed SDK `0.2.143` → actual envelope → external core | passed: real official `2.1.241` bounded version probe plus public `query()` through a no-network core fixture |
-| real Dream with direct official CLI | passed through the public Deck → Chat → Dream production journey on the existing local Dream/Admin/Gateway/PostgreSQL topology |
-| real Dream with custom Runtime path | passed the same production journey through the packaged envelope and the same official core |
-| real new session/SSE/tool/result/workspace/transcript/resume/plugin/hook | passed in both real-business lanes; content-free receipts remain local and uncommitted |
-| real OAuth/remote HTTP MCP/tool/resume/logout | passed through the public Dream OAuth and Chat journeys with an isolated official MCP SDK `2.0.0` provider; two confirmed tool results persisted across refresh/resume and cleanup completed |
-| real MCP Resources inventory/read | partial only: provider declared a resource and provider-free matrix passed resources, but current Dream detail/inventory reported no Resources/Prompts for this user-scope server |
-| remote MCP transient-5xx reconnect | not claimed; no destructive fault injection was run against the real business topology |
-| production sandbox semantics | not claimed: the accepted Deck journey did not prove an enabled production sandbox policy |
+| Focused on Runtime rather than Dream workarounds? | Yes; Dream is an interface consumer and test target only. |
+| Evidence before deletion? | Yes for CCR, swarm/team, interactive REPL/IDE UI, updater command/UI, and feedback UI; unknown shared code remains. |
+| SDK/MCP/tools/SSE/Workspace/sandbox/resume/auth retained? | Yes: required-input assertions and digest-bound SDK/MCP/management receipts pass; the custom-core Dream main journey also passed SSE, Workspace/sandbox/transcript and same-session resume. A working external OAuth MCP remains unavailable for the final real-provider lane. |
+| Slash Skill and ordinary Agent/Task preserved? | Yes; they are explicitly KEEP and not conflated with swarm/team or interactive fork UI. |
+| Depending blindly on old behavior? | No; old source is the build baseline, while current deltas are separately evidenced and patched. |
+| Second Agent/MCP state machine introduced? | No. |
+| Python SDK over-rewritten? | No; distribution rename/build flow only, public namespace and upstream launcher retained. |
+| User data packaged? | No; output and receipts exclude it. |
+| License boundary explicit? | Yes: local input authorization does not imply public redistribution. |
+| Replayable and independently reversible? | Yes: exact digests/manifests, two byte-identical package passes, and the official CLI path provide replay and rollback evidence. |
+| Minimal implementation? | Yes: delete proven non-IM surfaces first; defer telemetry/diagnostics/shared updater logic. |
 
-## 19. Acceptance criteria and design self-review
-
-Accept the clean-room package when lint, build, unit tests, release verify, package, and reproducibility pass; release contains no vendor/user material; exact manifests reference `2.1.241`/`0.2.143`; auth is untouched; and rollback is documented. Real Dream business E2E has passed for the official direct and envelope paths, including a real OAuth HTTP MCP tool journey through the envelope. This still does not prove a Runtime loading reduction, MCP Resources UI/read behavior, transient-5xx reconnect, an enabled production sandbox, Linux deployment behavior, or bare-profile equivalence.
-
-| Self-review question | Answer |
-| --- | --- |
-| Focused on Runtime rather than Dream business changes? | Yes; no Dream production code changed. The only local Dream edits repair the explicit Playwright release harness to follow the current public UI. |
-| Evidence supports deleting an official capability? | No deletion is attempted; the core stays whole. |
-| SDK, MCP, tools, SSE, workspace, and resume retained? | Yes at the opaque boundary and in both real-business lanes; internal stdio MCP and real OAuth HTTP MCP tool/result/resume passed. Resources UI/read, transient-5xx reconnect, and enabled production sandbox semantics remain explicitly unclaimed. |
-| Depends on historical restored behavior? | No; restored `2.1.88` is reference-only. |
-| Introduces a second agent state machine or Python SDK rewrite? | No. |
-| Packages transcript, workspace, plugin, MCP, OAuth, auth, or settings data? | No; verifier rejects these classes. |
-| Meets redistribution/authentication constraints? | Yes for the clean-room wrapper: external unmodified artifact, no auth selection/removal; vendor redistribution remains blocked. |
-| Upgrade replay and rollback independent? | Yes; manifests/tests update per version and rollback is `CLAUDE_CODE_CLI_PATH` configuration. |
-| Is `--bare` minimal and proven? | Carrier validation is minimal; it is not production-enabled or claimed semantically complete. |
-
-## 20. Open items and blockers
-
-- Redistribution of official/restored implementation is blocked without separate authorization.
-- Dream now locks the self SDK `0.2.143` as the sole `claude_agent_sdk` provider; package, process-boundary, and provider-free Dream regressions pass. The self Runtime still fails closed because no production-eligible pruned core exists.
-- Bare profile settings/plugin/MCP content is not semantically attested and remains disabled for production.
-- Real new session, SSE, internal MCP tool/result, workspace, transcript, resume, locked plugin, artifact hook, and durable UI re-entry passed. A disposable official MCP SDK `2.0.0` provider then proved real HTTP OAuth, confirmation, two persisted tool results across refresh/resume, logout, and removal through the same normal topology.
-- The current Dream detail/inventory surface reported `Tools —` and no Resources/Prompts for that external user-scope server even though Chat tool execution passed and the provider declared one resource; Resources UI/read remains unproved. Legacy SSE add and official user-scope server names containing a colon were rejected by the current official CLI. Transient-5xx reconnect was not fault-injected.
-- The accepted business Deck did not establish that production sandbox was enabled; sandbox policy semantics therefore remain unclaimed.
-- The default `claude` on `PATH` is `2.1.220`, so it cannot satisfy the `2.1.241` doctor gate; a separately extracted, unmodified Darwin arm64 `2.1.241` artifact passed the bounded doctor/differential probe.
-- Source branch commit/push and independent PR creation are authorized for this task. Merge, package publication, release tagging, and deployment remain unauthorized.
+Open decisions: supply a working OAuth MCP endpoint for the complete browser OAuth/Resources lane, supply an authenticated Admin browser session if UI evidence is required, and separately decide whether to authorize deployment, publication, or redistribution. No Runtime technical gap/wiring blocker remains for the qualified hashes above. Official CLI `2.1.241` remains the external comparator and direct rollback; restored `2.1.88` plus the separate MCP patch remains the local implementation.

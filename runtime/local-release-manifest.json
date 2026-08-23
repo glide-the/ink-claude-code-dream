@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "ink-claude-cli-envelope/v1",
+  "runtime": {
+    "name": "ink-claude-code-dream",
+    "version": "0.1.0",
+    "entrypoint": "bin/ink-claude-code-dream",
+    "integration": {
+      "environment": "CLAUDE_CODE_CLI_PATH",
+      "sdkOption": "ClaudeAgentOptions.cli_path",
+      "sdkDistribution": "ink-claude-dream-agent-sdk",
+      "sdkVersion": "0.2.143",
+      "sdkModified": false
+    }
+  },
+  "core": {
+    "delivery": "local-derived-bun-bundle",
+    "entrypoint": "lib/core/cli.js",
+    "sourceVersionEvidence": "2.1.88",
+    "cliCompatibilityVersion": "2.1.241",
+    "corePruned": true,
+    "productionEligible": false,
+    "buildReceipt": "manifest/core-build-receipt.json"
+  },
+  "protocol": {
+    "name": "claude-code-stream-json",
+    "version": 1,
+    "transport": "stdio-jsonl"
+  },
+  "evidence": {
+    "capabilities": "manifest/capabilities.json",
+    "qualifications": "manifest/qualification-summary.json",
+    "artifact": "manifest/artifact-manifest.json",
+    "checksums": "manifest/checksums.sha256",
+    "sbom": "manifest/sbom.cdx.json",
+    "licenses": "manifest/dependency-licenses.json",
+    "reproducibility": "manifest/reproducible-build.json"
+  },
+  "capabilityEvidence": "manifest/capabilities.json",
+  "status": {
+    "productionEligible": false,
+    "publicationAllowed": false,
+    "redistributionAllowed": false
+  },
+  "dataBoundary": {
+    "bundled": "immutable-runtime-code-and-machine-evidence-only",
+    "excluded": [
+      "session-transcripts",
+      "workspace-content",
+      "plugin-materialization",
+      "MCP-credentials",
+      "OAuth-tokens",
+      "Claude-settings-and-authentication-files"
+    ]
+  },
+  "legalGate": {
+    "use": "local-derived-evaluation-only-until-separately-authorized",
+    "publicationAllowed": false,
+    "redistributionAllowed": false,
+    "restoredSourceIncluded": false
+  }
+}
