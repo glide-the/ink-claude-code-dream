@@ -34,6 +34,7 @@
     "test:pruning-evidence": "node scripts/verify-pruning-evidence.mjs",
     "build:core-local": "./node_modules/.bin/bun scripts/build-core-prune.ts",
     "verify:core-local": "./node_modules/.bin/bun scripts/build-core-prune.ts && node scripts/verify-core-prune.mjs",
+    "install:core-local": "node scripts/install-core-local.mjs",
     "test:reproducible": "node scripts/check-reproducible.mjs",
     "verify": "bun run lint && bun run test && bun run test:mcp-auth-compat && bun run test:upstream-sdk && bun run test:acceptance && node scripts/verify-release.mjs && bun run test:reproducible",
     "package": "bun run release:pack",

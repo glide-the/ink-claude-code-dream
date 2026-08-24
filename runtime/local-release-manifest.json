@@ -4,6 +4,13 @@
     "name": "ink-claude-code-dream",
     "version": "0.1.0",
     "entrypoint": "bin/ink-claude-code-dream",
+    "toolchain": {
+      "name": "Bun",
+      "version": "1.4.0",
+      "delivery": "separate-local-install",
+      "executable": "ink-claude-code-bun-1.4.0",
+      "overrideEnvironment": "INK_CLAUDE_CODE_BUN_PATH"
+    },
     "integration": {
       "environment": "CLAUDE_CODE_CLI_PATH",
       "sdkOption": "ClaudeAgentOptions.cli_path",

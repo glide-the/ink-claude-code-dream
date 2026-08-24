@@ -2,7 +2,7 @@
 // [Input] Verified dist/core-local bundle/receipt, optional digest-bound qualification receipts, local package policy, and SOURCE_DATE_EPOCH.
 // [Output] Build a byte-reproducible, local-only Bun Runtime artifact with manifest, checksums, SBOM, license, and qualification evidence.
 // [Pos] Fail-closed local derived-artifact packager; it never reads or copies restored source or mutable user Runtime data.
-// [Sync] 2026-08-24: bind source provenance and CLI compatibility versions independently in the packaged manifest.
+// [Sync] 2026-08-24: discover the separately installed exact Bun toolchain without relying on ambient Bun.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -154,7 +154,8 @@ function validatePolicy(policy) {
     policy.artifact?.version !== "0.1.0" ||
     policy.artifact?.entrypoint !== "bin/ink-claude-code-dream" ||
     policy.artifact?.coreEntrypoint !== "lib/core/cli.js" ||
-    policy.artifact?.bunVersion !== "1.4.0"
+    policy.artifact?.bunVersion !== "1.4.0" ||
+    policy.artifact?.bunExecutableName !== "ink-claude-code-bun-1.4.0"
   ) {
     fail("local artifact identity/toolchain policy drift");
   }
@@ -338,13 +339,28 @@ function assertNoSensitiveContent(body, label) {
   if (patterns.some(pattern => pattern.test(text))) fail(`sensitive/source-root material found in ${label}`);
 }
 
-function wrapperBody(bunVersion) {
+function wrapperBody(bunVersion, bunExecutableName) {
   return `#!/bin/sh
 set -eu
 # Dream MCP identity capability marker; the selector remains server-owned and is passed through unchanged:
 # CLAUDE_SECURESTORAGE_CONFIG_DIR
-INK_RUNTIME_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-INK_BUN_BIN=\${INK_CLAUDE_CODE_BUN_PATH:-bun}
+INK_ENTRYPOINT=$0
+while [ -L "$INK_ENTRYPOINT" ]; do
+  INK_ENTRYPOINT_DIR=$(CDPATH= cd -- "$(dirname -- "$INK_ENTRYPOINT")" && pwd)
+  INK_ENTRYPOINT_TARGET=$(readlink "$INK_ENTRYPOINT")
+  case "$INK_ENTRYPOINT_TARGET" in
+    /*) INK_ENTRYPOINT=$INK_ENTRYPOINT_TARGET ;;
+    *) INK_ENTRYPOINT=$INK_ENTRYPOINT_DIR/$INK_ENTRYPOINT_TARGET ;;
+  esac
+done
+INK_RUNTIME_DIR=$(CDPATH= cd -- "$(dirname -- "$INK_ENTRYPOINT")/.." && pwd)
+if [ -n "\${INK_CLAUDE_CODE_BUN_PATH:-}" ]; then
+  INK_BUN_BIN=$INK_CLAUDE_CODE_BUN_PATH
+elif command -v ${bunExecutableName} >/dev/null 2>&1; then
+  INK_BUN_BIN=$(command -v ${bunExecutableName})
+else
+  INK_BUN_BIN=bun
+fi
 INK_BUN_VERSION=$("$INK_BUN_BIN" --version)
 if [ "$INK_BUN_VERSION" != "${bunVersion}" ]; then
   echo "ink-claude-code-dream requires Bun ${bunVersion}; received $INK_BUN_VERSION" >&2
@@ -524,7 +540,10 @@ async function buildArtifact({ destination, inputRoot, policy, releaseTemplate, 
     productionEligible,
   };
 
-  const wrapper = wrapperBody(policy.artifact.bunVersion);
+  const wrapper = wrapperBody(
+    policy.artifact.bunVersion,
+    policy.artifact.bunExecutableName,
+  );
   await writeFile(path.join(destination, policy.artifact.entrypoint), wrapper, { mode: 0o755 });
   await chmod(path.join(destination, policy.artifact.entrypoint), 0o755);
   await writeJson(path.join(destination, "release-manifest.json"), releaseManifest);

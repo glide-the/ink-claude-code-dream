@@ -1,12 +1,12 @@
 // [Input] Synthetic zero-gap core bundles/receipts and local artifact package/verify scripts.
 // [Output] Prove reproducibility, qualification gating/binding, Bun wrapper behavior, tamper detection, and user/source material exclusion.
 // [Pos] Provider-free local artifact contract tests; fixtures contain no restored/vendor implementation or Dream business state.
-// [Sync] 2026-08-24: prove actor-local OAuth stage receipts remain outside reproducible artifacts.
+// [Sync] 2026-08-24: prove versioned Bun discovery and immutable-prefix installation.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, chmod, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { access, chmod, mkdir, mkdtemp, readFile, readlink, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageScript = path.join(repositoryRoot, "scripts", "package-core-local.mjs");
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-core-package-local.mjs");
+const installScript = path.join(repositoryRoot, "scripts", "install-core-local.mjs");
 const artifactId = "ink-claude-code-dream-0.1.0";
 const sourceDigest = "4".repeat(64);
 
@@ -440,6 +441,86 @@ test("the wrapper enforces Bun 1.4.0 and verifier detects post-package tampering
     const verification = runVerify(context.artifactRoot);
     assert.notEqual(verification.status, 0);
     assert.match(verification.stderr, /qualification subject|release identity|artifact manifest|checksum mismatch/);
+  } finally {
+    await rm(context.root, { recursive: true, force: true });
+  }
+});
+
+test("local installer provides a production-qualified Runtime and versioned Bun without changing ambient Bun", async () => {
+  const context = await fixture();
+  try {
+    const sdk = await writeQualification(context, "sdk", "real-process-sdk-differential");
+    const mcp = await writeQualification(context, "mcp", "real-process-mcp-differential");
+    const full = await writeQualification(context, "full", "full-runtime-qualification");
+    const packaged = runPackage(context, [
+      "--sdk-receipt",
+      sdk,
+      "--mcp-receipt",
+      mcp,
+      "--full-receipt",
+      full,
+    ]);
+    assert.equal(packaged.status, 0, packaged.stderr);
+    const fakeBun = path.join(context.root, "fixture-bun");
+    await writeFile(
+      fakeBun,
+      '#!/bin/sh\nif [ "$1" = "--version" ]; then echo 1.4.0; exit 0; fi\nprintf "installed-bun:%s\\n" "$*"\n',
+    );
+    await chmod(fakeBun, 0o755);
+    const prefix = path.join(context.root, "prefix");
+    const installed = spawnSync(
+      process.execPath,
+      [
+        installScript,
+        "--package-root",
+        context.artifactRoot,
+        "--prefix",
+        prefix,
+        "--bun-binary",
+        fakeBun,
+      ],
+      { cwd: repositoryRoot, encoding: "utf8" },
+    );
+    assert.equal(installed.status, 0, installed.stderr);
+    const receipt = JSON.parse(installed.stdout.trim());
+    assert.equal(receipt.productionEligible, true);
+    assert.equal(receipt.bunVersion, "1.4.0");
+    const runtimeLink = path.join(prefix, "bin", "ink-claude-code-dream");
+    const bunLink = path.join(prefix, "bin", "ink-claude-code-bun-1.4.0");
+    assert.equal(path.resolve(path.dirname(runtimeLink), await readlink(runtimeLink)), receipt.runtimeTarget);
+    assert.equal(path.resolve(path.dirname(bunLink), await readlink(bunLink)), receipt.bunTarget);
+    const launched = spawnSync(runtimeLink, ["--version"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${path.join(prefix, "bin")}:${process.env.PATH ?? ""}`,
+        INK_CLAUDE_CODE_BUN_PATH: "",
+      },
+    });
+    assert.equal(launched.status, 0, launched.stderr);
+    const installedCore = path.resolve(
+      path.dirname(receipt.runtimeTarget),
+      "..",
+      "lib",
+      "core",
+      "cli.js",
+    );
+    assert.match(launched.stdout, new RegExp(`installed-bun:${installedCore} --version`));
+    assert.doesNotMatch(launched.stdout, new RegExp(`${prefix}/lib/core/cli\\.js`));
+    const repeated = spawnSync(
+      process.execPath,
+      [
+        installScript,
+        "--package-root",
+        context.artifactRoot,
+        "--prefix",
+        prefix,
+        "--bun-binary",
+        fakeBun,
+      ],
+      { cwd: repositoryRoot, encoding: "utf8" },
+    );
+    assert.equal(repeated.status, 0, repeated.stderr);
   } finally {
     await rm(context.root, { recursive: true, force: true });
   }

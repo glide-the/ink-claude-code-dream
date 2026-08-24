@@ -2,6 +2,7 @@
 // [Input] A packaged local derived Runtime artifact plus checked-in local artifact/template contracts.
 // [Output] Fail closed on checksum, provenance, qualification, reproducibility, SBOM/license, executable, or mutable-data boundary drift.
 // [Pos] Read-only verifier for dist/core-package-local; it never reads restored source or executes the candidate core.
+// [Sync] 2026-08-24: require the versioned external Bun discovery contract used by local installation.
 
 import { createHash } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
@@ -260,6 +261,11 @@ if (
   release.runtime?.name !== policy.artifact.name ||
   release.runtime?.version !== policy.artifact.version ||
   release.runtime?.entrypoint !== policy.artifact.entrypoint ||
+  release.runtime?.toolchain?.name !== "Bun" ||
+  release.runtime?.toolchain?.version !== policy.artifact.bunVersion ||
+  release.runtime?.toolchain?.delivery !== "separate-local-install" ||
+  release.runtime?.toolchain?.executable !== policy.artifact.bunExecutableName ||
+  release.runtime?.toolchain?.overrideEnvironment !== "INK_CLAUDE_CODE_BUN_PATH" ||
   release.runtime?.integration?.environment !== "CLAUDE_CODE_CLI_PATH" ||
   release.runtime?.integration?.sdkOption !== "ClaudeAgentOptions.cli_path" ||
   release.runtime?.integration?.sdkDistribution !== "ink-claude-dream-agent-sdk" ||
@@ -498,7 +504,12 @@ const wrapperText = await readFile(wrapper, "utf8");
 if (
   !wrapperText.startsWith("#!/bin/sh\nset -eu\n") ||
   !wrapperText.includes("CLAUDE_SECURESTORAGE_CONFIG_DIR") ||
-  !wrapperText.includes("INK_CLAUDE_CODE_BUN_PATH:-bun") ||
+  !wrapperText.includes('while [ -L "$INK_ENTRYPOINT" ]') ||
+  !wrapperText.includes('INK_ENTRYPOINT_TARGET=$(readlink "$INK_ENTRYPOINT")') ||
+  !wrapperText.includes('$(dirname -- "$INK_ENTRYPOINT")/..') ||
+  !wrapperText.includes('if [ -n "${INK_CLAUDE_CODE_BUN_PATH:-}" ]') ||
+  !wrapperText.includes(`command -v ${policy.artifact.bunExecutableName}`) ||
+  !wrapperText.includes("INK_BUN_BIN=bun") ||
   !wrapperText.includes(`requires Bun ${policy.artifact.bunVersion}`) ||
   !wrapperText.includes('exec "$INK_BUN_BIN" "$INK_RUNTIME_DIR/lib/core/cli.js" "$@"')
 ) {

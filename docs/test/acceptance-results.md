@@ -1,7 +1,7 @@
 <!-- [Input] Digest-bound local-core qualification/package receipts, Dream validation evidence, and historical official/envelope results. -->
 <!-- [Output] Record current technical and real-business acceptance without misapplying historical receipts or hiding external blockers. -->
 <!-- [Pos] Current minimal-core technical acceptance record plus historical comparator evidence. -->
-<!-- [Sync] 2026-08-24: record passing real Comfy OAuth/inventory acceptance, cleanup, and final exact-Node verification. -->
+<!-- [Sync] 2026-08-24: record the installed Runtime startup, isolated Bun toolchain, and refreshed package identity. -->
 
 # Acceptance results
 
@@ -19,14 +19,15 @@ Final local run date: 2026-08-24.
 | MCP management | exit 0 | stdio/HTTP lifecycle, colon-containing name, identity isolation, production Dream redaction, and OAuth help/management contract |
 | OAuth CLI contract | 3/3 passed | official MCP Python SDK `2.0.0` commit `6f69a3758ebf2ee55ce050f58b470ce11af71133`; source-bound, pipe, and real-PTY lanes |
 | aggregate qualification | 0 | `full-runtime-qualification`, with `businessAcceptanceIncluded=false` |
-| local package | passed | 62 files, 61 checksum entries; artifact-tree SHA-256 `728e758f7c7f0294d504c67805eb29453636f3f5cbfbcf49fdef9f1a5c018fb3`; two byte-identical passes |
+| local package | passed | 62 files, 61 checksum entries; artifact-tree SHA-256 `b674fb04734cde23c3821ae7796f3125e96e110392f6be353c30e1e7f59b0f5b`; two byte-identical passes |
 | package policy | passed | `productionEligible=true`, `publicationAllowed=false`, `redistributionAllowed=false`; Dream manifest contract passed |
+| local installation/startup | passed | content-addressed Runtime and Bun `1.4.0` installed under the user prefix; ambient Bun remained `1.2.20`; Dream resolved the Runtime from `PATH` with both override variables unset and FastAPI reached `Application startup complete` |
 | Dream backend | 0 | 1,954 passed, 24 skipped, 607 subtests |
-| Runtime process/lifecycle suite | 0 | 45 passed; includes JSONL, OAuth pipe/PTY, nonzero exit, SIGTERM, crash, timeout, cancellation, TMPDIR, and SDK skip rejection |
+| Runtime process/lifecycle suite | 0 | 44 passed, 2 external OAuth-fixture tests skipped; includes JSONL, packaging/install, nonzero exit, SIGTERM, crash, timeout, cancellation, TMPDIR, and SDK skip rejection |
 | Dream frontend production build | 0 | TypeScript and Vite production build completed |
-| final repository verify | 0 | exact Node `24.13.0`; Node 45/45, MCP compatibility 46 passed / 6 authorized-source fixtures skipped, SDK, acceptance, release, and reproducibility passed |
+| final repository verify | 0 | exact Node `24.13.0`; Node 44 passed / 2 external OAuth-fixture skips, MCP compatibility 46 passed / 6 authorized-source fixture skips, SDK, acceptance, release, and reproducibility passed |
 
-The standard full repository test command serializes test files with `node --test --test-concurrency=1 tests/*.test.mjs` because they share build artifacts and process-level fixtures. The pipe and PTY lanes remain independent contracts, and individual process/protocol assertions are unchanged.
+The standard full repository test command serializes test files with `node --test --test-concurrency=1 tests/*.test.mjs` because they share build artifacts and process-level fixtures. The pipe and PTY lanes remain independent contracts, and individual process/protocol assertions are unchanged. The installed launcher also passed the bound SDK real-process differential and MCP management lifecycle without `CLAUDE_CODE_CLI_PATH` or `INK_CLAUDE_CODE_BUN_PATH`. A fresh stdio/HTTP differential calibration against `/Users/dmeck/.local/bin/claude` was not accepted because that local official path had drifted to `2.1.220` and the Python MCP fixture requires the separately pinned MCP SDK environment; this is recorded as reference-environment drift, not a candidate failure.
 
 The complete local OAuth CLI contract keeps Commander `mcp login --no-browser`, advertises and submits the same `http://localhost:3118/callback`, and verifies that headless mode opens no competing callback listener. Both pipe and real-PTY lanes perform DCR, authorization callback validation, token exchange, secure persistence, and credential postcondition checks against the official provider fixture; PTY cleanup explicitly pauses stdin so the process exits deterministically. DCR client information is memoized only for the provider instance lifetime. Token save must succeed and be followed by `credentials_present`.
 
@@ -76,7 +77,7 @@ The earlier custom-core main-journey Run and logs remain retained for normal rev
 
 ## Final repository verification
 
-`PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify` exited 0. Node tests passed 45/45; MCP compatibility reported 46 passed and 6 authorized-source fixtures skipped; the SDK contract, acceptance, release verification, and archive reproducibility all passed. The separate explicit-source command `INK_AUTHORIZED_CORE_SOURCE_ROOT=/Users/dmeck/project/claude-code-sourcemap/restored-src bun --cwd compat/mcp-auth test` then ran all source-bound cases: 52 passed, 0 failed, 230 assertions.
+`PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify` exited 0. Node tests reported 44 passed and 2 external OAuth-fixture skips; MCP compatibility reported 46 passed and 6 authorized-source fixtures skipped; the SDK contract, acceptance, release verification, and archive reproducibility all passed. The separate explicit-source command `INK_AUTHORIZED_CORE_SOURCE_ROOT=/Users/dmeck/project/claude-code-sourcemap/restored-src bun --cwd compat/mcp-auth test` then ran all source-bound cases: 52 passed, 0 failed, 230 assertions.
 
 Final deterministic archive SHA-256: `64c919d1f11b2770497a080c4cdeb8587925f45d928912459b31647e1b68eb38`.
 

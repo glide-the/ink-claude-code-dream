@@ -6,7 +6,8 @@
     "directory": "dist/core-package-local/ink-claude-code-dream-0.1.0",
     "entrypoint": "bin/ink-claude-code-dream",
     "coreEntrypoint": "lib/core/cli.js",
-    "bunVersion": "1.4.0"
+    "bunVersion": "1.4.0",
+    "bunExecutableName": "ink-claude-code-bun-1.4.0"
   },
   "coreGate": {
     "receiptSchemaVersion": "ink-core-prune-build/v1",

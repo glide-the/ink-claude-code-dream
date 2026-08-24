@@ -1,15 +1,15 @@
 <!-- [Input] Clean-room Runtime tooling, authorized external restored source, capability profile, compatibility policies, and verification evidence. -->
 <!-- [Output] Explain the qualified local minimal-core workflow, remaining business gate, legacy envelope, and safe Git/release boundary. -->
 <!-- [Pos] Operator-facing entry point for ink-claude-code-dream. -->
-<!-- [Sync] 2026-08-24: record the selector-safe OAuth candidate, passing real Comfy acceptance, and final verification receipts. -->
+<!-- [Sync] 2026-08-24: add fail-closed local installation and isolated exact-Bun discovery. -->
 
 # ink-claude-code-dream
 
 This private repository builds a locally packaged, IM-focused Claude Runtime named `ink-claude-code-dream`. Its primary path uses the user-authorized Claude Code `2.1.88` restored source as an external local input and Bun `1.4.0` compile-time feature DCE. Generated core and package files go only to Git-ignored `dist/core-local/` and `dist/core-package-local/`; Git stores the repository-authored, source-bound transformation builder, capability profile, resolution map, tests, manifests, and documentation. This is technical provenance, not a license conclusion.
 
-Current technical status: **built, verified, and locally production-eligible under the repository's artifact contract**. The exact core has bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5` and source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`. Its sanitized graph has 1,989 inputs, 48 outputs, zero resolution gaps, and passing DCE assertions. Source provenance remains `2.1.88`; the separately qualified Dream-facing CLI compatibility version is `2.1.241`. Digest-bound SDK real-process differential, stdio/HTTP MCP tools/resources differential, MCP management lifecycle, and `full-runtime-qualification` all exited 0. The local package contains 62 files with 61 checksum entries, has artifact-tree SHA-256 `728e758f7c7f0294d504c67805eb29453636f3f5cbfbcf49fdef9f1a5c018fb3`, and reproduced byte-identically twice.
+Current technical status: **built, verified, and locally production-eligible under the repository's artifact contract**. The exact core has bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5` and source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`. Its sanitized graph has 1,989 inputs, 48 outputs, zero resolution gaps, and passing DCE assertions. Source provenance remains `2.1.88`; the separately qualified Dream-facing CLI compatibility version is `2.1.241`. Digest-bound SDK real-process differential, stdio/HTTP MCP tools/resources differential, MCP management lifecycle, and `full-runtime-qualification` all exited 0. The local package contains 62 files with 61 checksum entries, has artifact-tree SHA-256 `b674fb04734cde23c3821ae7796f3125e96e110392f6be353c30e1e7f59b0f5b`, and reproduced byte-identically twice.
 
-This is a technical artifact decision, not a publication or deployment grant: `productionEligible=true`, while `publicationAllowed=false` and `redistributionAllowed=false`. The Dream manifest gate and backend suite passed (1,954 passed, 24 skipped, 607 subtests), the Runtime suite passed 45/45, and the current custom-core real Dream main journey passed. The official MCP Python SDK `2.0.0` fixture at commit `6f69a3758ebf2ee55ce050f58b470ce11af71133` passed the complete OAuth CLI contract 3/3 through pipe and real-PTY lanes. The final real Comfy acceptance also passed through Dream's public configure/auth/callback/inventory/logout/remove path: `comfyui-cloud` `0.40.1` connected with 41 tools and a complete 16-stage safe receipt ending in `credentials_present` → `flow_resolved` → `success_stdout_flushed`.
+This is a technical artifact decision, not a publication or deployment grant: `productionEligible=true`, while `publicationAllowed=false` and `redistributionAllowed=false`. The Dream manifest gate and backend suite passed (1,954 passed, 24 skipped, 607 subtests), the current standard Runtime run passed 44 tests with 2 external OAuth-fixture tests skipped, and the current custom-core real Dream main journey passed. The official MCP Python SDK `2.0.0` fixture at commit `6f69a3758ebf2ee55ce050f58b470ce11af71133` separately passed the complete OAuth CLI contract 3/3 through pipe and real-PTY lanes. The final real Comfy acceptance also passed through Dream's public configure/auth/callback/inventory/logout/remove path: `comfyui-cloud` `0.40.1` connected with 41 tools and a complete 16-stage safe receipt ending in `credentials_present` → `flow_resolved` → `success_stdout_flushed`.
 
 The existing Node supervisor/envelope and its `dist/release/` receipts remain a historical process-boundary and rollback baseline. Its green tests do not prove the minimal core.
 
@@ -36,6 +36,17 @@ INK_AUTHORIZED_CORE_SOURCE_ROOT=/absolute/path/to/claude-code-sourcemap/restored
 ```
 
 Both commands now complete with a zero-gap receipt for the exact source digest above. A later source, profile, transformation, or bundle hash drift must fail closed and requires fresh qualification; a DCE receipt by itself is never sufficient.
+
+## Local installation
+
+After qualification and packaging, install the Runtime and its exact Bun toolchain into the user's local prefix:
+
+```sh
+node scripts/package-core-local.mjs
+node scripts/install-core-local.mjs
+```
+
+The installer re-verifies `productionEligible=true`, copies the release and Bun `1.4.0` into content-addressed directories under `~/.local/share/ink-claude-code-dream/`, and atomically installs `~/.local/bin/ink-claude-code-dream` plus `~/.local/bin/ink-claude-code-bun-1.4.0`. It does not replace or upgrade ambient `bun`; the Runtime launcher selects the versioned executable first, with `INK_CLAUDE_CODE_BUN_PATH` retained only as an explicit operator override. Dream therefore resolves the manifest-qualified Runtime through ordinary `PATH` without a `CLAUDE_CODE_CLI_PATH` bypass.
 
 ## Separate MCP compatibility layer
 
@@ -67,7 +78,7 @@ The interface differential is the primary compatibility gate; UI/business covera
 
 The restored source is a read-only local build input. Git contains only replayable repository-authored builders, patches, manifests, tests, and documentation; it does not contain the restored source or generated artifact. No Anthropic redistribution authorization has been obtained, so the restored source and derived artifact must not be publicly published or redistributed. Credentials, complete environment data, transcripts, Workspace content, and materialized plugins are likewise excluded.
 
-The final exact-Node verification command, `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify`, exited 0: Node 45/45, MCP compatibility 46 passed with 6 authorized-source fixtures skipped, SDK contract, acceptance, release verification, and archive reproducibility all passed. A separate authorized-source replay, `INK_AUTHORIZED_CORE_SOURCE_ROOT=/Users/dmeck/project/claude-code-sourcemap/restored-src bun --cwd compat/mcp-auth test`, then executed those six fixtures and passed 52/52 with zero failures. The archive SHA-256 is `64c919d1f11b2770497a080c4cdeb8587925f45d928912459b31647e1b68eb38`; checksum-inventory SHA-256 is `61e12c7c1828c05fb6e70535abb36ff1fbe924aaba2d78787b9ce8e832b3947c`.
+The final exact-Node verification command, `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify`, exited 0: Node 44 passed with 2 external OAuth-fixture tests skipped, MCP compatibility 46 passed with 6 authorized-source fixtures skipped, and the SDK contract, acceptance, release verification, and archive reproducibility all passed. A separate authorized-source replay, `INK_AUTHORIZED_CORE_SOURCE_ROOT=/Users/dmeck/project/claude-code-sourcemap/restored-src bun --cwd compat/mcp-auth test`, then executed those six fixtures and passed 52/52 with zero failures. The archive SHA-256 is `64c919d1f11b2770497a080c4cdeb8587925f45d928912459b31647e1b68eb38`; checksum-inventory SHA-256 is `61e12c7c1828c05fb6e70535abb36ff1fbe924aaba2d78787b9ce8e832b3947c`.
 
 The official CLI `2.1.241` remains the current behavior comparator and direct rollback target. It is not the source of this core: the implementation is restored `2.1.88` plus the separate `2.1.238`/`2.1.239` MCP compatibility patch and source-bound OAuth repair. The custom package business path and final real Comfy lane passed. Authenticated Admin UI evidence remains unavailable because no administrator browser session was supplied; publication/redistribution remain prohibited.
 

@@ -79,7 +79,7 @@ The actor-local stage receipt is overwritten per login, bounded to 16 unique all
 
 All three layers now pass for the selected Runtime scope. The real Comfy lane used public production endpoints, connected `comfyui-cloud` `0.40.1`, reported 41 tools, and cleaned up through cancel/logout/remove. Resources and Prompts were `not_reported`. No tool was called because the available metadata did not prove a zero-cost operation: some tools were marked read-only, but an ordinary Agent turn would still consume model tokens, so the three-gate charging policy correctly refused execution. This is a safety decision, not a Runtime or MCP failure. Authenticated Admin UI visibility remains unverified solely because no administrator browser session was available.
 
-The final standard command is `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify`; it exits 0 with Node 45/45, MCP compatibility 46 passed plus 6 authorized-source fixture skips, SDK contract, acceptance, release verification, and archive reproducibility passing.
+The final standard command is `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify`; it exits 0 with Node 44 passed plus 2 external OAuth-fixture skips, MCP compatibility 46 passed plus 6 authorized-source fixture skips, and the SDK contract, acceptance, release verification, and archive reproducibility passing.
 
 Fault injection and destructive testing must remain isolated; those results are technical validation and cannot be reported as real-business acceptance.
 

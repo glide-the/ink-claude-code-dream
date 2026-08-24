@@ -1,7 +1,7 @@
 <!-- [Input] Bun locks, authorized external restored source, core profile/resolution map, compatibility manifest, and legacy envelope build. -->
 <!-- [Output] Give fail-closed local-core, legacy-envelope, packaging, and Git-boundary commands. -->
 <!-- [Pos] Build and release operator guide. -->
-<!-- [Sync] 2026-08-24: record the passing real Comfy candidate, final exact-Node verification, reproducibility, and redistribution gate. -->
+<!-- [Sync] 2026-08-24: document content-addressed local installation and isolated Bun 1.4.0 discovery. -->
 
 # Build and package
 
@@ -88,7 +88,17 @@ node scripts/package-core-local.mjs
 node scripts/verify-core-package-local.mjs
 ```
 
-The current SDK real-process differential, stdio/HTTP MCP tools/resources differential, MCP management lifecycle, and aggregate qualifier all exit 0. The verified package under `dist/core-package-local/ink-claude-code-dream-0.1.0/` contains 62 files and 61 checksum entries, has artifact-tree SHA-256 `728e758f7c7f0294d504c67805eb29453636f3f5cbfbcf49fdef9f1a5c018fb3`, and records two byte-identical passes. Its manifest state is `productionEligible=true`, `publicationAllowed=false`, and `redistributionAllowed=false`; the Dream manifest contract also passes. Qualification receipts remain outside the package and are represented by digest-bound summaries.
+The current SDK real-process differential, stdio/HTTP MCP tools/resources differential, MCP management lifecycle, and aggregate qualifier all exit 0. The verified package under `dist/core-package-local/ink-claude-code-dream-0.1.0/` contains 62 files and 61 checksum entries, has artifact-tree SHA-256 `b674fb04734cde23c3821ae7796f3125e96e110392f6be353c30e1e7f59b0f5b`, and records two byte-identical passes. Its manifest state is `productionEligible=true`, `publicationAllowed=false`, and `redistributionAllowed=false`; the Dream manifest contract also passes. Qualification receipts remain outside the package and are represented by digest-bound summaries.
+
+Install the qualified package without changing the user's ambient Bun:
+
+```sh
+node scripts/install-core-local.mjs
+command -v ink-claude-code-dream
+ink-claude-code-dream --version
+```
+
+The installer refuses an unqualified package, a non-`1.4.0` Bun, unsafe prefix roots, and existing non-symlink PATH entries. Runtime and toolchain bytes are copied into content-addressed `~/.local/share/ink-claude-code-dream/` directories before atomic links are created under `~/.local/bin`. The launcher resolves `INK_CLAUDE_CODE_BUN_PATH` only when explicitly supplied, then the dedicated `ink-claude-code-bun-1.4.0`, and only then ambient `bun`; this prevents an older global Bun from breaking Dream startup while preserving a diagnostic override.
 
 The final repository verification uses exact Node `24.13.0`:
 
@@ -96,7 +106,7 @@ The final repository verification uses exact Node `24.13.0`:
 PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify
 ```
 
-It exits 0 with Node 45/45, MCP compatibility 46 passed and 6 authorized-source fixtures skipped, SDK contract, acceptance, release verification, and archive reproducibility all passing. The explicit authorized-source replay, `INK_AUTHORIZED_CORE_SOURCE_ROOT=/Users/dmeck/project/claude-code-sourcemap/restored-src bun --cwd compat/mcp-auth test`, executes all six source-bound fixtures and passes 52/52 with zero failures. Final archive SHA-256: `64c919d1f11b2770497a080c4cdeb8587925f45d928912459b31647e1b68eb38`. Final checksum-inventory SHA-256: `61e12c7c1828c05fb6e70535abb36ff1fbe924aaba2d78787b9ce8e832b3947c`.
+It exits 0 with Node 44 passed and 2 external OAuth-fixture tests skipped, MCP compatibility 46 passed and 6 authorized-source fixtures skipped, and the SDK contract, acceptance, release verification, and archive reproducibility all passing. The explicit authorized-source replay, `INK_AUTHORIZED_CORE_SOURCE_ROOT=/Users/dmeck/project/claude-code-sourcemap/restored-src bun --cwd compat/mcp-auth test`, executes all six source-bound fixtures and passes 52/52 with zero failures. Final archive SHA-256: `64c919d1f11b2770497a080c4cdeb8587925f45d928912459b31647e1b68eb38`. Final checksum-inventory SHA-256: `61e12c7c1828c05fb6e70535abb36ff1fbe924aaba2d78787b9ce8e832b3947c`.
 
 ## Legacy envelope build
 
