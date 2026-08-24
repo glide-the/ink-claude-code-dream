@@ -2,7 +2,7 @@
 // [Input] Verified dist/core-local bundle/receipt, optional digest-bound qualification receipts, local package policy, and SOURCE_DATE_EPOCH.
 // [Output] Build a byte-reproducible, local-only Bun Runtime artifact with manifest, checksums, SBOM, license, and qualification evidence.
 // [Pos] Fail-closed local derived-artifact packager; it never reads or copies restored source or mutable user Runtime data.
-// [Sync] 2026-08-24: discover the separately installed exact Bun toolchain without relying on ambient Bun.
+// [Sync] 2026-08-24: bind package and qualification evidence to one native darwin/linux target.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -155,7 +155,9 @@ function validatePolicy(policy) {
     policy.artifact?.entrypoint !== "bin/ink-claude-code-dream" ||
     policy.artifact?.coreEntrypoint !== "lib/core/cli.js" ||
     policy.artifact?.bunVersion !== "1.4.0" ||
-    policy.artifact?.bunExecutableName !== "ink-claude-code-bun-1.4.0"
+    policy.artifact?.bunExecutableName !== "ink-claude-code-bun-1.4.0" ||
+    JSON.stringify(policy.artifact?.supportedTargets) !==
+      JSON.stringify(["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"])
   ) {
     fail("local artifact identity/toolchain policy drift");
   }
@@ -173,13 +175,28 @@ function validatePolicy(policy) {
   if (JSON.stringify(gateIds) !== JSON.stringify(["sdk", "mcp", "full"])) {
     fail("qualification gate set/order must be sdk, mcp, full");
   }
+  const publicationAllowed = policy.legalGate?.publicationAllowed;
+  const redistributionAllowed = policy.legalGate?.redistributionAllowed;
   if (
-    policy.legalGate?.publicationAllowed !== false ||
-    policy.legalGate?.redistributionAllowed !== false ||
+    typeof publicationAllowed !== "boolean" ||
+    typeof redistributionAllowed !== "boolean" ||
+    publicationAllowed !== redistributionAllowed ||
     policy.legalGate?.restoredSourceMayBeCommitted !== false ||
-    policy.legalGate?.derivedBundleMayBeCommitted !== false
+    typeof policy.legalGate?.derivedBundleMayBeCommitted !== "boolean"
   ) {
-    fail("local legal/publish gate must remain closed");
+    fail("local legal/publish gate is incomplete or internally inconsistent");
+  }
+  if (
+    publicationAllowed === true &&
+    (!policy.legalGate.publicationLicense || !policy.legalGate.authorizationReference)
+  ) {
+    fail("authorized publication requires a checked license and authorization reference");
+  }
+  if (
+    publicationAllowed === false &&
+    (policy.legalGate.publicationLicense !== null || policy.legalGate.authorizationReference !== null)
+  ) {
+    fail("closed publication policy must not claim license/authorization evidence");
   }
 }
 
@@ -197,6 +214,9 @@ function validateCoreReceipt(receipt, policy, gaps) {
     fail("core source provenance or CLI compatibility version drift");
   }
   assertDigest(receipt.sourceDigest?.digest, "core source digest");
+  if (!policy.artifact.supportedTargets.includes(receipt.runtimeTarget)) {
+    fail("core Runtime target is unsupported");
+  }
   if (
     receipt.dceAssertions?.status !== "passed" ||
     !Array.isArray(receipt.dceAssertions?.violations) ||
@@ -235,7 +255,7 @@ function qualificationEnvironment(id) {
   return preferred || legacy || null;
 }
 
-async function collectQualifications({ policy, arguments_, coreDigest, sourceDigest }) {
+async function collectQualifications({ policy, arguments_, coreDigest, sourceDigest, runtimeTarget }) {
   const argumentPaths = {
     sdk: arguments_.sdkReceipt,
     mcp: arguments_.mcpReceipt,
@@ -274,7 +294,8 @@ async function collectQualifications({ policy, arguments_, coreDigest, sourceDig
       value.subject?.runtime !== binding.subjectRuntime ||
       value.subject?.version !== binding.subjectVersion ||
       value.subject?.coreBundleSha256 !== coreDigest ||
-      value.subject?.sourceDigest !== sourceDigest
+      value.subject?.sourceDigest !== sourceDigest ||
+      value.subject?.runtimeTarget !== runtimeTarget
     ) {
       if (explicit) fail(`${gate.id} qualification receipt is not bound to this core bundle/source`);
       results[gate.id] = { status: "missing", evidenceType: null, receiptSha256: null };
@@ -309,6 +330,7 @@ async function collectQualifications({ policy, arguments_, coreDigest, sourceDig
         version: value.subject.version,
         coreBundleSha256: value.subject.coreBundleSha256,
         sourceDigest: value.subject.sourceDigest,
+        runtimeTarget: value.subject.runtimeTarget,
       },
       ...embeddedEvidence,
     };
@@ -391,14 +413,20 @@ function dependencyLicenseReport(receipt, policy) {
     });
   return {
     schemaVersion: "ink-core-local-license-report/v1",
-    artifact: { name: policy.artifact.name, version: policy.artifact.version, license: "UNLICENSED" },
+    artifact: {
+      name: policy.artifact.name,
+      version: policy.artifact.version,
+      license: policy.legalGate.publicationLicense ?? "UNLICENSED",
+    },
     components: [
       {
         name: "derived Claude Runtime core",
         version: receipt.sourceVersionEvidence,
         license: "LicenseRef-Anthropic-All-Rights-Reserved",
         scope: "bundled-local-derived-core",
-        redistribution: "blocked-without-separate-written-authorization",
+        redistribution: policy.legalGate.redistributionAllowed
+          ? `authorized-by:${policy.legalGate.authorizationReference}`
+          : "blocked-without-separate-written-authorization",
       },
       ...dependencyComponents,
       { name: "Bun", version: policy.artifact.bunVersion, license: "MIT", scope: "external-runtime" },
@@ -441,8 +469,8 @@ function cyclonedx(receipt, policy, coreDigest, licenses) {
         "bom-ref": `pkg:generic/${policy.artifact.name}@${policy.artifact.version}`,
         properties: [
           { name: "ink:delivery", value: "local-derived-bun-bundle" },
-          { name: "ink:publicationAllowed", value: "false" },
-          { name: "ink:redistributionAllowed", value: "false" },
+          { name: "ink:publicationAllowed", value: String(policy.legalGate.publicationAllowed) },
+          { name: "ink:redistributionAllowed", value: String(policy.legalGate.redistributionAllowed) },
           { name: "ink:coreBundleSha256", value: coreDigest },
           { name: "ink:sourceDigest", value: receipt.sourceDigest.digest },
         ],
@@ -487,6 +515,7 @@ async function buildArtifact({ destination, inputRoot, policy, releaseTemplate, 
       version: policy.artifact.version,
       coreBundleSha256: coreDigest,
       sourceDigest: receipt.sourceDigest.digest,
+      runtimeTarget: receipt.runtimeTarget,
     },
     gates: qualifications,
     productionEligible,
@@ -495,6 +524,7 @@ async function buildArtifact({ destination, inputRoot, policy, releaseTemplate, 
   const releaseManifest = structuredClone(releaseTemplate);
   releaseManifest.core.sourceVersionEvidence = receipt.sourceVersionEvidence;
   releaseManifest.core.cliCompatibilityVersion = receipt.cliCompatibilityVersion;
+  releaseManifest.core.runtimeTarget = receipt.runtimeTarget;
   releaseManifest.core.sourceDigest = receipt.sourceDigest;
   releaseManifest.core.coreBundleSha256 = coreDigest;
   releaseManifest.core.mcpCompatibility = {
@@ -503,12 +533,20 @@ async function buildArtifact({ destination, inputRoot, policy, releaseTemplate, 
   };
   releaseManifest.core.productionEligible = productionEligible;
   releaseManifest.status.productionEligible = productionEligible;
+  releaseManifest.status.publicationAllowed = policy.legalGate.publicationAllowed;
+  releaseManifest.status.redistributionAllowed = policy.legalGate.redistributionAllowed;
+  releaseManifest.legalGate.publicationAllowed = policy.legalGate.publicationAllowed;
+  releaseManifest.legalGate.redistributionAllowed = policy.legalGate.redistributionAllowed;
+  releaseManifest.legalGate.use = policy.legalGate.publicationAllowed
+    ? "publication-authorized-by-checked-policy"
+    : "local-derived-evaluation-only-until-separately-authorized";
   releaseManifest.status.qualification = Object.fromEntries(
     Object.entries(qualifications).map(([id, result]) => [id, result.status]),
   );
   const capabilities = structuredClone(capabilityTemplate);
   capabilities.runtime.sourceVersionEvidence = receipt.sourceVersionEvidence;
   capabilities.runtime.cliCompatibilityVersion = receipt.cliCompatibilityVersion;
+  capabilities.runtime.runtimeTarget = receipt.runtimeTarget;
   capabilities.runtime.corePruned = true;
   capabilities.runtime.productionEligible = productionEligible;
   capabilities.requiredCapabilities = capabilities.requiredCapabilities.map(capability => ({
@@ -569,8 +607,9 @@ async function buildArtifact({ destination, inputRoot, policy, releaseTemplate, 
       entrypoint: policy.artifact.entrypoint,
       coreEntrypoint: policy.artifact.coreEntrypoint,
       productionEligible,
-      publicationAllowed: false,
-      redistributionAllowed: false,
+      runtimeTarget: receipt.runtimeTarget,
+      publicationAllowed: policy.legalGate.publicationAllowed,
+      redistributionAllowed: policy.legalGate.redistributionAllowed,
     },
     sourceDateEpoch: epoch,
     coreBundleSha256: coreDigest,
@@ -675,6 +714,7 @@ const qualifications = await collectQualifications({
   arguments_,
   coreDigest,
   sourceDigest: receipt.sourceDigest.digest,
+  runtimeTarget: receipt.runtimeTarget,
 });
 
 const artifactId = `${policy.artifact.name}-${policy.artifact.version}`;
@@ -725,8 +765,8 @@ try {
       artifactTreeSha256: reproducible.sha256,
       coreBundleSha256: first.coreDigest,
       productionEligible: first.productionEligible,
-      publicationAllowed: false,
-      redistributionAllowed: false,
+      publicationAllowed: policy.legalGate.publicationAllowed,
+      redistributionAllowed: policy.legalGate.redistributionAllowed,
       reproduciblePasses: 2,
     })}\n`,
   );

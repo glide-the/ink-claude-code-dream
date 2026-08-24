@@ -1,7 +1,7 @@
 <!-- [Input] Dream call-chain evidence, Claude Code 2.1.88 restored source, Bun 1.4 feature-DCE evidence, current SDK/CLI contracts, and MCP 2.1.238/2.1.239 deltas. -->
 <!-- [Output] Define the local minimal Runtime architecture, capability boundary, build/publish gate, compatibility layers, and three-level acceptance contract. -->
 <!-- [Pos] Canonical 20-section design for the locally built ink-claude-code-dream Runtime. -->
-<!-- [Sync] 2026-08-24: record content-addressed installation, isolated Bun discovery, and startup recovery. -->
+<!-- [Sync] 2026-08-24: add native-target qualification and fail-closed scoped npm publication architecture. -->
 
 # Claude Code Runtime minimalization
 
@@ -231,6 +231,10 @@ flowchart LR
 
 The current build moved through `blocked` → `built` → `verified` → `qualified`; a DCE pass alone was not sufficient. The package is locally production-eligible under its artifact contract; its real Dream main journey and final real Comfy lane passed. Authenticated Admin UI evidence remains unavailable because no administrator browser session was supplied. Publication, redistribution, and deployment remain separate decisions.
 
+多平台发布不复用这一份 Darwin ARM64 资格结论。core builder 现在只允许 native `darwin-arm64`、`darwin-x64`、`linux-arm64`、`linux-x64`，receipt 及 SDK/MCP/management/full qualification subject 都携带 `runtimeTarget`；四个平台分别绑定各自 ripgrep SHA-256。npm 目标由 `@glide-the/ink-claude-code-dream` 选择包和四个平台包组成，平台包固定依赖并实测 `bun@1.4.0`。Windows、Linux musl 和交叉打包没有完整证据，保持 fail-closed。
+
+`npm pack` 有三层独立安全门：仓库根 lifecycle 拒绝 legacy envelope；生成式 package prepack 校验法律状态、qualification、target/arch、manifest、ripgrep checksum 和 Bun 版本；最终 tgz verifier 再拒绝 legacy material、用户数据和任意 `**/*.map`。当前 publication/redistribution 两个字段均为 false，且 npm 发布许可证为空，所以 workflow 在下载制品前就停止。
+
 ## 15. Security and license boundary
 
 The user has explicitly authorized local read-only use of the recovered `2.1.88` source as a reference/build input. That resolves the local task boundary; it does not establish public redistribution rights. The target repository records only replayable repository-authored builders, patches, manifests, tests, and documentation, while both the restored source and derived artifact stay out of Git. No Anthropic redistribution authorization has been obtained, so neither restored source nor derived artifact may be publicly published or redistributed. Private repository visibility is not treated as a license grant.
@@ -283,7 +287,7 @@ The final command `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun r
 | Python SDK over-rewritten? | No; distribution rename/build flow only, public namespace and upstream launcher retained. |
 | User data packaged? | No; output and receipts exclude it. |
 | License boundary explicit? | Yes: restored source is read-only/local, source and artifacts stay out of Git, and no Anthropic public redistribution authorization exists. |
-| Replayable and independently reversible? | Yes: exact digests/manifests, two byte-identical package passes, and the official CLI path provide replay and rollback evidence. |
+| Replayable and independently reversible? | Yes for the current native target: exact digests/manifests, two byte-identical package passes, and the official CLI path provide replay and rollback evidence. Other npm targets require their own replay and qualification. |
 | Minimal implementation? | Yes: delete proven non-IM surfaces first; defer telemetry/diagnostics/shared updater logic. |
 
-Open decisions: supply an authenticated Admin browser session if UI evidence is required, and separately decide whether to authorize deployment. Publication and redistribution remain prohibited absent Anthropic authorization. No Runtime technical gap/wiring blocker remains for the qualified hashes above. Official CLI `2.1.241` remains the external comparator and direct rollback; restored `2.1.88` plus the separate MCP and OAuth repairs remains the local implementation.
+Open decisions: supply an authenticated Admin browser session if UI evidence is required, separately decide whether to authorize deployment, obtain explicit redistribution/publication terms and npm license, configure npm Trusted Publisher, and execute complete native qualification on Darwin x64/Linux x64/Linux ARM64. Publication and redistribution remain prohibited absent authorization. The qualified hashes above prove only their recorded native target, not the other npm packages. Official CLI `2.1.241` remains the external comparator and direct rollback; restored `2.1.88` plus the separate MCP and OAuth repairs remains the local implementation.

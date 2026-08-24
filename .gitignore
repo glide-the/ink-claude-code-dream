@@ -5,7 +5,11 @@
 node_modules/
 dist/core-local/
 dist/core-package-local/
+dist/npm-stage/
+dist/npm-tarballs/
 dist/*.tar.gz
 dist/*.sha256
 .DS_Store
 *.log
+__pycache__/
+*.pyc

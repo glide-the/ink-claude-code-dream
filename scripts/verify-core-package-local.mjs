@@ -2,7 +2,7 @@
 // [Input] A packaged local derived Runtime artifact plus checked-in local artifact/template contracts.
 // [Output] Fail closed on checksum, provenance, qualification, reproducibility, SBOM/license, executable, or mutable-data boundary drift.
 // [Pos] Read-only verifier for dist/core-package-local; it never reads restored source or executes the candidate core.
-// [Sync] 2026-08-24: require the versioned external Bun discovery contract used by local installation.
+// [Sync] 2026-08-24: require native target identity across core, qualifications, manifests, and assets.
 
 import { createHash } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
@@ -164,10 +164,25 @@ const checkedInPolicy = await readJson(
 if (stableJson(policy) !== stableJson(checkedInPolicy)) fail("embedded local artifact policy drift");
 if (
   policy.schemaVersion !== "ink-core-local-artifact-policy/v1" ||
-  policy.legalGate?.publicationAllowed !== false ||
-  policy.legalGate?.redistributionAllowed !== false
+  typeof policy.legalGate?.publicationAllowed !== "boolean" ||
+  typeof policy.legalGate?.redistributionAllowed !== "boolean" ||
+  policy.legalGate.publicationAllowed !== policy.legalGate.redistributionAllowed
 ) {
   fail("local artifact policy/legal gate mismatch");
+}
+const publicationAllowed = policy.legalGate.publicationAllowed;
+const redistributionAllowed = policy.legalGate.redistributionAllowed;
+if (
+  publicationAllowed &&
+  (!policy.legalGate.publicationLicense || !policy.legalGate.authorizationReference)
+) {
+  fail("authorized artifact policy lacks checked license/authorization evidence");
+}
+if (
+  !publicationAllowed &&
+  (policy.legalGate.publicationLicense !== null || policy.legalGate.authorizationReference !== null)
+) {
+  fail("closed artifact policy claims license/authorization evidence");
 }
 
 if (
@@ -192,6 +207,9 @@ if (
   fail("packaged resolution gaps are not empty");
 }
 assertDigest(core.sourceDigest?.digest, "core source digest");
+if (!policy.artifact?.supportedTargets?.includes(core.runtimeTarget)) {
+  fail("core Runtime target is unsupported");
+}
 const requiredTransforms = [...(core.mcpCompatibility?.requiredTransformIds ?? [])].sort();
 const appliedTransforms = [...(core.mcpCompatibility?.appliedTransformIds ?? [])].sort();
 if (requiredTransforms.length === 0 || JSON.stringify(requiredTransforms) !== JSON.stringify(appliedTransforms)) {
@@ -210,6 +228,7 @@ if (
   subject?.version !== policy.artifact.version ||
   subject?.coreBundleSha256 !== coreDigest ||
   subject?.sourceDigest !== core.sourceDigest.digest ||
+  subject?.runtimeTarget !== core.runtimeTarget ||
   qualifications.qualificationReceiptsBundled !== false
 ) {
   fail("qualification subject/bundling contract mismatch");
@@ -234,6 +253,7 @@ for (const gate of policy.qualificationGates) {
       evidence.subject?.version !== subject.version ||
       evidence.subject?.coreBundleSha256 !== subject.coreBundleSha256 ||
       evidence.subject?.sourceDigest !== subject.sourceDigest
+      || evidence.subject?.runtimeTarget !== subject.runtimeTarget
     ) {
       fail(`${gate.id} qualification subject drift`);
     }
@@ -276,14 +296,15 @@ if (
   release.core?.productionEligible !== allQualificationsPassed ||
   release.core?.coreBundleSha256 !== coreDigest ||
   release.core?.sourceDigest?.digest !== core.sourceDigest.digest ||
+  release.core?.runtimeTarget !== core.runtimeTarget ||
   release.status?.productionEligible !== allQualificationsPassed ||
   release.capabilityEvidence !== policy.dreamManifestContract.capabilityEvidence ||
   release.protocol?.name !== policy.dreamManifestContract.protocolName ||
   release.protocol?.version !== policy.dreamManifestContract.protocolVersion ||
-  release.status?.publicationAllowed !== false ||
-  release.status?.redistributionAllowed !== false ||
-  release.legalGate?.publicationAllowed !== false ||
-  release.legalGate?.redistributionAllowed !== false ||
+  release.status?.publicationAllowed !== publicationAllowed ||
+  release.status?.redistributionAllowed !== redistributionAllowed ||
+  release.legalGate?.publicationAllowed !== publicationAllowed ||
+  release.legalGate?.redistributionAllowed !== redistributionAllowed ||
   release.legalGate?.restoredSourceIncluded !== false
 ) {
   fail("release identity/integration/legal/qualification contract mismatch");
@@ -303,6 +324,7 @@ if (
   capabilities.runtime?.version !== policy.artifact.version ||
   capabilities.runtime?.corePruned !== true ||
   capabilities.runtime?.productionEligible !== allQualificationsPassed ||
+  capabilities.runtime?.runtimeTarget !== core.runtimeTarget ||
   JSON.stringify(capabilityIds) !== JSON.stringify(core.requiredCapabilities) ||
   JSON.stringify(dreamCapabilityIds) !==
     JSON.stringify(policy.dreamManifestContract.requiredCapabilities) ||
@@ -349,10 +371,11 @@ if (
   artifact.artifact?.name !== policy.artifact.name ||
   artifact.artifact?.version !== policy.artifact.version ||
   artifact.artifact?.productionEligible !== allQualificationsPassed ||
-  artifact.artifact?.publicationAllowed !== false ||
-  artifact.artifact?.redistributionAllowed !== false ||
+  artifact.artifact?.publicationAllowed !== publicationAllowed ||
+  artifact.artifact?.redistributionAllowed !== redistributionAllowed ||
   artifact.coreBundleSha256 !== coreDigest ||
   artifact.sourceDigest !== core.sourceDigest.digest
+  || artifact.artifact?.runtimeTarget !== core.runtimeTarget
 ) {
   fail("artifact manifest contract mismatch");
 }
@@ -436,8 +459,8 @@ const sbomProperties = Object.fromEntries(
 );
 if (
   sbomProperties["ink:delivery"] !== "local-derived-bun-bundle" ||
-  sbomProperties["ink:publicationAllowed"] !== "false" ||
-  sbomProperties["ink:redistributionAllowed"] !== "false" ||
+  sbomProperties["ink:publicationAllowed"] !== String(publicationAllowed) ||
+  sbomProperties["ink:redistributionAllowed"] !== String(redistributionAllowed) ||
   sbomProperties["ink:coreBundleSha256"] !== coreDigest ||
   sbomProperties["ink:sourceDigest"] !== core.sourceDigest.digest
 ) {
@@ -445,13 +468,15 @@ if (
 }
 if (
   licenses.schemaVersion !== "ink-core-local-license-report/v1" ||
-  licenses.legalGate?.publicationAllowed !== false ||
-  licenses.legalGate?.redistributionAllowed !== false ||
+  licenses.legalGate?.publicationAllowed !== publicationAllowed ||
+  licenses.legalGate?.redistributionAllowed !== redistributionAllowed ||
   !licenses.components?.some(
     component =>
       component.name === "derived Claude Runtime core" &&
       component.license === "LicenseRef-Anthropic-All-Rights-Reserved" &&
-      component.redistribution === "blocked-without-separate-written-authorization",
+      component.redistribution === (redistributionAllowed
+        ? `authorized-by:${policy.legalGate.authorizationReference}`
+        : "blocked-without-separate-written-authorization"),
   )
 ) {
   fail("dependency license/local redistribution gate mismatch");
@@ -524,8 +549,8 @@ process.stdout.write(
     checksums: checksumMap.size,
     coreBundleSha256: coreDigest,
     productionEligible: allQualificationsPassed,
-    publicationAllowed: false,
-    redistributionAllowed: false,
+    publicationAllowed,
+    redistributionAllowed,
     reproduciblePasses: reproducibility.passCount,
   })}\n`,
 );

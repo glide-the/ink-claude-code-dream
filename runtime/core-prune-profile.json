@@ -4,18 +4,12 @@
   "cliCompatibilityVersion": "2.1.241",
   "sourceRootEnvironment": "INK_AUTHORIZED_CORE_SOURCE_ROOT",
   "packageRootEnvironment": "INK_AUTHORIZED_CORE_PACKAGE_ROOT",
+  "targetEnvironment": "INK_CLAUDE_CODE_BUILD_TARGET",
   "outputDirectory": "dist/core-local",
   "entrypoints": [
     "src/entrypoints/cli.tsx"
   ],
   "runtimeAssets": [
-    {
-      "source": "vendor/ripgrep/arm64-darwin/rg",
-      "output": "chunks/vendor/ripgrep/arm64-darwin/rg",
-      "sha256": "051d22c8d7f1139f2953c34ca82f216299f79955553158f8c5a215e99d66684f",
-      "mode": 493,
-      "license": "MIT OR Unlicense"
-    },
     {
       "source": "vendor/ripgrep/COPYING",
       "output": "chunks/vendor/ripgrep/COPYING",
@@ -24,6 +18,44 @@
       "license": "MIT OR Unlicense"
     }
   ],
+  "runtimeAssetTargets": {
+    "darwin-arm64": [
+    {
+      "source": "vendor/ripgrep/arm64-darwin/rg",
+      "output": "chunks/vendor/ripgrep/arm64-darwin/rg",
+      "sha256": "051d22c8d7f1139f2953c34ca82f216299f79955553158f8c5a215e99d66684f",
+      "mode": 493,
+      "license": "MIT OR Unlicense"
+    }
+    ],
+    "darwin-x64": [
+    {
+      "source": "vendor/ripgrep/x64-darwin/rg",
+      "output": "chunks/vendor/ripgrep/x64-darwin/rg",
+      "sha256": "3b8b89f3afebe2d9ee6b59a217ee9892f08d1c06d3407765ff83abee78af19f3",
+      "mode": 493,
+      "license": "MIT OR Unlicense"
+    }
+    ],
+    "linux-arm64": [
+      {
+        "source": "vendor/ripgrep/arm64-linux/rg",
+        "output": "chunks/vendor/ripgrep/arm64-linux/rg",
+        "sha256": "fa8f640e4baec82e134c03983373833815dbaee5354f760818bb6840727a4385",
+        "mode": 493,
+        "license": "MIT OR Unlicense"
+      }
+    ],
+    "linux-x64": [
+      {
+        "source": "vendor/ripgrep/x64-linux/rg",
+        "output": "chunks/vendor/ripgrep/x64-linux/rg",
+        "sha256": "55c2b8dd910f390b06b3a7c620603489b83fdfb647665e4d4bb32f3f54f09ea1",
+        "mode": 493,
+        "license": "MIT OR Unlicense"
+      }
+    ]
+  },
   "builder": {
     "runtime": "bun",
     "version": "1.4.0",

@@ -1,7 +1,7 @@
 // [Input] Synthetic zero-gap core bundles/receipts and local artifact package/verify scripts.
 // [Output] Prove reproducibility, qualification gating/binding, Bun wrapper behavior, tamper detection, and user/source material exclusion.
 // [Pos] Provider-free local artifact contract tests; fixtures contain no restored/vendor implementation or Dream business state.
-// [Sync] 2026-08-24: prove versioned Bun discovery and immutable-prefix installation.
+// [Sync] 2026-08-24: bind packages and all qualification receipts to one native Runtime target.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -18,6 +18,7 @@ const verifyScript = path.join(repositoryRoot, "scripts", "verify-core-package-l
 const installScript = path.join(repositoryRoot, "scripts", "install-core-local.mjs");
 const artifactId = "ink-claude-code-dream-0.1.0";
 const sourceDigest = "4".repeat(64);
+const runtimeTarget = `${process.platform}-${process.arch}`;
 
 function digest(body) {
   return createHash("sha256").update(body).digest("hex");
@@ -52,6 +53,7 @@ async function fixture() {
     status: "built",
     sourceVersionEvidence: "2.1.88",
     cliCompatibilityVersion: "2.1.241",
+    runtimeTarget,
     sourceDigest: { algorithm: "sha256", digest: sourceDigest, fileCount: 10, bytes: 1000 },
     builder: { runtime: "bun", version: "1.4.0", target: "bun", format: "esm" },
     requiredCapabilities,
@@ -185,6 +187,7 @@ async function writeQualification(context, id, evidenceType, overrides = {}) {
       version: "0.1.0",
       coreBundleSha256: context.coreDigest,
       sourceDigest,
+      runtimeTarget,
     },
     ...overrides,
   };
@@ -332,6 +335,7 @@ test("qualification evidence bound to another bundle is rejected", async () => {
         version: "0.1.0",
         coreBundleSha256: "9".repeat(64),
         sourceDigest,
+        runtimeTarget,
       },
     });
     const result = runPackage(context, ["--sdk-receipt", sdk]);

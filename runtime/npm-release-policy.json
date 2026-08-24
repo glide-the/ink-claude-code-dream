@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "ink-npm-release-policy/v1",
+  "repository": "glide-the/ink-claude-code-dream",
+  "scope": "@glide-the",
+  "version": "0.1.0",
+  "metaPackage": "@glide-the/ink-claude-code-dream",
+  "command": "ink-claude-code-dream",
+  "runtimePackagePolicy": "runtime/local-artifact-policy.json",
+  "runtimeVerifier": "scripts/verify-core-package-local.mjs",
+  "stagingDirectory": "dist/npm-stage",
+  "tarballDirectory": "dist/npm-tarballs",
+  "bun": {
+    "package": "bun",
+    "version": "1.4.0",
+    "resolvedExecutable": "bin/bun.exe",
+    "requireNativeVersionProbe": true
+  },
+  "materialPolicy": {
+    "forbiddenSuffixes": [
+      ".map",
+      ".ts",
+      ".tsx",
+      ".jsx"
+    ],
+    "forbiddenPathSegments": [
+      ".claude",
+      "credentials",
+      "oauth",
+      "plugin-materialization",
+      "secrets",
+      "sessions",
+      "settings",
+      "transcript",
+      "transcripts",
+      "workspace",
+      "workspaces"
+    ],
+    "sourceMapsAllowed": false
+  },
+  "platforms": {
+    "darwin-arm64": {
+      "package": "@glide-the/ink-claude-code-dream-darwin-arm64",
+      "os": "darwin",
+      "cpu": "arm64",
+      "ripgrepPath": "lib/core/chunks/vendor/ripgrep/arm64-darwin/rg",
+      "ripgrepSha256": "051d22c8d7f1139f2953c34ca82f216299f79955553158f8c5a215e99d66684f"
+    },
+    "darwin-x64": {
+      "package": "@glide-the/ink-claude-code-dream-darwin-x64",
+      "os": "darwin",
+      "cpu": "x64",
+      "ripgrepPath": "lib/core/chunks/vendor/ripgrep/x64-darwin/rg",
+      "ripgrepSha256": "3b8b89f3afebe2d9ee6b59a217ee9892f08d1c06d3407765ff83abee78af19f3"
+    },
+    "linux-arm64": {
+      "package": "@glide-the/ink-claude-code-dream-linux-arm64",
+      "os": "linux",
+      "cpu": "arm64",
+      "ripgrepPath": "lib/core/chunks/vendor/ripgrep/arm64-linux/rg",
+      "ripgrepSha256": "fa8f640e4baec82e134c03983373833815dbaee5354f760818bb6840727a4385"
+    },
+    "linux-x64": {
+      "package": "@glide-the/ink-claude-code-dream-linux-x64",
+      "os": "linux",
+      "cpu": "x64",
+      "ripgrepPath": "lib/core/chunks/vendor/ripgrep/x64-linux/rg",
+      "ripgrepSha256": "55c2b8dd910f390b06b3a7c620603489b83fdfb647665e4d4bb32f3f54f09ea1"
+    }
+  },
+  "unsupported": {
+    "win32-arm64": "当前没有 Windows Runtime、sandbox、shell/tool 与 native dependency 的完整协议和业务验收证据。",
+    "win32-x64": "当前没有 Windows Runtime、sandbox、shell/tool 与 native dependency 的完整协议和业务验收证据。",
+    "linux-arm": "当前没有 Linux ARM32 Runtime、Bun 与 native dependency 的验收矩阵。",
+    "linux-musl": "当前只验证 glibc；musl 必须独立构建和验收。"
+  },
+  "publish": {
+    "access": "public",
+    "license": null,
+    "provenance": true,
+    "trustedPublisher": {
+      "repository": "glide-the/ink-claude-code-dream",
+      "workflow": "publish-npm.yml",
+      "environment": "npm"
+    },
+    "qualificationWorkflow": ".github/workflows/qualify-npm-runtime.yml",
+    "bootstrap": {
+      "trustedPublishingRequiresExistingPackages": true,
+      "initialPackageCount": 5,
+      "method": "manual-account-2fa-bootstrap-before-trusted-publisher-configuration"
+    },
+    "requiredRuntimeFlags": {
+      "productionEligible": true,
+      "publicationAllowed": true,
+      "redistributionAllowed": true
+    }
+  }
+}

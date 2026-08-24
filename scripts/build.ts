@@ -1,7 +1,7 @@
 // [Input] Consume checked-in TypeScript, legal/artifact/data/capability manifests, Bun lock state, and SOURCE_DATE_EPOCH.
-// [Output] Produce a deterministic Node 22 ESM release with split lazy chunks, contracts, maps, checksums, license report, and SBOM.
+// [Output] Produce a deterministic Node 22 ESM release with split lazy chunks, contracts, checksums, license report, and SBOM; source maps are forbidden.
 // [Pos] Bun-managed build entry; generated artifacts contain no Claude core, workspace, transcript, plugin, OAuth, setting, or secret material.
-// [Sync] 2026-08-24: align generated discovery, SBOM, and rollback receipts with Dream's locked SDK/CLI.
+// [Sync] 2026-08-24: align generated discovery, SBOM, and rollback receipts with Dream's locked SDK/CLI and remove source maps from every release form.
 
 import { build, version as esbuildVersion } from "esbuild";
 import { createHash } from "node:crypto";
@@ -53,8 +53,7 @@ const buildResult = await build({
   target: "node22",
   packages: "bundle",
   external: externals,
-  sourcemap: "external",
-  sourcesContent: false,
+  sourcemap: false,
   legalComments: "none",
   charset: "utf8",
   metafile: true,

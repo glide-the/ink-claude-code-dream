@@ -24,6 +24,7 @@
     "entrypoint": "lib/core/cli.js",
     "sourceVersionEvidence": "2.1.88",
     "cliCompatibilityVersion": "2.1.241",
+    "runtimeTarget": null,
     "corePruned": true,
     "productionEligible": false,
     "buildReceipt": "manifest/core-build-receipt.json"

@@ -1,7 +1,7 @@
 <!-- [Input] Bun locks, authorized external restored source, core profile/resolution map, compatibility manifest, and legacy envelope build. -->
 <!-- [Output] Give fail-closed local-core, legacy-envelope, packaging, and Git-boundary commands. -->
 <!-- [Pos] Build and release operator guide. -->
-<!-- [Sync] 2026-08-24: document content-addressed local installation and isolated Bun 1.4.0 discovery. -->
+<!-- [Sync] 2026-08-24: add fail-closed @glide-the four-platform npm staging, tarball, OIDC publication flow, and zero-source-map rule for every release form. -->
 
 # Build and package
 
@@ -9,6 +9,8 @@ There are two distinct build products. Do not combine their claims:
 
 - `dist/core-local/`: the qualified local minimal core, built from the explicitly authorized external Claude Code `2.1.88` restored source with exact Bun `1.4.0`; generated and Git-ignored.
 - `dist/release/ink-claude-code-dream-0.1.0/`: the existing Node supervisor/envelope around an external official CLI; useful as a historical process-boundary baseline, not a pruned core.
+
+Both products forbid `*.map`. The legacy envelope build disables esbuild source-map generation, while the minimal core, npm stage, npm dry-run inventory, and final tgz verifier independently reject source maps.
 
 ## Requirements
 
@@ -128,3 +130,35 @@ May enter Git: repository-authored replayable source-bound builders, capability 
 Must stay out of Git and public release: the read-only restored/vendor source input, `dist/core-local`, `dist/core-package-local`, generated artifacts, vendor binaries/maps, source-containing maps, transcripts, Workspace bodies, plugin materialization, settings, complete environment data, OAuth tokens, authentication files, and credentials. The ignored local package may contain only the runtime assets named by its checksum/SBOM/license manifests.
 
 The user's local build authorization is not a public redistribution grant, and no Anthropic redistribution authorization has been obtained. Do not publicly publish or redistribute the restored source or derived core. The local Dream main journey and final real Comfy lane passed; authenticated Admin UI evidence remains the separate missing-session gap. Official `2.1.241` remains the behavior comparator and rollback executable; the local implementation remains restored `2.1.88` plus separately applied MCP compatibility and OAuth repairs.
+
+## npm 多平台打包与发布
+
+查看不产生制品的发布布局：
+
+```sh
+npm run npm:plan
+```
+
+当前法律门会按预期失败，输出同时点名 `publicationAllowed` 和 `redistributionAllowed`：
+
+```sh
+npm run npm:legal
+npm run npm:gate
+npm pack --dry-run --json
+```
+
+前两个命令不能授权发布；第三个命令还会由根包 lifecycle 明确拒绝 legacy envelope。取得书面再分发授权、补齐发布许可证，并对某个 native target 完成独立 qualification 后，才使用：
+
+```sh
+SOURCE_DATE_EPOCH=1787443200 \
+node scripts/npm-release.mjs stage \
+  --target darwin-arm64 \
+  --package-root /absolute/path/to/qualified/ink-claude-code-dream-0.1.0 \
+  --output-root dist/npm-stage
+
+node scripts/smoke-npm-release.mjs dist/npm-stage/darwin-arm64
+```
+
+四个平台必须在对应 native runner 上分别执行；禁止交叉打包。平台包固定依赖并实测 `bun@1.4.0`，同时校验 target、manifest、ripgrep SHA-256。所有 `*.map` 在 core material、staging、prepack、npm dry-run inventory 和最终 tgz 五层都被拒绝。
+
+先由 `.github/workflows/qualify-npm-runtime.yml` 在四个受控 native self-hosted runner 生成精确 commit/target 的 qualification artifact，再由 `.github/workflows/publish-npm.yml` 校验 workflow path、同仓库、成功状态、head SHA 与 ref 后进入 Trusted Publishing OIDC 流程；法律 gate 为 false 时不会打包或发布。五个包首次创建必须在账户启用 2FA 后手工 bootstrap，之后才能配置 Trusted Publisher。完整架构和外部 npm 设置见 [npm 多平台发布设计](../design/npm多平台发布设计.md)。
