@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room policies, source/build manifests, provider-free tests, five npm tarballs, and host measurements. -->
 <!-- [Output] 给出版本/能力矩阵、真实业务回执边界、内存观测、正式制品摘要和发布前命令证据。 -->
-<!-- [Pos] Clean-room Runtime 的 digest-bound 技术与发布资格记录；registry 回下载仍是发布后证据。 -->
-<!-- [Sync] 2026-08-24：绑定最终 Dream 真实业务回执并记录开放发布门后的正式五包摘要。 -->
+<!-- [Pos] Clean-room Runtime 的 digest-bound 技术、发布资格与 registry 回下载记录。 -->
+<!-- [Sync] 2026-08-24：记录 main qualification、公共 registry 五包和匿名 fresh-install 回执。 -->
 
 # Clean-room Runtime 技术验证
 
@@ -17,7 +17,7 @@ PostgreSQL 的公开生产入口完成两轮同 Thread 对话、refresh/resume�
 因此三个 artifact gate 和 `npmPublishAllowed` 均已显式置为 true，正式 package prepack 通过。
 darwin-arm64 是真实宿主业务与 native execution 资格；darwin-x64、linux-arm64、linux-x64 的
 true 表示 cross-build native format、精确 inventory、verifier 与复现性资格，不虚构为相应宿主
-上的 live execution。npm registry 回下载是发布后证据，必须在首次发布后补齐。
+上的 live execution。npm registry 回下载证据现已补齐。
 
 ## 版本与协议矩阵
 
@@ -65,13 +65,14 @@ true 表示 cross-build native format、精确 inventory、verifier 与复现性
 
 | target/package | executable bytes / format | executable SHA-256 | tgz bytes | tgz SHA-256 |
 | --- | ---: | --- | ---: | --- |
-| selector | Node launcher | `df77ddf569a7f035e868716360d8ee94874c73fbf67a84a60f681224a1aa7d30` | 18,362 | `72a29df28f5a6515f5a86fd4cbc080c22b70a58d915382c3e20539ffb49b58e9` |
-| darwin-arm64 | 64,868,210 / Mach-O arm64 | `04372c5b48d0e49cb2a908401dfb7bd0b8b7cb18e030f2ca4bfeb9949d0d22be` | 26,190,521 | `0409827b14b8ac5c728694c7db3e6ec9d6d1a425e6ef80a98579f3a709eb8faf` |
-| darwin-x64 | 71,654,816 / Mach-O x64 | `9a9a86c053ab97944550792efc90b76a0161c1b98bb624be9e7d7e140bd9a6ee` | 28,749,371 | `33d696c4f0d6666c36c46c158253a9b945b796f4e185e1436c21b467193500a1` |
-| linux-arm64 | 83,412,984 / ELF arm64 | `c876c14f0d4803af6132ab5a37414a97467ea60e106a3b80b88338e100544884` | 36,871,439 | `b6ed4fbf6087efacb72af2170e03f7ac8a5e83a2deaa637b1df0f6cec1cb8dc9` |
-| linux-x64 | 83,498,184 / ELF x64 | `3d90ec6af53a753fa2c49bb740451243fd79dd37edd198181e90b8ca260426fd` | 36,877,788 | `d400b2e5ce05c7dacfa238f29834a6530f5e59a27d5feb115b3e12936de55f82` |
+| selector | Node launcher | `df77ddf569a7f035e868716360d8ee94874c73fbf67a84a60f681224a1aa7d30` | 18,404 | `3c7c357eda4107beded55e87c1e21ee0c7a0c9ec4e46927a3591bdb0557f4d4f` |
+| darwin-arm64 | 64,868,210 / Mach-O arm64 | `04372c5b48d0e49cb2a908401dfb7bd0b8b7cb18e030f2ca4bfeb9949d0d22be` | 26,999,879 | `85906499553664f7af82cd004fcf29041041c9f56c76d675f33a1b8607c7ea63` |
+| darwin-x64 | 71,654,816 / Mach-O x64 | `9a9a86c053ab97944550792efc90b76a0161c1b98bb624be9e7d7e140bd9a6ee` | 29,149,785 | `8aaf33031b2a51495f30a14196f8d8eaa85f9c71853e46601ad5bef561588090` |
+| linux-arm64 | 83,412,984 / ELF arm64 | `c876c14f0d4803af6132ab5a37414a97467ea60e106a3b80b88338e100544884` | 37,961,901 | `aa5f1dea21986b42b88b9f1b4bbfd2c86f0ce4a778343a2ba20ec23aa7ecd583` |
+| linux-x64 | 83,498,184 / ELF x64 | `3d90ec6af53a753fa2c49bb740451243fd79dd37edd198181e90b8ca260426fd` | 37,465,743 | `29b015399b6782dbe0c1ff0eefac04081017bdda5f13c9753436e6f2f3ad0176` |
 
-表中的 tgz 是绑定最终回执 digest 的正式发布候选，不含 fixture 字段；五个 generated prepack
+表中的 tgz 是 main commit `c4fb8df1de43d756c3bde90523cc589c8f66e837`、qualification run
+`32726262238` 生成并实际发布到 registry 的正式制品，不含 fixture 字段；五个 generated prepack
 均要求三个 artifact gate、目标资格、回执 digest 和 npm 授权精确为 true。Dream 实际验收使用
 回执内固定的前一候选 tgz；其 source tree 与四个 executable digest 与正式候选一致，正式 tgz
 仅因加入开放门和回执 attestation 而改变摘要。两次完整四目标编译与该五包打包后，四个 executable SHA 文件和聚合
@@ -112,8 +113,10 @@ darwin-arm64 standalone，不包含 selector Node 进程。`/usr/bin/time -l` �
 - 两轮 executable/tarball `cmp`：exit 0；
 - `find dist/cleanroom-targets dist/cleanroom-npm -name '*.map'`：零输出。
 
-发布前证据已齐并得到显式公共 npm 授权。发布顺序固定为四个平台包逐一成功并可从 registry
-读取后，再发布 selector；版本不可覆盖。首次 bootstrap 使用账号 2FA 和同一 main commit 的
-qualification 制品，随后为五包配置 Trusted Publisher。发布后必须从 registry 全新安装、执行
-两个 alias、核对 manifest/attestation/no-map，并调用 Dream 的真实 resolver；该结果是唯一剩余的
-`postPublicationEvidence`。
+发布后回执：四个平台包先完成 `PUT 200`，并分别由 npm visibility API 确认为 public；selector
+随后完成 `PUT 200`。五个公共 packument 均返回 `0.1.0`、MIT 和 tarball URL，其 SHA-512
+integrity 与 qualification tgz 逐包一致。使用 Node `24.13.0`、npm `11.6.2`、空安装目录、
+全新 cache 且 `npm_config_userconfig=/dev/null` 的匿名 registry 安装 exit 0，只安装 selector 与
+darwin-arm64 可选包；`claude --version` 和 `ink-claude-code-dream --version` 均输出
+`2.1.241 (Claude Code)`，安装树零 `.map`，Dream 真实 Python resolver 成功解析 selector 的
+`release-manifest.json`。版本不可覆盖，后续版本需配置五包 Trusted Publisher。
