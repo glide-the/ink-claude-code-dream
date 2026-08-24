@@ -1,7 +1,7 @@
 // [Input] Process argv plus inline or file-backed JSON containing mcpServers.
 // [Output] Strict normalized MCP configs keyed by the exact configured server name.
 // [Pos] Untrusted configuration boundary for the clean-room MCP client.
-// [Sync] 2026-08-24: parse repeated --mcp-config values for stdio and Streamable HTTP.
+// [Sync] 2026-08-25: treat legacy OAuth markers as provider hints, never auth facts.
 
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -43,7 +43,7 @@ function normalizeServer(name: string, raw: unknown): McpServerConfig {
   if (!isObject(raw)) throw new Error(`mcpServers.${name} must be an object`);
 
   const enabled = optionalBoolean(raw.enabled, `mcpServers.${name}.enabled`, true);
-  const requiresOAuth =
+  const legacyOAuthHint =
     raw.oauth === true || raw.authProvider !== undefined || raw.authorization !== undefined;
 
   if (typeof raw.command === "string" && raw.command.length > 0) {
@@ -60,7 +60,7 @@ function normalizeServer(name: string, raw: unknown): McpServerConfig {
       env: objectOfStrings(raw.env, `mcpServers.${name}.env`),
       ...(typeof raw.cwd === "string" ? { cwd: raw.cwd } : {}),
       enabled,
-      requiresOAuth,
+      requiresOAuth: legacyOAuthHint,
     };
   }
 
@@ -71,7 +71,7 @@ function normalizeServer(name: string, raw: unknown): McpServerConfig {
         type: "unsupported",
         transport: String(transport),
         enabled,
-        requiresOAuth,
+        requiresOAuth: legacyOAuthHint,
       };
     }
     let parsed: URL;
@@ -88,12 +88,12 @@ function normalizeServer(name: string, raw: unknown): McpServerConfig {
       url: parsed.href,
       headers: objectOfStrings(raw.headers, `mcpServers.${name}.headers`),
       enabled,
-      requiresOAuth,
+      requiresOAuth: legacyOAuthHint,
     };
   }
 
   const transport = typeof raw.type === "string" ? raw.type : "unknown";
-  return { type: "unsupported", transport, enabled, requiresOAuth };
+  return { type: "unsupported", transport, enabled, requiresOAuth: legacyOAuthHint };
 }
 
 function mcpConfigValues(argv: string[]): string[] {

@@ -2,7 +2,7 @@
 // [Input] Local provider-free OAuth/DCR fixture and clean-room persistent OAuth modules.
 // [Output] Evidence for PKCE, callbacks, refresh, permissions, logout, probes, and safe errors.
 // [Pos] Provider-free clean-room MCP OAuth contract test; it never opens a browser or uses a real token.
-// [Sync] 2026-08-24: cover projected stale-token refresh plus the complete headless OAuth lifecycle.
+// [Sync] 2026-08-25: preserve OAuth lifecycle while proving marker-free projected-token reuse.
 
 import assert from "node:assert/strict";
 import { once } from "node:events";
@@ -18,7 +18,10 @@ import {
   probeUnauthenticatedMcpOAuth,
 } from "../src/cleanroom/mcp/oauth/index.ts";
 import { createMcpRegistryFromArgv, McpRegistry } from "../src/cleanroom/mcp/index.ts";
-import { UserMcpStateStore } from "../src/cleanroom/mcp/management-cli/index.ts";
+import {
+  createUserOAuthContext,
+  UserMcpStateStore,
+} from "../src/cleanroom/mcp/management-cli/index.ts";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -34,7 +37,7 @@ function readRequestBody(request) {
   });
 }
 
-async function startOAuthFixture() {
+async function startOAuthFixture(options = {}) {
   const events = [];
   let origin;
   let validAccessToken = "fixture-access-secret";
@@ -105,7 +108,7 @@ async function startOAuthFixture() {
     ) {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({
-        resource: `${origin}/mcp`,
+        resource: options.invalidResource ? `${origin}/other` : `${origin}/mcp`,
         authorization_servers: [origin],
         scopes_supported: ["mcp:tools", "offline_access"],
       }));
@@ -309,6 +312,34 @@ test("storage rejects symlinked config roots and OAuth errors never expose fixtu
   }
 });
 
+test("cancelling a new login clears pending state but preserves a working projected token", async () => {
+  const directory = await mkdtemp(path.join(repositoryRoot, "tests", ".cleanroom-oauth-"));
+  const configDir = path.join(directory, "config");
+  const store = await UserMcpStateStore.open(configDir);
+  const context = await createUserOAuthContext({
+    store,
+    serverName: "cancel:fixture",
+    serverUrl: "https://example.invalid/mcp",
+    redirectUrl: "http://127.0.0.1/oauth/callback",
+  });
+  try {
+    await context.provider.saveTokens({
+      access_token: "fixture-working-secret",
+      refresh_token: "fixture-refresh-secret",
+      token_type: "Bearer",
+    });
+    await context.provider.saveCodeVerifier("fixture-pending-verifier");
+    await context.cancel();
+    const privateState = await context.provider.store.read();
+    assert.equal(privateState.tokens.access_token, "fixture-working-secret");
+    assert.equal(privateState.codeVerifier, undefined);
+    const projected = await store.readOAuth("cancel:fixture");
+    assert.equal(projected.state.tokens.access_token, "fixture-working-secret");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("unauthenticated probe reports challenge/discovery and never sends authorization", async () => {
   const fixture = await startOAuthFixture();
   const observedHeaders = [];
@@ -327,7 +358,7 @@ test("unauthenticated probe reports challenge/discovery and never sends authoriz
     assert.equal(result.registrationEndpoint.endsWith("/register"), true);
     assert(observedHeaders.length >= 3);
     assert.equal(oauthNeedsAuthFromStatus(401)?.code, "oauth_required");
-    assert.equal(oauthNeedsAuthFromStatus(403)?.status, "needs-auth");
+    assert.equal(oauthNeedsAuthFromStatus(403), undefined);
     assert.equal(oauthNeedsAuthFromStatus(500), undefined);
   } finally {
     await fixture.close();
@@ -393,6 +424,40 @@ test("registry exposes authorization URL, finishes callback, reconnects, and log
   }
 });
 
+test("registry classifies invalid protected-resource metadata without exposing it", async () => {
+  const directory = await mkdtemp(path.join(repositoryRoot, "tests", ".cleanroom-oauth-"));
+  const configDir = path.join(directory, "config");
+  const fixture = await startOAuthFixture({ invalidResource: true });
+  const configs = new Map([
+    ["invalid:metadata", {
+      type: "http",
+      url: fixture.serverUrl,
+      headers: {},
+      enabled: true,
+      requiresOAuth: true,
+    }],
+  ]);
+  const registry = new McpRegistry(configs, {
+    oauthProviderFactory: (_serverName, config) => new PersistentOAuthClientProvider({
+      configDir,
+      serverUrl: config.url,
+      redirectUrl: "http://127.0.0.1/oauth/callback",
+    }),
+  });
+  try {
+    const classified = await registry.connect("invalid:metadata");
+    assert.equal(classified.status, "failed");
+    assert.equal(classified.authentication, "unknown");
+    assert.equal(classified.failureCode, "mcp_auth_metadata_invalid");
+    assert.equal(classified.error, "MCP authorization metadata is invalid");
+    assert.equal(JSON.stringify(classified).includes(fixture.serverUrl), false);
+  } finally {
+    await registry.close();
+    await fixture.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test("registry refreshes an expired projected access token before MCP discovery", async () => {
   const directory = await mkdtemp(path.join(repositoryRoot, "tests", ".cleanroom-oauth-"));
   const configDir = path.join(directory, "config");
@@ -425,7 +490,7 @@ test("registry refreshes an expired projected access token before MCP discovery"
       "--mcp-config",
       JSON.stringify({
         mcpServers: {
-          [serverName]: { type: "http", url: fixture.serverUrl, oauth: true },
+          [serverName]: { type: "http", url: fixture.serverUrl },
         },
       }),
     ];

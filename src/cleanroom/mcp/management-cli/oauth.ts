@@ -1,7 +1,7 @@
 // [Input] One configured HTTP server, Dream's projected mcpOAuth value, and the public MCP OAuth provider.
 // [Output] Hydrated headless OAuth flow with rotation-safe Dream credential projection synchronization.
 // [Pos] Compatibility bridge between clean-room OAuth persistence and Dream thread projection.
-// [Sync] 2026-08-24: preserve newer private tokens and mirror refresh rotation/invalidation to Dream.
+// [Sync] 2026-08-25: cancel pending login state without deleting previously working tokens.
 
 import type { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
@@ -50,6 +50,7 @@ export interface UserOAuthContext {
   flow: HeadlessMcpOAuthFlow;
   persist(): Promise<void>;
   logout(): Promise<void>;
+  cancel(): Promise<void>;
   authenticated(): Promise<boolean>;
 }
 
@@ -99,6 +100,14 @@ export async function createUserOAuthContext(
       provider.stopAcceptingMutations();
       await flow.logout();
       await options.store.deleteOAuth(options.serverName);
+    },
+    async cancel() {
+      const preserveTokens = Boolean((await provider.tokens())?.access_token);
+      provider.stopAcceptingMutations();
+      const scope = preserveTokens ? "verifier" : "all";
+      await provider.invalidateCredentials(scope).catch(() => undefined);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      await provider.invalidateCredentials(scope).catch(() => undefined);
     },
     async authenticated() {
       return Boolean((await provider.tokens())?.access_token);

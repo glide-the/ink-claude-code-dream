@@ -3,7 +3,7 @@
 // [Output] Provider-free evidence for config, discovery, calls, resources, status, and management APIs.
 // [Pos] Clean-room MCP contract test; it performs no provider, OAuth, credential, or remote call.
 // [Sync] 2026-08-24: cover stdio and local Streamable HTTP plus fail-closed boundaries.
-// [Sync] 2026-08-24: recognize the separately tested MCP CLI wire while preserving argv ownership.
+// [Sync] 2026-08-25: classify anonymous HTTP, 401, bare 403, 404, timeout, and network outcomes.
 
 import assert from "node:assert/strict";
 import { once } from "node:events";
@@ -98,6 +98,25 @@ async function startHttpFixture() {
   };
 }
 
+async function startRejectingHttpFixture({ status, delayMs = 0 }) {
+  const server = http.createServer(async (_request, response) => {
+    if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    response.writeHead(status, { "content-type": "application/json" });
+    response.end('{"error":"fixture_rejected"}');
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  assert(address && typeof address === "object");
+  return {
+    url: `http://127.0.0.1:${address.port}/mcp`,
+    close: async () => {
+      server.close();
+      await once(server, "close");
+    },
+  };
+}
+
 test("stdio config preserves colon identity and exposes discovery/call/resource APIs", async () => {
   const directory = await mkdtemp(path.join(repositoryRoot, "tests", ".cleanroom-mcp-"));
   const fixture = path.join(directory, "stdio-fixture.mjs");
@@ -170,6 +189,8 @@ test("Streamable HTTP uses SDK initialize, discovery, calls, and reads", async (
   try {
     const connected = await registry.connect("http:fixture");
     assert.equal(connected.status, "connected", connected.error);
+    assert.equal(connected.authentication, "anonymous");
+    assert.equal(connected.failureCode, undefined);
     assert.equal(connected.serverInfo?.name, "http-fixture");
     assert.equal(
       (await registry.callTool("http:fixture", "echo", { message: "ok" })).content?.[0]?.text,
@@ -195,22 +216,66 @@ test("Streamable HTTP uses SDK initialize, discovery, calls, and reads", async (
   }
 });
 
-test("unsupported and unauthenticated OAuth boundaries fail closed without consuming non-MCP argv", async () => {
+test("legacy OAuth hint does not block anonymous HTTP and non-MCP argv remains unconsumed", async () => {
+  const fixture = await startHttpFixture();
   const configs = await parseMcpConfigArgv([
     "--mcp-config",
     JSON.stringify({
       mcpServers: {
         legacy: { type: "sse", url: "https://example.invalid/mcp" },
-        protected: { type: "http", url: "https://example.invalid/mcp", oauth: true },
+        hinted: { type: "http", url: fixture.url, oauth: true },
       },
     }),
   ]);
   const registry = new McpRegistry(configs);
   try {
     assert.equal((await registry.connect("legacy")).status, "failed");
-    assert.equal((await registry.connect("protected")).status, "needs-auth");
+    const hinted = await registry.connect("hinted");
+    assert.equal(hinted.status, "connected", hinted.error);
+    assert.equal(hinted.authentication, "anonymous");
     assert.equal(await runMcpManagementCli(["--version"]), undefined);
   } finally {
     await registry.close();
+    await fixture.close();
+  }
+});
+
+test("registry exposes mutually exclusive safe HTTP failure classifications", async () => {
+  const fixtures = {
+    required: await startRejectingHttpFixture({ status: 401 }),
+    forbidden: await startRejectingHttpFixture({ status: 403 }),
+    missing: await startRejectingHttpFixture({ status: 404 }),
+    timeout: await startRejectingHttpFixture({ status: 200, delayMs: 80 }),
+  };
+  const configs = await parseMcpConfigArgv([
+    "--mcp-config",
+    JSON.stringify({
+      mcpServers: Object.fromEntries(
+        Object.entries(fixtures).map(([name, fixture]) => [name, { type: "http", url: fixture.url }]),
+      ),
+    }),
+  ]);
+  const registry = new McpRegistry(configs, { requestTimeoutMs: 25 });
+  try {
+    const required = await registry.connect("required");
+    assert.equal(required.status, "needs-auth");
+    assert.equal(required.authentication, "required");
+    assert.equal(required.failureCode, "mcp_auth_required");
+
+    const forbidden = await registry.connect("forbidden");
+    assert.equal(forbidden.status, "failed");
+    assert.equal(forbidden.authentication, "unknown");
+    assert.equal(forbidden.failureCode, "mcp_forbidden");
+
+    const missing = await registry.connect("missing");
+    assert.equal(missing.status, "failed");
+    assert.equal(missing.failureCode, "mcp_endpoint_not_found");
+
+    const timedOut = await registry.connect("timeout");
+    assert.equal(timedOut.status, "failed");
+    assert.equal(timedOut.failureCode, "mcp_timeout");
+  } finally {
+    await registry.close();
+    await Promise.all(Object.values(fixtures).map((fixture) => fixture.close()));
   }
 });

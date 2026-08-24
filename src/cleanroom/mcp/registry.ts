@@ -1,7 +1,7 @@
 // [Input] Normalized MCP configs and official SDK v1 client/transports.
 // [Output] Lifecycle registry, discovery inventory, calls, reads, and model tool bindings.
 // [Pos] Stateful connection owner for the clean-room MCP client slice.
-// [Sync] 2026-08-24: integrate headless OAuth provider, callback, logout, and auth-state transitions.
+// [Sync] 2026-08-25: make one anonymous-first classifier authoritative for every caller.
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
@@ -10,7 +10,7 @@ import {
   StdioClientTransport,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type { FetchLike, Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { mcpModelToolName } from "./naming.ts";
 import {
   HeadlessMcpOAuthFlow,
@@ -18,6 +18,8 @@ import {
 } from "./oauth/index.ts";
 import type {
   HttpMcpServerConfig,
+  McpAuthenticationState,
+  McpFailureCode,
   McpPromptDescription,
   McpRegistryEntry,
   McpResourceContents,
@@ -35,16 +37,25 @@ interface LiveConnection {
   transport: Transport;
 }
 
+interface HttpObservation {
+  serverUrl: string;
+  sawUnauthorized: boolean;
+  discoveryAttempted: boolean;
+  networkFailed: boolean;
+}
+
 interface MutableEntry extends McpRegistryEntry {
   config: McpServerConfig;
   connection?: LiveConnection;
   oauthProvider?: PersistentOAuthClientProvider;
+  httpObservation?: HttpObservation;
 }
 
 export interface McpRegistryOptions {
   clientName?: string;
   clientVersion?: string;
   requestTimeoutMs?: number;
+  httpFetch?: FetchLike;
   oauthProviderFactory?: (
     serverName: string,
     config: HttpMcpServerConfig,
@@ -52,10 +63,6 @@ export interface McpRegistryOptions {
 }
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error && error.message ? error.message : "MCP connection failed";
-}
 
 function errorStatus(error: unknown): number | undefined {
   if (!error || typeof error !== "object") return undefined;
@@ -65,9 +72,89 @@ function errorStatus(error: unknown): number | undefined {
   return undefined;
 }
 
-function isNeedsAuth(error: unknown): boolean {
+interface FailureClassification {
+  status: Extract<McpServerStatus, "needs-auth" | "failed">;
+  authentication: McpAuthenticationState;
+  failureCode: McpFailureCode;
+  message: string;
+}
+
+function isTimeout(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { name?: unknown; message?: unknown; code?: unknown };
+  return candidate.name === "AbortError" || candidate.name === "TimeoutError" ||
+    candidate.code === "ETIMEDOUT" ||
+    (typeof candidate.message === "string" && /timed?\s*out|timeout/iu.test(candidate.message));
+}
+
+function classifyFailure(
+  error: unknown,
+  observation?: HttpObservation,
+): FailureClassification {
   const status = errorStatus(error);
-  return error instanceof UnauthorizedError || status === 401 || status === 403;
+  if (error instanceof UnauthorizedError || status === 401) {
+    return {
+      status: "needs-auth",
+      authentication: "required",
+      failureCode: "mcp_auth_required",
+      message: "MCP authorization is required",
+    };
+  }
+  if (status === 403) {
+    return {
+      status: "failed",
+      authentication: "unknown",
+      failureCode: "mcp_forbidden",
+      message: "MCP server rejected the request",
+    };
+  }
+  if (status === 404) {
+    return {
+      status: "failed",
+      authentication: "unknown",
+      failureCode: "mcp_endpoint_not_found",
+      message: "MCP endpoint was not found",
+    };
+  }
+  if (isTimeout(error)) {
+    return {
+      status: "failed",
+      authentication: "unknown",
+      failureCode: "mcp_timeout",
+      message: "MCP request timed out",
+    };
+  }
+  if (observation?.networkFailed) {
+    return {
+      status: "failed",
+      authentication: "unknown",
+      failureCode: "mcp_network_error",
+      message: "MCP network request failed",
+    };
+  }
+  if (observation?.sawUnauthorized && observation.discoveryAttempted) {
+    return {
+      status: "failed",
+      authentication: "unknown",
+      failureCode: "mcp_auth_metadata_invalid",
+      message: "MCP authorization metadata is invalid",
+    };
+  }
+  if (error instanceof TypeError || (error && typeof error === "object" &&
+    typeof (error as { code?: unknown }).code === "string")) {
+    return {
+      status: "failed",
+      authentication: "unknown",
+      failureCode: "mcp_network_error",
+      message: "MCP network request failed",
+    };
+  }
+  return {
+    status: "failed",
+    authentication: "unknown",
+    failureCode: "mcp_server_rejected",
+    message: "MCP server request failed",
+  };
 }
 
 function cloneEntry(entry: MutableEntry): McpRegistryEntry {
@@ -75,8 +162,10 @@ function cloneEntry(entry: MutableEntry): McpRegistryEntry {
     name: entry.name,
     type: entry.type,
     status: entry.status,
+    authentication: entry.authentication,
     enabled: entry.enabled,
     ...(entry.error ? { error: entry.error } : {}),
+    ...(entry.failureCode ? { failureCode: entry.failureCode } : {}),
     ...(entry.serverInfo ? { serverInfo: { ...entry.serverInfo } } : {}),
     tools: entry.tools.map((tool) => ({ ...tool })),
     resources: entry.resources.map((resource) => ({ ...resource })),
@@ -88,6 +177,8 @@ function cloneEntry(entry: MutableEntry): McpRegistryEntry {
 function makeTransport(
   config: StdioMcpServerConfig | HttpMcpServerConfig,
   oauthProvider?: PersistentOAuthClientProvider,
+  httpFetch?: FetchLike,
+  observation?: HttpObservation,
 ): Transport {
   if (config.type === "stdio") {
     return new StdioClientTransport({
@@ -98,15 +189,33 @@ function makeTransport(
       stderr: "pipe",
     });
   }
+  const fetchWithObservation: FetchLike = async (input, init) => {
+    const requestUrl = input instanceof Request ? input.url : String(input);
+    try {
+      const response = await (httpFetch ?? fetch)(input, init);
+      if (observation) {
+        const isServerEndpoint = new URL(requestUrl).href === observation.serverUrl;
+        if (isServerEndpoint && response.status === 401) observation.sawUnauthorized = true;
+        if (!isServerEndpoint && observation.sawUnauthorized) {
+          observation.discoveryAttempted = true;
+        }
+      }
+      return response;
+    } catch (error) {
+      if (observation) observation.networkFailed = true;
+      throw error;
+    }
+  };
   return new StreamableHTTPClientTransport(new URL(config.url), {
     requestInit: { headers: config.headers },
     ...(oauthProvider ? { authProvider: oauthProvider } : {}),
+    fetch: fetchWithObservation,
   });
 }
 
 export class McpAuthorizationRequiredError extends Error {
   readonly status = "needs-auth" as const;
-  readonly code = "mcp_oauth_required" as const;
+  readonly code = "mcp_auth_required" as const;
 
   constructor(serverName: string) {
     super(`MCP server ${serverName} requires authorization`);
@@ -119,12 +228,14 @@ export class McpRegistry {
   private readonly clientName: string;
   private readonly clientVersion: string;
   private readonly requestTimeoutMs: number;
+  private readonly httpFetch?: FetchLike;
   private readonly oauthProviderFactory?: McpRegistryOptions["oauthProviderFactory"];
 
   constructor(configs: ReadonlyMap<string, McpServerConfig>, options: McpRegistryOptions = {}) {
     this.clientName = options.clientName ?? "ink-claude-code-dream";
     this.clientVersion = options.clientVersion ?? "0.1.0";
     this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    this.httpFetch = options.httpFetch;
     this.oauthProviderFactory = options.oauthProviderFactory;
     if (!Number.isSafeInteger(this.requestTimeoutMs) || this.requestTimeoutMs <= 0) {
       throw new Error("requestTimeoutMs must be a positive integer");
@@ -134,6 +245,7 @@ export class McpRegistry {
         name,
         type: config.type,
         status: config.enabled ? "pending" : "disabled",
+        authentication: "unknown",
         enabled: config.enabled,
         config,
         tools: [],
@@ -159,24 +271,25 @@ export class McpRegistry {
     await this.closeConnection(entry);
     this.clearDiscovery(entry);
     entry.status = "pending";
+    entry.authentication = "unknown";
     delete entry.error;
+    delete entry.failureCode;
     delete entry.oauth;
+    delete entry.httpObservation;
 
-    if (entry.config.requiresOAuth) {
-      if (entry.config.type !== "http") {
-        entry.status = "failed";
-        entry.error = "OAuth is supported only for Streamable HTTP MCP servers";
-        return cloneEntry(entry);
-      }
+    if (entry.config.type === "http") {
       entry.oauthProvider ??= this.oauthProviderFactory?.(entry.name, entry.config);
-      if (!entry.oauthProvider) {
-        entry.status = "needs-auth";
-        entry.error = "MCP authorization is required";
-        return cloneEntry(entry);
-      }
+      entry.httpObservation = {
+        serverUrl: entry.config.url,
+        sawUnauthorized: false,
+        discoveryAttempted: false,
+        networkFailed: false,
+      };
     }
     if (entry.config.type === "unsupported") {
       entry.status = "failed";
+      entry.authentication = "unknown";
+      entry.failureCode = "mcp_transport_unsupported";
       entry.error = `unsupported MCP transport: ${entry.config.transport}`;
       return cloneEntry(entry);
     }
@@ -185,18 +298,27 @@ export class McpRegistry {
       { name: this.clientName, version: this.clientVersion },
       { capabilities: {} },
     );
-    const transport = makeTransport(entry.config, entry.oauthProvider);
+    const transport = makeTransport(
+      entry.config,
+      entry.oauthProvider,
+      this.httpFetch,
+      entry.httpObservation,
+    );
     entry.connection = { client, transport };
     try {
       await client.connect(transport, { timeout: this.requestTimeoutMs });
       await this.discover(entry);
       entry.status = "connected";
+      entry.authentication = (await entry.oauthProvider?.tokens())?.access_token
+        ? "authenticated"
+        : "anonymous";
       return cloneEntry(entry);
     } catch (error) {
-      entry.status = isNeedsAuth(error) ? "needs-auth" : "failed";
-      entry.error = entry.status === "needs-auth"
-        ? "MCP authorization is required"
-        : errorMessage(error);
+      const failure = classifyFailure(error, entry.httpObservation);
+      entry.status = failure.status;
+      entry.authentication = failure.authentication;
+      entry.failureCode = failure.failureCode;
+      entry.error = failure.message;
       const pending = entry.oauthProvider?.takePendingAuthorization();
       if (pending) entry.oauth = pending;
       await this.closeConnection(entry);
@@ -218,6 +340,8 @@ export class McpRegistry {
     }).completeCallback(callback);
     if (!result.ok) {
       entry.status = "needs-auth";
+      entry.authentication = "required";
+      entry.failureCode = "mcp_oauth_failed";
       entry.error = result.message;
       return cloneEntry(entry);
     }
@@ -235,12 +359,17 @@ export class McpRegistry {
       serverUrl: (entry.config as HttpMcpServerConfig).url,
       provider: entry.oauthProvider,
     }).logout();
-    await this.closeConnection(entry);
-    this.clearDiscovery(entry);
-    delete entry.oauth;
-    entry.status = entry.enabled ? "needs-auth" : "disabled";
-    entry.error = entry.enabled ? "MCP authorization is required" : undefined;
-    return cloneEntry(entry);
+    if (!entry.enabled) {
+      await this.closeConnection(entry);
+      this.clearDiscovery(entry);
+      delete entry.oauth;
+      delete entry.error;
+      delete entry.failureCode;
+      entry.status = "disabled";
+      entry.authentication = "unknown";
+      return cloneEntry(entry);
+    }
+    return this.connect(serverName);
   }
 
   async toggle(serverName: string, enabled: boolean): Promise<McpRegistryEntry> {
@@ -251,7 +380,9 @@ export class McpRegistry {
       await this.closeConnection(entry);
       this.clearDiscovery(entry);
       entry.status = "disabled";
+      entry.authentication = "unknown";
       delete entry.error;
+      delete entry.failureCode;
       delete entry.oauth;
       return cloneEntry(entry);
     }
@@ -377,14 +508,19 @@ export class McpRegistry {
   }
 
   private async transitionAuthFailure(entry: MutableEntry, error: unknown): Promise<void> {
-    if (!isNeedsAuth(error)) return;
-    entry.status = "needs-auth";
-    entry.error = "MCP authorization is required";
+    const failure = classifyFailure(error, entry.httpObservation);
+    if (failure.failureCode !== "mcp_auth_required" && failure.failureCode !== "mcp_forbidden") {
+      return;
+    }
+    entry.status = failure.status;
+    entry.authentication = failure.authentication;
+    entry.failureCode = failure.failureCode;
+    entry.error = failure.message;
     const pending = entry.oauthProvider?.takePendingAuthorization();
     if (pending) entry.oauth = pending;
     this.clearDiscovery(entry);
     await this.closeConnection(entry);
-    throw new McpAuthorizationRequiredError(entry.name);
+    if (failure.status === "needs-auth") throw new McpAuthorizationRequiredError(entry.name);
   }
 
   private async discover(entry: MutableEntry): Promise<void> {
