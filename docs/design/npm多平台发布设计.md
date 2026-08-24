@@ -1,6 +1,7 @@
 <!-- [Input] npm/local artifact policies, native Runtime assets, Bun package contract, and legal qualification gates. -->
 <!-- [Output] Define the Chinese architecture and fail-closed workflow for scoped multi-platform npm delivery. -->
 <!-- [Pos] Authoritative npm publication design; it does not grant redistribution rights or contain Runtime source. -->
+<!-- [Sync] 2026-08-24: record the real GitHub npm environment, main-only policy, private-plan reviewer limit, and missing native runners. -->
 
 # 精简 Claude Runtime 的 npm 多平台发布设计
 
@@ -72,6 +73,8 @@ Windows 明确 fail-closed。虽然参考包里存在 Windows ripgrep，但没�
 `.github/workflows/qualify-npm-runtime.yml` 在四个带 `ink-runtime-qualification` 与 native target 标签的受控 self-hosted runner 上，分别执行 core build、SDK/MCP differential、Dream MCP management、OAuth aggregate qualification、package 与 verifier，输出四个 `qualified-core-<target>` artifact。`.github/workflows/publish-npm.yml` 只允许手工启动，并校验 qualification run 来自同仓库、指定 workflow、成功状态、当前精确 commit 与 ref；发布 job 才拥有 `id-token: write`。两条 workflow 使用的第三方 Action 全部固定到 40 位 commit SHA。
 
 发布顺序是四个平台包后顶层选择包，命令统一带 `--access public --provenance`。由于 npm Trusted Publisher 只能为已经存在的包配置，首次创建这五个包必须由 `glide-the` 账户在启用 2FA 后手工 bootstrap；五个包都存在后再逐个配置 repository `glide-the/ink-claude-code-dream`、workflow `publish-npm.yml`、environment `npm`，后续才允许选择 `trusted_publishers_configured=true`。仓库不会保存长期 npm token。
+
+GitHub `npm` Environment 已创建，并只允许 `main` branch deployment。当前私有仓库套餐不支持 required-reviewer environment protection，GitHub API 对该规则返回 HTTP 422；因此人工意图门由手工 workflow dispatch、`trusted_publishers_configured` 明示输入、精确 qualification run 和法律 policy 共同承担，不能把 Environment 存在本身描述成独立人工审批。若仓库套餐升级，应补 required reviewer。当前 Actions runner inventory 为 0；正式 qualification 还需要四个带 `ink-runtime-qualification` 和精确 native target 标签的受控 runner。
 
 npm 当前登录身份是个人 scope `glide-the`，没有同名 organization，因此包名固定为 `@glide-the/*`。当前账号未启用 2FA 是首次 bootstrap 的明确阻断项，不能由仓库脚本代替处理。
 
