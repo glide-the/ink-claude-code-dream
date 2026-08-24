@@ -1,6 +1,7 @@
 // [Input] Consume opaque Claude CLI argv/stdio plus the server-owned runtime environment and release manifest.
 // [Output] Validate the pinned core/TMPDIR boundary, then transparently supervise the official CLI process group.
 // [Pos] Lazy-loaded execution boundary; no Claude protocol, MCP payload, transcript, setting, or secret is parsed here.
+// [Sync] 2026-08-24: align the SDK probe comment with Dream's locked 0.2.143 distribution.
 
 import { constants as fsConstants } from "node:fs";
 import { access, lstat, realpath } from "node:fs/promises";
@@ -14,8 +15,10 @@ const CONTROL_ENV_KEYS = [
   "INK_CLAUDE_RUNTIME_WORKSPACE_ROOT",
   "INK_CLAUDE_RUNTIME_TIMEOUT_MS",
   "INK_CLAUDE_RUNTIME_KILL_GRACE_MS",
+  "INK_CLAUDE_BARE_PROFILE",
   "CLAUDE_CODE_CLI_PATH",
 ] as const;
+const BARE_PROFILE = "dream-explicit-v1";
 const MAX_VERSION_OUTPUT_BYTES = 4096;
 const SIGNAL_NUMBERS: Partial<Record<NodeJS.Signals, number>> = {
   SIGHUP: 1,
@@ -60,11 +63,99 @@ async function executableFromPath(command: string): Promise<string | null> {
 
 export async function resolveCoreExecutable(): Promise<string> {
   const configured = process.env.INK_CLAUDE_CODE_EXECUTABLE?.trim();
+  if (configured && !isAbsolute(configured)) {
+    throw new Error("INK_CLAUDE_CODE_EXECUTABLE must be an absolute path");
+  }
   const executable = await executableFromPath(configured || "claude");
   if (!executable) {
     throw new Error("official Claude Code executable was not found");
   }
   return executable;
+}
+
+function hasFlag(args: string[], names: string[]): boolean {
+  return args.some((argument) =>
+    names.some((name) => argument === name || argument.startsWith(`${name}=`)),
+  );
+}
+
+function flagValues(args: string[], name: string): string[] {
+  const values: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    if (argument === name) {
+      const value = args[index + 1];
+      if (!value || value.startsWith("-")) {
+        throw new Error(`explicit bare profile requires a value for ${name}`);
+      }
+      values.push(value);
+      index += 1;
+    } else if (argument.startsWith(`${name}=`)) {
+      const value = argument.slice(name.length + 1);
+      if (!value) throw new Error(`explicit bare profile requires a value for ${name}`);
+      values.push(value);
+    }
+  }
+  return values;
+}
+
+async function validateExplicitCarrier(
+  raw: string,
+  label: string,
+  allowDirectory: boolean,
+): Promise<void> {
+  if (!isAbsolute(raw)) throw new Error(`${label} must use an absolute path`);
+  const info = await lstat(raw);
+  if (info.isSymbolicLink()) throw new Error(`${label} must not be a symlink`);
+  if (!info.isFile() && !(allowDirectory && info.isDirectory())) {
+    throw new Error(`${label} is not an allowed file or directory`);
+  }
+  await access(raw, fsConstants.R_OK);
+}
+
+async function validateBareProfile(args: string[]): Promise<void> {
+  const requested = hasFlag(args, ["--bare"]);
+  const profile = process.env.INK_CLAUDE_BARE_PROFILE?.trim();
+  if (!requested && !profile) return;
+  if (!requested || profile !== BARE_PROFILE) {
+    throw new Error("--bare requires explicit INK_CLAUDE_BARE_PROFILE=dream-explicit-v1");
+  }
+  if (!hasFlag(args, ["-p", "--print"])) {
+    throw new Error("explicit bare profile is limited to headless -p/--print launches");
+  }
+  if (!hasFlag(args, ["--strict-mcp-config"])) {
+    throw new Error("explicit bare profile requires --strict-mcp-config");
+  }
+  if (hasFlag(args, ["--no-session-persistence"])) {
+    throw new Error("explicit bare profile must preserve session persistence for resume");
+  }
+  const settings = flagValues(args, "--settings");
+  const mcpConfigs = flagValues(args, "--mcp-config");
+  const pluginDirectories = flagValues(args, "--plugin-dir");
+  if (settings.length !== 1) {
+    throw new Error("explicit bare profile requires exactly one --settings file");
+  }
+  if (mcpConfigs.length === 0) {
+    throw new Error("explicit bare profile requires --mcp-config");
+  }
+  if (pluginDirectories.length === 0) {
+    throw new Error("explicit bare profile requires --plugin-dir for plugins and skills");
+  }
+  await validateExplicitCarrier(settings[0], "--settings", false);
+  for (const path of mcpConfigs) await validateExplicitCarrier(path, "--mcp-config", false);
+  for (const path of pluginDirectories) {
+    await validateExplicitCarrier(path, "--plugin-dir", true);
+  }
+  const workspace = process.env.INK_CLAUDE_RUNTIME_WORKSPACE_ROOT?.trim();
+  if (!workspace || !isAbsolute(workspace)) {
+    throw new Error("explicit bare profile requires an absolute workspace root");
+  }
+  if ((await realpath(workspace)) !== (await realpath(process.cwd()))) {
+    throw new Error("explicit bare profile requires cwd to equal the declared workspace");
+  }
+  for (const resumeFlag of ["--resume", "--session-id"]) {
+    if (hasFlag(args, [resumeFlag])) flagValues(args, resumeFlag);
+  }
 }
 
 async function validateTmpdir(): Promise<string> {
@@ -162,26 +253,26 @@ function signalProcessGroup(pid: number | undefined, signal: NodeJS.Signals): vo
 
 export async function launchOfficialCli(args: string[]): Promise<LaunchResult> {
   const executable = await resolveCoreExecutable();
-  if (args.length === 1 && (args[0] === "-v" || args[0] === "--version")) {
-    const { readManifestEnvelope } = await import("./manifest.js");
-    const { manifest } = await readManifestEnvelope();
-    const actualVersion = await probeAndVerifyCoreVersion(executable, manifest);
-    process.stdout.write(`${actualVersion} (Claude Code)\n`);
-    return { exitCode: 0, signal: null, timedOut: false };
-  }
-  // Upstream SDK 0.2.140 probes cli_path with `-v` before its stream-json
-  // launch. Do not add another large-core probe here. Deployment must run
+  // Dream's locked ink-claude-dream-agent-sdk 0.2.143 probes cli_path with
+  // `-v` before its stream-json launch. Do not add another large-core probe here. Deployment must run
   // --runtime-doctor. Dream's `mcp ...` management calls and help are not
   // thread launches and therefore do not require a thread-local TMPDIR.
   const managementOrHelp =
     args[0] === "mcp" ||
-    (args.length === 1 && (args[0] === "--help" || args[0] === "-h"));
+    args[0] === "auth" ||
+    args[0] === "setup-token" ||
+    (args.length === 1 &&
+      (args[0] === "--help" ||
+        args[0] === "-h" ||
+        args[0] === "--version" ||
+        args[0] === "-v"));
   if (!managementOrHelp) {
     if (process.env.CLAUDE_AGENT_SDK_SKIP_VERSION_CHECK) {
       throw new Error(
         "CLAUDE_AGENT_SDK_SKIP_VERSION_CHECK is forbidden for supervised launches",
       );
     }
+    await validateBareProfile(args);
     await validateTmpdir();
   }
 

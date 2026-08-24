@@ -1,6 +1,7 @@
-// [Input] Consume checked-in TypeScript, capability/platform manifests, Bun lock state, and SOURCE_DATE_EPOCH.
-// [Output] Produce a deterministic Node 22 ESM release with split lazy chunks, source maps, checksums, and CycloneDX SBOM.
+// [Input] Consume checked-in TypeScript, legal/artifact/data/capability manifests, Bun lock state, and SOURCE_DATE_EPOCH.
+// [Output] Produce a deterministic Node 22 ESM release with split lazy chunks, contracts, maps, checksums, license report, and SBOM.
 // [Pos] Bun-managed build entry; generated artifacts contain no Claude core, workspace, transcript, plugin, OAuth, setting, or secret material.
+// [Sync] 2026-08-24: align generated discovery, SBOM, and rollback receipts with Dream's locked SDK/CLI.
 
 import { build, version as esbuildVersion } from "esbuild";
 import { createHash } from "node:crypto";
@@ -20,8 +21,8 @@ import { dirname, join, relative, resolve } from "node:path";
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const packageJson = JSON.parse(
   await readFile(join(repositoryRoot, "package.json"), "utf8"),
-) as { name: string; version: string };
-const releaseId = `ink-claude-runtime-${packageJson.version}`;
+) as { name: string; version: string; inkBuild: { archiveNode: string } };
+const releaseId = `ink-claude-code-dream-${packageJson.version}`;
 const releaseRoot = join(repositoryRoot, "dist", "release", releaseId);
 const epochSeconds = Number(process.env.SOURCE_DATE_EPOCH || "1787443200");
 if (!Number.isSafeInteger(epochSeconds) || epochSeconds <= 0) {
@@ -30,7 +31,7 @@ if (!Number.isSafeInteger(epochSeconds) || epochSeconds <= 0) {
 const buildTimestamp = new Date(epochSeconds * 1000).toISOString();
 const externals = [
   "@anthropic-ai/claude-code",
-  "claude-agent-sdk",
+  "ink-claude-dream-agent-sdk",
   "@modelcontextprotocol/sdk",
 ];
 
@@ -39,7 +40,7 @@ await mkdir(join(releaseRoot, "manifest"), { recursive: true });
 
 const buildResult = await build({
   absWorkingDir: repositoryRoot,
-  entryPoints: { "ink-claude-runtime": "src/cli.ts" },
+  entryPoints: { "ink-claude-code-dream": "src/cli.ts" },
   outdir: releaseRoot,
   entryNames: "bin/[name]",
   chunkNames: "lib/[name]-[hash]",
@@ -60,10 +61,17 @@ const buildResult = await build({
   logLevel: "warning",
 });
 
-const executable = join(releaseRoot, "bin", "ink-claude-runtime.mjs");
+const executable = join(releaseRoot, "bin", "ink-claude-code-dream.mjs");
 const executableBody = await readFile(executable, "utf8");
 await writeFile(executable, `#!/usr/bin/env node\n${executableBody}`, "utf8");
 await chmod(executable, 0o755);
+const consoleBin = join(releaseRoot, "bin", "ink-claude-code-dream");
+await writeFile(
+  consoleBin,
+  "#!/usr/bin/env node\n// CLAUDE_SECURESTORAGE_CONFIG_DIR: capability marker; behavior stays in official core.\nawait import('./ink-claude-code-dream.mjs');\n",
+  "utf8",
+);
+await chmod(consoleBin, 0o755);
 await cp(
   join(repositoryRoot, "runtime", "release-manifest.json"),
   join(releaseRoot, "release-manifest.json"),
@@ -76,6 +84,19 @@ await cp(
   join(repositoryRoot, "runtime", "platforms.json"),
   join(releaseRoot, "manifest", "platforms.json"),
 );
+for (const contract of [
+  "artifact-manifest.json",
+  "entrypoint-policy.json",
+  "runtime-data-contract.json",
+  "bare-profile.json",
+  "dependency-licenses.json",
+  "pruning-decision.json",
+]) {
+  await cp(
+    join(repositoryRoot, "runtime", contract),
+    join(releaseRoot, "manifest", contract),
+  );
+}
 
 const manifestRaw = await readFile(
   join(releaseRoot, "release-manifest.json"),
@@ -86,12 +107,18 @@ const discovery = {
   releaseId,
   runtimeVersion: packageJson.version,
   protocol: { name: "claude-code-stream-json", version: 1 },
-  executable: "bin/ink-claude-runtime.mjs",
+  executable: "bin/ink-claude-code-dream",
   releaseManifest: "release-manifest.json",
   releaseManifestSha256: manifestSha256,
   evidenceManifest: "manifest/capabilities.json",
+  status: {
+    corePruned: false,
+    productionEligible: false,
+  },
   sdk: {
-    version: "0.2.140",
+    distribution: "ink-claude-dream-agent-sdk",
+    version: "0.2.143",
+    dreamObservedVersion: "0.2.143",
     modified: false,
     option: "ClaudeAgentOptions.cli_path",
     discoveryEnvironment: "CLAUDE_CODE_CLI_PATH",
@@ -131,14 +158,15 @@ const sbom = {
     {
       type: "application",
       name: "@anthropic-ai/claude-code",
-      version: "2.1.235",
+      version: "2.1.241",
       scope: "required",
+      licenses: [{ license: { name: "LicenseRef-Anthropic-All-Rights-Reserved" } }],
       properties: [{ name: "ink:delivery", value: "external-not-bundled" }],
     },
     {
       type: "library",
-      name: "claude-agent-sdk",
-      version: "0.2.140",
+      name: "ink-claude-dream-agent-sdk",
+      version: "0.2.143",
       scope: "optional",
       properties: [{ name: "ink:delivery", value: "Dream Python environment" }],
     },
@@ -184,10 +212,13 @@ await writeFile(
       packageManager: "bun@1.2.20",
       esbuild: esbuildVersion,
       deterministicArchivePacker: "tar-stream@3.1.7 plus node:zlib",
+      archivePackerNode: packageJson.inkBuild.archiveNode,
       externals,
       sourceMaps: "external-without-sources-content",
       dynamicImports: ["Runtime release-manifest diagnostic", "launcher/doctor"],
       claudeCoreLoadingReduction: 0,
+      corePruned: false,
+      productionEligible: false,
     },
     null,
     2,
@@ -200,10 +231,12 @@ await writeFile(
       schemaVersion: "1.0.0",
       releaseId,
       runtimeVersion: packageJson.version,
-      claudeCodeVersion: "2.1.235",
-      agentSdkVersion: "0.2.140",
+      claudeCodeVersion: "2.1.241",
+      agentSdkDistribution: "ink-claude-dream-agent-sdk",
+      agentSdkVersion: "0.2.143",
+      dreamObservedSdkVersion: "0.2.143",
       mcpVersions: ["1.27.0", "1.27.1"],
-      activation: "set CLAUDE_CODE_CLI_PATH to the immutable release executable after doctor/verify-release",
+      activation: "not authorized as a production default; feasibility tests may set CLAUDE_CODE_CLI_PATH explicitly after doctor/verify-release",
       rollback: "restore CLAUDE_CODE_CLI_PATH to the previously verified official Claude executable; the official runtime is the default rollback",
     },
     null,

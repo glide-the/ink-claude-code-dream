@@ -1,27 +1,65 @@
 {
-  "name": "@ink-memory/minimal-claude-code-runtime",
+  "name": "ink-claude-code-dream",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
-  "description": "Fail-closed, transparent launcher and capability contract for Dream's pinned Claude Code runtime",
+  "bin": {
+    "ink-claude-code-dream": "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream"
+  },
+  "description": "Fail-closed feasibility distribution for Dream's pinned Claude Code runtime",
+  "files": [
+    "dist/release/ink-claude-code-dream-0.1.0",
+    "README.md"
+  ],
   "engines": {
     "node": ">=22.0.0 <25.0.0",
     "bun": ">=1.2.20 <2.0.0"
   },
   "packageManager": "bun@1.2.20",
+  "inkBuild": {
+    "archiveNode": "24.13.0",
+    "coreBun": "1.4.0"
+  },
   "scripts": {
+    "lint": "node scripts/lint.mjs",
     "build": "bun run scripts/build.ts",
-    "test": "bun run build && node --test tests/*.test.mjs",
+    "test": "bun run build && node --test --test-concurrency=1 tests/*.test.mjs",
     "test:upstream-sdk": "bun run build && node scripts/run-upstream-sdk-contract.mjs",
     "test:acceptance": "bun run build && node scripts/run-acceptance.mjs",
     "test:official-difference": "bun run build && node scripts/benchmark-official.mjs",
     "test:mcp-matrix": "node scripts/run-mcp-matrix.mjs",
+    "test:mcp-auth-compat": "./node_modules/.bin/bun --cwd compat/mcp-auth test",
+    "test:core-oauth": "node scripts/run-core-oauth-cli-contract.mjs",
+    "test:pruning-evidence": "node scripts/verify-pruning-evidence.mjs",
+    "build:core-local": "./node_modules/.bin/bun scripts/build-core-prune.ts",
+    "verify:core-local": "./node_modules/.bin/bun scripts/build-core-prune.ts && node scripts/verify-core-prune.mjs",
+    "install:core-local": "node scripts/install-core-local.mjs",
     "test:reproducible": "node scripts/check-reproducible.mjs",
-    "verify": "bun run test && bun run test:upstream-sdk && bun run test:acceptance && node scripts/verify-release.mjs && bun run test:reproducible",
+    "verify": "bun run lint && bun run test && bun run test:mcp-auth-compat && bun run test:upstream-sdk && bun run test:acceptance && node scripts/verify-release.mjs && bun run test:reproducible",
+    "package": "bun run release:pack",
     "release:pack": "bun run build && node scripts/verify-release.mjs && node scripts/pack-release.mjs"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "0.74.0",
+    "@grpc/grpc-js": "1.14.0",
+    "@protobufjs/codegen": "2.0.5",
+    "@protobufjs/fetch": "1.1.1",
+    "@protobufjs/path": "1.1.2",
+    "ajv": "8.17.1",
+    "bun": "1.4.0",
+    "diff": "8.0.2",
     "esbuild": "0.25.9",
-    "tar-stream": "3.1.7"
+    "lodash.camelcase": "4.3.0",
+    "protobufjs": "7.5.4",
+    "sharp": "0.34.5",
+    "tar-stream": "3.1.7",
+    "zod": "4.0.0",
+    "zod-to-json-schema": "3.25.2"
+  },
+  "dependencies": {
+    "ansi-styles": "6.2.3",
+    "is-fullwidth-code-point": "5.1.0",
+    "signal-exit": "4.1.0"
   }
 }

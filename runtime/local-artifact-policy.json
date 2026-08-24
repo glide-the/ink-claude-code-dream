@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "ink-core-local-artifact-policy/v1",
+  "artifact": {
+    "name": "ink-claude-code-dream",
+    "version": "0.1.0",
+    "directory": "dist/core-package-local/ink-claude-code-dream-0.1.0",
+    "entrypoint": "bin/ink-claude-code-dream",
+    "coreEntrypoint": "lib/core/cli.js",
+    "bunVersion": "1.4.0",
+    "bunExecutableName": "ink-claude-code-bun-1.4.0"
+  },
+  "coreGate": {
+    "receiptSchemaVersion": "ink-core-prune-build/v1",
+    "requiredStatus": "built",
+    "sourceVersionEvidence": "2.1.88",
+    "cliCompatibilityVersion": "2.1.241",
+    "requireBuildSuccess": true,
+    "requireZeroResolutionGaps": true,
+    "requirePassedDce": true,
+    "requireAllMcpTransformsApplied": true
+  },
+  "dreamManifestContract": {
+    "schemaVersion": "ink-claude-cli-envelope/v1",
+    "protocolName": "claude-code-stream-json",
+    "protocolVersion": 1,
+    "capabilityEvidence": "manifest/capabilities.json",
+    "requiredCapabilities": [
+      "extensions.plugins",
+      "lifecycle.cancel",
+      "mcp.http",
+      "mcp.management.identity",
+      "mcp.oauth",
+      "mcp.stdio",
+      "protocol.control.bidirectional",
+      "protocol.streaming",
+      "sandbox",
+      "session.resume",
+      "tmpdir.thread-local",
+      "transcript.jsonl",
+      "workspace.cwd"
+    ]
+  },
+  "qualificationGates": [
+    {
+      "id": "sdk",
+      "defaultReceipt": "dist/core-local/qualification/sdk-differential.json",
+      "evidenceTypes": [
+        "real-process-sdk-differential"
+      ]
+    },
+    {
+      "id": "mcp",
+      "defaultReceipt": "dist/core-local/qualification/mcp-differential.json",
+      "evidenceTypes": [
+        "real-process-mcp-differential"
+      ]
+    },
+    {
+      "id": "full",
+      "defaultReceipt": "dist/core-local/qualification/full-runtime-qualification.json",
+      "evidenceTypes": [
+        "full-runtime-qualification",
+        "real-dream-business-qualification"
+      ],
+      "requiredEmbeddedEvidence": {
+        "inputDigestField": "mcpManagementReceiptSha256",
+        "evidenceType": "real-process-mcp-management-contract",
+        "qualifiedField": "mcpManagementIdentityQualified"
+      }
+    }
+  ],
+  "qualificationBinding": {
+    "schemaVersion": 1,
+    "status": "passed",
+    "subjectRuntime": "ink-claude-code-dream",
+    "subjectVersion": "0.1.0",
+    "requireCoreBundleSha256": true,
+    "requireSourceDigest": true
+  },
+  "materialPolicy": {
+    "allowedTopLevelDirectories": [
+      "bin",
+      "lib",
+      "manifest"
+    ],
+    "forbiddenPathSegments": [
+      ".claude",
+      "transcript",
+      "transcripts",
+      "workspace",
+      "workspaces",
+      "plugin-materialization",
+      "oauth",
+      "credentials",
+      "secrets",
+      "settings",
+      "sessions"
+    ],
+    "forbiddenBundleSuffixes": [
+      ".ts",
+      ".tsx",
+      ".jsx",
+      ".map"
+    ],
+    "qualificationReceiptsBundled": false,
+    "restoredSourceBundled": false,
+    "userRuntimeDataBundled": false
+  },
+  "legalGate": {
+    "localDerivedArtifact": true,
+    "publicationAllowed": false,
+    "redistributionAllowed": false,
+    "redistributionStatus": "blocked-without-separate-written-authorization",
+    "restoredSourceMayBeCommitted": false,
+    "derivedBundleMayBeCommitted": false
+  }
+}

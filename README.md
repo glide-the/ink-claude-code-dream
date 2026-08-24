@@ -1,37 +1,85 @@
-<!-- [Input] Runtime source, release manifests, Dream evidence, and executable acceptance results. -->
-<!-- [Output] Explain what this repository ships, how to build/test it, and why it is not a core optimization. -->
-<!-- [Pos] Operator-facing entry point for the Claude Code compatibility envelope. -->
+<!-- [Input] Clean-room Runtime tooling, authorized external restored source, capability profile, compatibility policies, and verification evidence. -->
+<!-- [Output] Explain the qualified local minimal-core workflow, remaining business gate, legacy envelope, and safe Git/release boundary. -->
+<!-- [Pos] Operator-facing entry point for ink-claude-code-dream. -->
+<!-- [Sync] 2026-08-24: add fail-closed local installation and isolated exact-Bun discovery. -->
 
-# Ink Claude Code Runtime envelope
+# ink-claude-code-dream
 
-This repository ships a transparent Node 22 CLI envelope around the externally installed, pinned Claude Code `2.1.235`. It adds a Runtime-owned manifest, deployment doctor, thread-TMPDIR guard, process-group supervision, checksums, SBOM, and deterministic packaging. It does not contain or rebuild Claude Code.
+This private repository builds a locally packaged, IM-focused Claude Runtime named `ink-claude-code-dream`. Its primary path uses the user-authorized Claude Code `2.1.88` restored source as an external local input and Bun `1.4.0` compile-time feature DCE. Generated core and package files go only to Git-ignored `dist/core-local/` and `dist/core-package-local/`; Git stores the repository-authored, source-bound transformation builder, capability profile, resolution map, tests, manifests, and documentation. This is technical provenance, not a license conclusion.
 
-This is not the recommended production cold-start or memory optimization. Claude core loading reduction is exactly **0**; the envelope adds a Node process and release-file loading. The final local macOS arm64 measurement made the `--version` path 24.22 ms / 50.8% slower than the official binary. Keep the verified official executable as the production default and rollback target unless the supervision/attestation features justify that cost.
+Current technical status: **built, verified, and locally production-eligible under the repository's artifact contract**. The exact core has bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5` and source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`. Its sanitized graph has 1,989 inputs, 48 outputs, zero resolution gaps, and passing DCE assertions. Source provenance remains `2.1.88`; the separately qualified Dream-facing CLI compatibility version is `2.1.241`. Digest-bound SDK real-process differential, stdio/HTTP MCP tools/resources differential, MCP management lifecycle, and `full-runtime-qualification` all exited 0. The local package contains 62 files with 61 checksum entries, has artifact-tree SHA-256 `b674fb04734cde23c3821ae7796f3125e96e110392f6be353c30e1e7f59b0f5b`, and reproduced byte-identically twice.
 
-## Existing Dream/SDK integration
+This is a technical artifact decision, not a publication or deployment grant: `productionEligible=true`, while `publicationAllowed=false` and `redistributionAllowed=false`. The Dream manifest gate and backend suite passed (1,954 passed, 24 skipped, 607 subtests), the current standard Runtime run passed 44 tests with 2 external OAuth-fixture tests skipped, and the current custom-core real Dream main journey passed. The official MCP Python SDK `2.0.0` fixture at commit `6f69a3758ebf2ee55ce050f58b470ce11af71133` separately passed the complete OAuth CLI contract 3/3 through pipe and real-PTY lanes. The final real Comfy acceptance also passed through Dream's public configure/auth/callback/inventory/logout/remove path: `comfyui-cloud` `0.40.1` connected with 41 tools and a complete 16-stage safe receipt ending in `credentials_present` → `flow_resolved` → `success_stdout_flushed`.
 
-Python `claude-agent-sdk==0.2.140` remains unchanged. Dream already resolves `CLAUDE_CODE_CLI_PATH`, applies it to `ClaudeAgentOptions.cli_path`, and uses the same resolver for MCP Resources/OAuth management. No SDK manifest, bridge, fork, or Dream code change is required:
+The existing Node supervisor/envelope and its `dist/release/` receipts remain a historical process-boundary and rollback baseline. Its green tests do not prove the minimal core.
 
-```sh
-export CLAUDE_CODE_CLI_PATH="$PWD/dist/release/ink-claude-runtime-0.1.0/bin/ink-claude-runtime.mjs"
-# Optional only when `claude` on PATH is not the official 2.1.235 core:
-export INK_CLAUDE_CODE_EXECUTABLE=/path/to/verified/official/claude
+## Capability boundary
 
-"$CLAUDE_CODE_CLI_PATH" --runtime-doctor
-```
+Keep: headless SDK JSON/JSONL, streaming/control/cancel, session/transcript/resume, tool use/result and permission confirmation, Workspace/cwd/files, sandbox and exact `CLAUDE_CODE_TMPDIR`, MCP stdio/HTTP/OAuth/Resources/inventory, plugins, Slash Skills, hooks, ordinary Agent/Task subagents, authentication, and gateway/provider behavior.
 
-The wrapper transparently forwards SDK headless stream-json and `mcp add/get/list/login/logout/remove/help/version`. Thread launches require Dream's server-owned `CLAUDE_CODE_TMPDIR`; MCP management, `-v`/`--version`, and top-level help do not.
+Remove after graph proof: CCR/Remote Control bridge, swarm/team/teammate collaboration UI, interactive Ink REPL, IDE auto-connect/UI surface, updater command/UI, and feedback/reporting command/UI.
 
-## Build and verify
+Defer: telemetry, shared diagnostics, and shared `autoUpdater.ts` logic. A name that looks unrelated is not deletion evidence.
+
+## Local core build
+
+The exact external source root must be absolute, normalized, and not a symlink:
 
 ```sh
 bun install --frozen-lockfile
-bun run verify
-bun run release:pack
+
+INK_AUTHORIZED_CORE_SOURCE_ROOT=/absolute/path/to/claude-code-sourcemap/restored-src \
+  bun run build:core-local
+
+INK_AUTHORIZED_CORE_SOURCE_ROOT=/absolute/path/to/claude-code-sourcemap/restored-src \
+  bun run verify:core-local
 ```
 
-The executable is a Node-target bundle; Bun manages dependencies and runs build scripts but is not the production runtime. See [the design](docs/design/minimal-im-runtime.md), [build instructions](docs/build/README.md), and [test evidence](docs/test/README.md).
+Both commands now complete with a zero-gap receipt for the exact source digest above. A later source, profile, transformation, or bundle hash drift must fail closed and requires fresh qualification; a DCE receipt by itself is never sufficient.
 
-## Release contents
+## Local installation
 
-`dist/release/ink-claude-runtime-0.1.0/` contains the executable, lazy chunks, external source maps, Runtime-owned release/evidence manifests, platform pins, checksums, CycloneDX SBOM, build metadata, and rollback receipt. The official core, transcripts, workspace content, materialized plugins, OAuth state, settings, credentials, and secrets are excluded.
+After qualification and packaging, install the Runtime and its exact Bun toolchain into the user's local prefix:
+
+```sh
+node scripts/package-core-local.mjs
+node scripts/install-core-local.mjs
+```
+
+The installer re-verifies `productionEligible=true`, copies the release and Bun `1.4.0` into content-addressed directories under `~/.local/share/ink-claude-code-dream/`, and atomically installs `~/.local/bin/ink-claude-code-dream` plus `~/.local/bin/ink-claude-code-bun-1.4.0`. It does not replace or upgrade ambient `bun`; the Runtime launcher selects the versioned executable first, with `INK_CLAUDE_CODE_BUN_PATH` retained only as an explicit operator override. Dream therefore resolves the manifest-qualified Runtime through ordinary `PATH` without a `CLAUDE_CODE_CLI_PATH` bypass.
+
+## Separate MCP compatibility layer
+
+`compat/mcp-auth/` records repository-authored, source-bound policies/tests for the Claude Code `2.1.238` and `2.1.239` MCP deltas: trusted `headersHelper` scope/cwd and credential filtering, plus bounded transient-5xx reconnect with non-retryable 401/403 and redacted errors.
+
+The separate patch is source-bound and applied to the qualified headless artifact; all six required transform IDs are present. Restored OAuth/DCR/PKCE/token/revoke behavior remains the base implementation, while the newer patch covers the narrowly evidenced deltas without creating a second MCP or Agent state machine. MCP protocol and management receipts are bound to the same bundle/source hashes as the SDK differential.
+
+The OAuth repair keeps Commander `mcp login --no-browser` headless semantics, uses the same `http://localhost:3118/callback` in the advertised and submitted redirect without opening a competing listener, and works with both pipe stdin and a real PTY; PTY cleanup explicitly pauses stdin so the process exits deterministically. DCR client information is memoized only for the provider instance lifetime. When a valid explicit `CLAUDE_SECURESTORAGE_CONFIG_DIR` is present, the Runtime fixes secure storage to that actor-owned `0700` directory's `0600` `.credentials.json` and never invokes the user's macOS keychain; without the selector, official keychain behavior remains unchanged. Token persistence must report save success and a `credentials_present` postcondition. Failures are mapped to a fixed safe classification, and the bounded receipt contains only allowlisted stages, sequence, and timestamp—never server identity, URLs, OAuth parameters, credentials, or error text.
+
+The preceding candidate's real Comfy run reached `token_save_completed` and then `credentials_missing`: macOS keychain primary storage shadowed the actor plaintext fallback. The selector-pinned rule above removes that mixed-storage ambiguity. The official OAuth contract uses a fake `security` sentinel to prove that an actor-selector run never calls macOS `security`, and its `waitForExit` helper handles processes that exited before listener registration. The final real Comfy rerun passed with the selector credential as a regular `0600` file and no `flow_failed` stage.
+
+```sh
+bun run test:mcp-auth-compat
+```
+
+## SDK and Dream integration
+
+Dream installs `ink-claude-dream-agent-sdk==0.2.143` while keeping the upstream `claude_agent_sdk` import namespace and launcher. Official and custom Runtimes are selected through the existing absolute CLI-path injection point. No Dream business implementation is required to switch between them.
+
+Runtime acceptance has three ordered layers:
+
+1. static build/metafile evidence;
+2. SDK/CLI protocol-level differential against official `2.1.241`;
+3. real Dream/Admin/Gateway/PostgreSQL business acceptance.
+
+The interface differential is the primary compatibility gate; UI/business coverage cannot prove every Runtime contract by itself.
+
+## Repository and publication boundary
+
+The restored source is a read-only local build input. Git contains only replayable repository-authored builders, patches, manifests, tests, and documentation; it does not contain the restored source or generated artifact. No Anthropic redistribution authorization has been obtained, so the restored source and derived artifact must not be publicly published or redistributed. Credentials, complete environment data, transcripts, Workspace content, and materialized plugins are likewise excluded.
+
+The final exact-Node verification command, `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify`, exited 0: Node 44 passed with 2 external OAuth-fixture tests skipped, MCP compatibility 46 passed with 6 authorized-source fixtures skipped, and the SDK contract, acceptance, release verification, and archive reproducibility all passed. A separate authorized-source replay, `INK_AUTHORIZED_CORE_SOURCE_ROOT=/Users/dmeck/project/claude-code-sourcemap/restored-src bun --cwd compat/mcp-auth test`, then executed those six fixtures and passed 52/52 with zero failures. The archive SHA-256 is `64c919d1f11b2770497a080c4cdeb8587925f45d928912459b31647e1b68eb38`; checksum-inventory SHA-256 is `61e12c7c1828c05fb6e70535abb36ff1fbe924aaba2d78787b9ce8e832b3947c`.
+
+The official CLI `2.1.241` remains the current behavior comparator and direct rollback target. It is not the source of this core: the implementation is restored `2.1.88` plus the separate `2.1.238`/`2.1.239` MCP compatibility patch and source-bound OAuth repair. The custom package business path and final real Comfy lane passed. Authenticated Admin UI evidence remains unavailable because no administrator browser session was supplied; publication/redistribution remain prohibited.
+
+See the [canonical design](docs/design/claude-code-runtime-minimalization.md), [build guide](docs/build/README.md), and [test guide](docs/test/README.md).

@@ -1,6 +1,7 @@
 // [Input] Consume the checked-in Runtime-owned release manifest.
 // [Output] Define stable internal shapes for diagnostics and supervised CLI launches.
-// [Pos] Runtime implementation contract only; the unchanged Agent SDK never parses this schema.
+// [Pos] Runtime implementation contract only; Dream's locked SDK distribution never parses this schema.
+// [Sync] 2026-08-24: align current Dream SDK observation with ink-claude-dream-agent-sdk 0.2.143.
 
 export interface ReleaseManifest {
   schemaVersion: "ink-claude-cli-envelope/v1";
@@ -11,7 +12,9 @@ export interface ReleaseManifest {
     integration: {
       environment: "CLAUDE_CODE_CLI_PATH";
       sdkOption: "ClaudeAgentOptions.cli_path";
-      sdkVersion: "0.2.140";
+      sdkDistribution: "ink-claude-dream-agent-sdk";
+      sdkVersion: "0.2.143";
+      dreamObservedSdkVersion: "0.2.143";
       sdkModified: false;
     };
   };
@@ -19,7 +22,11 @@ export interface ReleaseManifest {
     package: "@anthropic-ai/claude-code";
     version: string;
     delivery: "external-not-bundled";
+    execution: "unmodified-as-published";
     loadingReduction: 0;
+    corePruned: false;
+    productionEligible: false;
+    blockingReasons: string[];
   };
   protocol: {
     name: "claude-code-stream-json";
@@ -28,7 +35,21 @@ export interface ReleaseManifest {
   };
   commands: { headless: string; management: string[] };
   capabilityEvidence: string;
+  contracts: {
+    artifact: string;
+    entrypointPolicy: string;
+    runtimeData: string;
+    bareProfile: string;
+    licenses: string;
+    pruningDecision: string;
+  };
+  legalGate: {
+    binary: "unmodified-as-published";
+    authentication: "unaltered-opaque-pass-through";
+    branding: "wrapper-is-not-Claude-Code";
+  };
   mcpVersionsRegressed: string[];
+  claudeCodeMcpChangelogVersions: string[];
   trustBoundary: string;
   [key: string]: unknown;
 }

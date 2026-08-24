@@ -1,0 +1,126 @@
+{
+  "schemaVersion": "ink-core-local-capabilities/v1",
+  "runtime": {
+    "name": "ink-claude-code-dream",
+    "version": "0.1.0",
+    "mode": "headless-sdk-runtime",
+    "sourceVersionEvidence": "2.1.88",
+    "cliCompatibilityVersion": "2.1.241",
+    "corePruned": true,
+    "productionEligible": false
+  },
+  "capabilities": [
+    {
+      "id": "extensions.plugins",
+      "buildCapability": "extensions.plugins-skills-hooks"
+    },
+    {
+      "id": "lifecycle.cancel",
+      "buildCapability": "sdk.bidirectional-control"
+    },
+    {
+      "id": "mcp.http",
+      "buildCapability": "mcp.stdio-http-oauth-resources"
+    },
+    {
+      "id": "mcp.management.identity",
+      "buildCapability": "mcp.stdio-http-oauth-resources"
+    },
+    {
+      "id": "mcp.oauth",
+      "buildCapability": "mcp.stdio-http-oauth-resources"
+    },
+    {
+      "id": "mcp.stdio",
+      "buildCapability": "mcp.stdio-http-oauth-resources"
+    },
+    {
+      "id": "protocol.control.bidirectional",
+      "buildCapability": "sdk.bidirectional-control"
+    },
+    {
+      "id": "protocol.streaming",
+      "buildCapability": "sdk.stream-json-jsonl"
+    },
+    {
+      "id": "sandbox",
+      "buildCapability": "sandbox"
+    },
+    {
+      "id": "session.resume",
+      "buildCapability": "session.transcript-resume"
+    },
+    {
+      "id": "tmpdir.thread-local",
+      "buildCapability": "tmpdir.CLAUDE_CODE_TMPDIR"
+    },
+    {
+      "id": "transcript.jsonl",
+      "buildCapability": "session.transcript-resume"
+    },
+    {
+      "id": "workspace.cwd",
+      "buildCapability": "workspace.cwd"
+    }
+  ],
+  "requiredCapabilities": [
+    {
+      "id": "sdk.stream-json-jsonl",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "sdk.bidirectional-control",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "session.transcript-resume",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "tools.permissions",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "workspace.cwd",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "sandbox",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "tmpdir.CLAUDE_CODE_TMPDIR",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "mcp.stdio-http-oauth-resources",
+      "status": "retained-build-input-and-compatibility-patched"
+    },
+    {
+      "id": "extensions.plugins-skills-hooks",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "subagents.agent-task",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "attachments.images",
+      "status": "retained-build-input"
+    },
+    {
+      "id": "authentication.gateway",
+      "status": "retained-build-input"
+    }
+  ],
+  "evidence": {
+    "coreBuildReceipt": "manifest/core-build-receipt.json",
+    "qualificationSummary": "manifest/qualification-summary.json"
+  },
+  "qualification": {
+    "sdk": "missing",
+    "mcp": "missing",
+    "full": "missing",
+    "productionEligible": false
+  }
+}

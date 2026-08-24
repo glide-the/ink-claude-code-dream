@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // [Input] Consume launcher-forwarded argv/stdin/env and test-only behavior controls.
-// [Output] Emulate the public Claude CLI process boundary for deterministic protocol/lifecycle tests.
+// [Output] Emulate the public Claude CLI boundary with an explicit lifecycle readiness handshake.
 // [Pos] Test fixture only; never copied into release artifacts.
+// [Sync] 2026-08-24: publish leader/grandchild readiness only after signal cleanup is installed.
 
 import { appendFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
@@ -11,14 +12,14 @@ if (args.length === 1 && args[0] === "--version") {
   if (process.env.FAKE_VERSION_COUNT) {
     await appendFile(process.env.FAKE_VERSION_COUNT, "v");
   }
-  process.stdout.write(`${process.env.FAKE_CLAUDE_VERSION || "2.1.235"} (Claude Code)\n`);
+  process.stdout.write(`${process.env.FAKE_CLAUDE_VERSION || "2.1.241"} (Claude Code)\n`);
   process.exit(0);
 }
 if (args.length === 1 && args[0] === "-v") {
   if (process.env.FAKE_VERSION_COUNT) {
     await appendFile(process.env.FAKE_VERSION_COUNT, "v");
   }
-  process.stdout.write(`${process.env.FAKE_CLAUDE_VERSION || "2.1.235"} (Claude Code)\n`);
+  process.stdout.write(`${process.env.FAKE_CLAUDE_VERSION || "2.1.241"} (Claude Code)\n`);
   process.exit(0);
 }
 
@@ -39,6 +40,15 @@ const record = {
     INK_CLAUDE_RUNTIME_WORKSPACE_ROOT:
       process.env.INK_CLAUDE_RUNTIME_WORKSPACE_ROOT ?? null,
     CLAUDE_CODE_CLI_PATH: process.env.CLAUDE_CODE_CLI_PATH ?? null,
+    INK_CLAUDE_BARE_PROFILE: process.env.INK_CLAUDE_BARE_PROFILE ?? null,
+    authenticationPresence: {
+      ANTHROPIC_API_KEY: Boolean(process.env.ANTHROPIC_API_KEY),
+      ANTHROPIC_AUTH_TOKEN: Boolean(process.env.ANTHROPIC_AUTH_TOKEN),
+      CLAUDE_CODE_OAUTH_TOKEN: Boolean(process.env.CLAUDE_CODE_OAUTH_TOKEN),
+      CLAUDE_CODE_USE_BEDROCK: Boolean(process.env.CLAUDE_CODE_USE_BEDROCK),
+      CLAUDE_CODE_USE_VERTEX: Boolean(process.env.CLAUDE_CODE_USE_VERTEX),
+      CLAUDE_CODE_USE_FOUNDRY: Boolean(process.env.CLAUDE_CODE_USE_FOUNDRY),
+    },
   },
 };
 if (recordPath) await writeFile(recordPath, `${JSON.stringify(record)}\n`);
@@ -47,7 +57,9 @@ if (args.includes("--fake-crash")) process.exit(23);
 if (args.includes("--fake-grandchild")) {
   const heartbeat = process.env.FAKE_GRANDCHILD_HEARTBEAT;
   const pidPath = process.env.FAKE_GRANDCHILD_PID;
+  const leaderPidPath = process.env.FAKE_LEADER_PID;
   if (!heartbeat || !pidPath) process.exit(64);
+  if (leaderPidPath) await writeFile(leaderPidPath, String(process.pid));
   const grandchild = spawn(
     process.execPath,
     [
@@ -63,6 +75,7 @@ if (args.includes("--fake-grandchild")) {
     if (process.env.FAKE_LEADER_EXITS_ON_TERM === "1") process.exit(0);
   });
   await appendFile(heartbeat, "s");
+  process.stdout.write(`INK_FAKE_GRANDCHILD_READY:${grandchild.pid}\n`);
   setInterval(() => {}, 1000);
   await new Promise(() => {});
 }

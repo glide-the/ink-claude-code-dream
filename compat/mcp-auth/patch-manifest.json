@@ -1,0 +1,358 @@
+{
+  "schemaVersion": "ink-mcp-auth-compat-patch/v2",
+  "module": "compat/mcp-auth",
+  "implementation": "clean-room-policy-and-hash-bound-transforms",
+  "integration": {
+    "wired": true,
+    "applied": false,
+    "status": "wired-build-required",
+    "note": "Transform definitions are wired and reviewable. Only a complete artifact receipt may derive applied=true."
+  },
+  "artifactReceipt": {
+    "schemaVersion": "ink-mcp-auth-compat-artifact/v1",
+    "requiredForApplied": true,
+    "derivedAppliedStatus": "applied-by-artifact-receipt",
+    "artifactKinds": {
+      "headless": {
+        "reachableTargetPaths": [
+          "src/services/mcp/headersHelper.ts",
+          "src/services/mcp/client.ts",
+          "src/cli/print.ts"
+        ],
+        "forbiddenTransformReachability": "interactive-only"
+      },
+      "interactive-full": {
+        "includesAllTransforms": true
+      }
+    }
+  },
+  "virtualModuleIds": {
+    "headersPolicy": "ink:mcp-auth/headers-helper-policy",
+    "reconnectPolicy": "ink:mcp-auth/reconnect-policy",
+    "redaction": "ink:mcp-auth/redaction"
+  },
+  "sourceTarget": {
+    "repository": "claude-code-sourcemap",
+    "sourceRootEnvironment": "INK_AUTHORIZED_CORE_SOURCE_ROOT",
+    "commit": "a8a678cb6244e6770e1e421767ff0987a1d95549",
+    "packageVersion": "2.1.88",
+    "classification": "read-only-restored-target",
+    "files": [
+      {
+        "path": "src/services/mcp/headersHelper.ts",
+        "sha256": "1929f72cf719af79f6c112f16ea676a23f04a40e30c127ef0fed86821a17733b",
+        "sourceAssertions": [
+          {
+            "id": "headers-helper-entrypoint",
+            "contains": "export async function getMcpHeadersFromHelper(",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "credential-env-spread-gap",
+            "contains": "...process.env,",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "helper-spawn-boundary",
+            "contains": "execFileNoThrowWithCwd(config.headersHelper, [], {",
+            "occurrenceCount": 1
+          }
+        ]
+      },
+      {
+        "path": "src/services/mcp/client.ts",
+        "sha256": "787bba952e1f37dead67afab114b4ee71f66c95e8dba4559afa55679b113b8d2",
+        "sourceAssertions": [
+          {
+            "id": "connect-entrypoint",
+            "contains": "export const connectToServer = memoize(",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "client-connect-anchor",
+            "contains": "const connectPromise = client.connect(transport)",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "stdio-transport-branch",
+            "contains": "} else if (serverRef.type === 'stdio' || !serverRef.type) {",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "central-inventory-entrypoint",
+            "contains": "export async function getMcpToolsCommandsAndResources(",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "disabled-partition",
+            "contains": "// Partition into disabled and active entries — disabled servers should",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "disabled-inventory-record",
+            "contains": "client: { name: entry[0], type: 'disabled', config: entry[1] },",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "connection-failure-return",
+            "contains": "error: errorMessage(error),",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "reconnect-connect-call",
+            "contains": "const client = await connectToServer(name, config)",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "connection-cache-key-export",
+            "contains": "export function getServerCacheKey(",
+            "occurrenceCount": 1
+          }
+        ]
+      },
+      {
+        "path": "src/cli/handlers/mcp.tsx",
+        "sha256": "694aa1a5dea2fbad368290290eecbb90a72e5398058c9f3cfd0e5b932f014859",
+        "sourceAssertions": [
+          {
+            "id": "health-connect-gap",
+            "contains": "const result = await connectToServer(name, server);",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "list-health-gap",
+            "contains": "status: await checkMcpServerHealth(name, server)",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "get-health-gap",
+            "contains": "const status = await checkMcpServerHealth(name, server);",
+            "occurrenceCount": 1
+          }
+        ]
+      },
+      {
+        "path": "src/cli/print.ts",
+        "sha256": "77bb8bed6ebe3e5fbc3c6521dcddab479af8ce9e3df82b2a103c27bf14cc573d",
+        "sourceAssertions": [
+          {
+            "id": "headless-reconnect-handler",
+            "contains": "} else if (message.request.subtype === 'mcp_reconnect') {",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "headless-reconnect-call",
+            "contains": "const result = await reconnectMcpServerImpl(serverName, config)",
+            "occurrenceCount": 3
+          },
+          {
+            "id": "dynamic-state-update",
+            "contains": "dynamicMcpState = {",
+            "occurrenceCount": 2
+          },
+          {
+            "id": "set-servers-reconcile-call",
+            "contains": "const processResult = await reconcileMcpServers(",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "reconcile-entrypoint",
+            "contains": "export async function reconcileMcpServers(",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "reconcile-connect-gap",
+            "contains": "const client = await connectToServer(name, scopedConfig)",
+            "occurrenceCount": 1
+          }
+        ]
+      },
+      {
+        "path": "src/services/mcp/useManageMCPConnections.ts",
+        "sha256": "2536c13da7f1a19ff272d58d0d9d1616433bdcdc57546d17d2c352911e12175b",
+        "sourceAssertions": [
+          {
+            "id": "manager-entrypoint",
+            "contains": "export function useManageMCPConnections(",
+            "occurrenceCount": 1
+          },
+          {
+            "id": "existing-reconnect-entrypoint",
+            "contains": "const result = await reconnectMcpServerImpl(",
+            "occurrenceCount": 3
+          },
+          {
+            "id": "existing-reconnect-budget",
+            "contains": "MAX_RECONNECT_ATTEMPTS",
+            "occurrenceCount": 7
+          }
+        ]
+      }
+    ]
+  },
+  "transforms": [
+    {
+      "id": "headers-helper-launch-policy-v1",
+      "targetPath": "src/services/mcp/headersHelper.ts",
+      "sourceSha256": "1929f72cf719af79f6c112f16ea676a23f04a40e30c127ef0fed86821a17733b",
+      "strategy": "compose-helper",
+      "boundarySymbol": "getMcpHeadersFromHelper",
+      "helperExports": [
+        "buildHeadersHelperLaunchPolicy",
+        "redactSensitiveText"
+      ],
+      "sourceAssertionIds": [
+        "headers-helper-entrypoint",
+        "credential-env-spread-gap",
+        "helper-spawn-boundary"
+      ],
+      "artifactReachability": "headless",
+      "mutatesSource": true
+    },
+    {
+      "id": "stdio-initialize-before-discovery-v1",
+      "targetPath": "src/services/mcp/client.ts",
+      "sourceSha256": "787bba952e1f37dead67afab114b4ee71f66c95e8dba4559afa55679b113b8d2",
+      "strategy": "enforce-ordering",
+      "boundarySymbol": "connectToServer",
+      "helperExports": [],
+      "sourceAssertionIds": [
+        "connect-entrypoint",
+        "client-connect-anchor",
+        "stdio-transport-branch"
+      ],
+      "artifactReachability": "headless",
+      "mutatesSource": true
+    },
+    {
+      "id": "client-transient-5xx-surface-v1",
+      "targetPath": "src/services/mcp/client.ts",
+      "sourceSha256": "787bba952e1f37dead67afab114b4ee71f66c95e8dba4559afa55679b113b8d2",
+      "strategy": "compose-helper",
+      "boundarySymbol": "connectToServer",
+      "helperExports": [
+        "classifyReconnectFailure",
+        "runWithReconnectRetry"
+      ],
+      "sourceAssertionIds": [
+        "connection-failure-return",
+        "reconnect-connect-call",
+        "connection-cache-key-export"
+      ],
+      "artifactReachability": "headless",
+      "mutatesSource": true
+    },
+    {
+      "id": "disabled-central-inventory-v1",
+      "targetPath": "src/services/mcp/client.ts",
+      "sourceSha256": "787bba952e1f37dead67afab114b4ee71f66c95e8dba4559afa55679b113b8d2",
+      "strategy": "assert-existing-contract",
+      "boundarySymbol": "getMcpToolsCommandsAndResources",
+      "helperExports": [],
+      "sourceAssertionIds": [
+        "central-inventory-entrypoint",
+        "disabled-partition",
+        "disabled-inventory-record"
+      ],
+      "artifactReachability": "headless",
+      "mutatesSource": false
+    },
+    {
+      "id": "mcp-list-get-disabled-guard-v1",
+      "targetPath": "src/cli/handlers/mcp.tsx",
+      "sourceSha256": "694aa1a5dea2fbad368290290eecbb90a72e5398058c9f3cfd0e5b932f014859",
+      "strategy": "guard-before-connect",
+      "boundarySymbol": "checkMcpServerHealth",
+      "helperExports": [],
+      "sourceAssertionIds": [
+        "health-connect-gap",
+        "list-health-gap",
+        "get-health-gap"
+      ],
+      "artifactReachability": "interactive-only",
+      "mutatesSource": true
+    },
+    {
+      "id": "print-headless-control-reconnect-v1",
+      "targetPath": "src/cli/print.ts",
+      "sourceSha256": "77bb8bed6ebe3e5fbc3c6521dcddab479af8ce9e3df82b2a103c27bf14cc573d",
+      "strategy": "wrap-existing-entrypoint",
+      "boundarySymbol": "mcp_reconnect",
+      "helperExports": [
+        "redactSensitiveText"
+      ],
+      "sourceAssertionIds": [
+        "headless-reconnect-handler",
+        "headless-reconnect-call",
+        "dynamic-state-update"
+      ],
+      "artifactReachability": "headless",
+      "mutatesSource": true
+    },
+    {
+      "id": "sdk-set-mcp-servers-reconcile-retry-v1",
+      "targetPath": "src/cli/print.ts",
+      "sourceSha256": "77bb8bed6ebe3e5fbc3c6521dcddab479af8ce9e3df82b2a103c27bf14cc573d",
+      "strategy": "wrap-existing-entrypoint",
+      "boundarySymbol": "reconcileMcpServers",
+      "helperExports": [
+        "runWithReconnectRetry",
+        "classifyReconnectFailure",
+        "redactSensitiveText"
+      ],
+      "sourceAssertionIds": [
+        "set-servers-reconcile-call",
+        "reconcile-entrypoint",
+        "reconcile-connect-gap"
+      ],
+      "artifactReachability": "headless",
+      "mutatesSource": true
+    },
+    {
+      "id": "managed-reconnect-backoff-v1",
+      "targetPath": "src/services/mcp/useManageMCPConnections.ts",
+      "sourceSha256": "2536c13da7f1a19ff272d58d0d9d1616433bdcdc57546d17d2c352911e12175b",
+      "strategy": "compose-helper",
+      "boundarySymbol": "useManageMCPConnections",
+      "helperExports": [
+        "classifyReconnectFailure",
+        "computeReconnectBackoffMs"
+      ],
+      "sourceAssertionIds": [
+        "manager-entrypoint",
+        "existing-reconnect-entrypoint",
+        "existing-reconnect-budget"
+      ],
+      "artifactReachability": "interactive-only",
+      "mutatesSource": true
+    }
+  ],
+  "officialEvidence": [
+    {
+      "version": "2.1.238",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-code/v2.1.239/CHANGELOG.md",
+      "section": "## 2.1.238",
+      "assertions": [
+        "Stdio MCP initialization precedes server discovery.",
+        "mcp list/get report disabled servers without health-check connections.",
+        "Project and add-dir agent headers helpers require folder trust, including print mode.",
+        "Project, plugin, and agent helpers do not inherit credential environment variables; user, managed, and claude.ai helpers use the Claude config cwd."
+      ]
+    },
+    {
+      "version": "2.1.239",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-code/v2.1.239/CHANGELOG.md",
+      "section": "## 2.1.239",
+      "assertions": [
+        "Remote MCP servers recover from transient 5xx failures during mid-session reconnect in cloud or SDK setMcpServers flows."
+      ]
+    }
+  ],
+  "guardrails": [
+    "No OAuth, DCR, PKCE, token refresh, or token persistence implementation.",
+    "No Agent or MCP connection state machine duplication.",
+    "No Runtime or restored source modification by this module.",
+    "Target realpath, containment, no-symlink, sha256, and exact source assertions must pass before transformation.",
+    "The manifest never claims applied=true; only a complete artifact receipt can derive that status."
+  ]
+}

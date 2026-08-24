@@ -1,0 +1,9 @@
+{
+  "name": "@ink-dream/mcp-auth-compat-policy",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.2.20",
+  "scripts": {
+    "test": "bun test tests"
+  }
+}

@@ -1,6 +1,7 @@
 // [Input] Exercise the built Node launcher with deterministic fake Claude CLI processes and release metadata.
-// [Output] Prove Runtime evidence, opaque CLI/SDK/MCP forwarding, version/TMPDIR gates, lifecycle cleanup, and lazy imports.
+// [Output] Prove Runtime evidence, forwarding, gates, and race-safe lifecycle cleanup on every assertion path.
 // [Pos] Provider-free runtime contract suite; it does not claim a real Dream/model acceptance.
+// [Sync] 2026-08-24: assert current Dream SDK distribution and retain race-safe lifecycle cleanup.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -18,15 +19,16 @@ import { performance } from "node:perf_hooks";
 import { test } from "node:test";
 
 const executable = resolve(
-  "dist/release/ink-claude-runtime-0.1.0/bin/ink-claude-runtime.mjs",
+  "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream",
 );
 const fakeClaude = resolve("tests/fixtures/fake-claude.mjs");
 await chmod(fakeClaude, 0o755);
 
-function run(args, { env = {}, input = Buffer.alloc(0) } = {}) {
+function run(args, { env = {}, input = Buffer.alloc(0), cwd = process.cwd() } = {}) {
   return new Promise((resolveRun, reject) => {
     const child = spawn(process.execPath, [executable, ...args], {
       env: { ...process.env, ...env },
+      cwd,
       stdio: ["pipe", "pipe", "pipe"],
     });
     const stdout = [];
@@ -63,6 +65,73 @@ function runtimeEnv(fixture, extra = {}) {
   };
 }
 
+function childClose(child) {
+  return new Promise((resolveClose, reject) => {
+    child.once("error", reject);
+    child.once("close", (code, signal) => resolveClose({ code, signal }));
+  });
+}
+
+function waitForGrandchildReady(child, timeoutMs = 5000) {
+  return new Promise((resolveReady, reject) => {
+    let output = "";
+    const cleanup = () => {
+      clearTimeout(timeout);
+      child.stdout.off("data", onData);
+      child.off("close", onClose);
+    };
+    const onData = (chunk) => {
+      output += chunk.toString("utf8");
+      const match = output.match(/INK_FAKE_GRANDCHILD_READY:(\d+)\n/);
+      if (!match) return;
+      cleanup();
+      resolveReady(Number(match[1]));
+    };
+    const onClose = (code, signal) => {
+      cleanup();
+      reject(new Error(`lifecycle fixture closed before ready: code=${code} signal=${signal}`));
+    };
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error(`lifecycle fixture readiness timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+    child.stdout.on("data", onData);
+    child.once("close", onClose);
+  });
+}
+
+function killIfPresent(pid, signal, processGroup = false) {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return;
+  try {
+    process.kill(processGroup && process.platform !== "win32" ? -pid : pid, signal);
+  } catch (error) {
+    if (error.code !== "ESRCH") throw error;
+  }
+}
+
+function settlesWithin(promise, timeoutMs) {
+  return new Promise((resolveSettled) => {
+    let done = false;
+    const finish = (settled) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolveSettled(settled);
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    promise.then(() => finish(true), () => finish(true));
+  });
+}
+
+async function cleanupLifecycleFixture(child, closePromise, leaderPid, grandchildPid) {
+  if (child.exitCode === null && child.signalCode === null) child.kill("SIGTERM");
+  const closed = await settlesWithin(closePromise, 500);
+  if (!closed && child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+  killIfPresent(leaderPid, "SIGKILL", true);
+  killIfPresent(grandchildPid, "SIGKILL");
+  await settlesWithin(closePromise, 2000);
+}
+
 test("Runtime manifest diagnostic does not need or launch a Claude core", async () => {
   const result = await run(["--runtime-manifest"], {
     env: { INK_CLAUDE_CODE_EXECUTABLE: "/definitely/missing" },
@@ -73,9 +142,39 @@ test("Runtime manifest diagnostic does not need or launch a Claude core", async 
   assert.equal(envelope.manifest.protocol.name, "claude-code-stream-json");
   assert.equal(envelope.manifest.protocol.version, 1);
   assert.equal(envelope.manifest.core.loadingReduction, 0);
+  assert.equal(envelope.manifest.core.corePruned, false);
+  assert.equal(envelope.manifest.core.productionEligible, false);
+  assert.equal(envelope.manifest.core.blockingReasons.length, 4);
+  assert.equal(envelope.manifest.core.version, "2.1.241");
+  assert.equal(envelope.manifest.core.execution, "unmodified-as-published");
   assert.equal(envelope.manifest.runtime.integration.sdkModified, false);
+  assert.equal(
+    envelope.manifest.runtime.integration.sdkDistribution,
+    "ink-claude-dream-agent-sdk",
+  );
+  assert.equal(envelope.manifest.runtime.integration.sdkVersion, "0.2.143");
+  assert.equal(envelope.manifest.runtime.integration.dreamObservedSdkVersion, "0.2.143");
   assert.equal(envelope.manifest.runtime.integration.environment, "CLAUDE_CODE_CLI_PATH");
   assert.match(envelope.sha256, /^[a-f0-9]{64}$/);
+});
+
+test("pruning decision never converts outer omissions into core deletion", async () => {
+  const decision = JSON.parse(
+    await readFile(
+      resolve("dist/release/ink-claude-code-dream-0.1.0/manifest/pruning-decision.json"),
+      "utf8",
+    ),
+  );
+  assert.equal(decision.decision.corePruned, false);
+  assert.equal(decision.decision.productionEligible, false);
+  assert.equal(decision.decision.coreLoadingReductionBytes, 0);
+  assert.equal(decision.baseline.historicalRestoredSource.srcFileCountObserved, 1902);
+  assert.equal(decision.baseline.historicalRestoredSource.typescriptFileCountObserved, 1884);
+  assert.equal(decision.baseline.historicalRestoredSource.gitTrackedSrcFileCountObserved, 1902);
+  assert.equal(decision.candidateDisposition.length, 6);
+  assert.equal(decision.candidateDisposition.every((entry) => entry.outerDistributionOmitted), true);
+  assert.equal(decision.candidateDisposition.every((entry) => entry.coreDeleted === false), true);
+  assert.equal(decision.authorizationAndInputsRequiredToProceed.length, 6);
 });
 
 test("MCP 1.27.0 and 1.27.1 are Runtime evidence, not an SDK handshake", async () => {
@@ -83,6 +182,10 @@ test("MCP 1.27.0 and 1.27.1 are Runtime evidence, not an SDK handshake", async (
   assert.deepEqual(envelope.manifest.mcpVersionsRegressed, [
     "1.27.0",
     "1.27.1",
+  ]);
+  assert.deepEqual(envelope.manifest.claudeCodeMcpChangelogVersions, [
+    "2.1.239",
+    "2.1.238",
   ]);
 });
 
@@ -134,7 +237,7 @@ test("argv, JSONL stdin/stdout, stderr, cwd, MCP/plugin env stay opaque", async 
   await assert.rejects(readFile(versionCount), /ENOENT/);
 });
 
-test("Dream MCP management argv and help pass through without thread TMPDIR", async () => {
+test("MCP/auth management, version, and help pass through without thread TMPDIR", async () => {
   const root = await mkdtemp(join(tmpdir(), "ink-runtime-mcp-"));
   const commands = [
     ["mcp", "add", "--transport", "http", "name", "https://example.test/mcp"],
@@ -145,6 +248,10 @@ test("Dream MCP management argv and help pass through without thread TMPDIR", as
     ["mcp", "remove", "name"],
     ["mcp", "--help"],
     ["mcp", "--version"],
+    ["auth", "login"],
+    ["auth", "logout"],
+    ["auth", "status"],
+    ["setup-token"],
     ["--help"],
   ];
   for (const [index, args] of commands.entries()) {
@@ -155,6 +262,13 @@ test("Dream MCP management argv and help pass through without thread TMPDIR", as
       env: {
         INK_CLAUDE_CODE_EXECUTABLE: fakeClaude,
         FAKE_CLAUDE_RECORD: recordPath,
+        INK_CLAUDE_BARE_PROFILE: "dream-explicit-v1",
+        ANTHROPIC_API_KEY: "fixture-api-key",
+        ANTHROPIC_AUTH_TOKEN: "fixture-auth-token",
+        CLAUDE_CODE_OAUTH_TOKEN: "fixture-oauth-token",
+        CLAUDE_CODE_USE_BEDROCK: "1",
+        CLAUDE_CODE_USE_VERTEX: "1",
+        CLAUDE_CODE_USE_FOUNDRY: "1",
       },
     });
     assert.equal(result.code, 0, `${args.join(" ")} failed`);
@@ -165,6 +279,15 @@ test("Dream MCP management argv and help pass through without thread TMPDIR", as
     assert.equal(record.stdinBase64, input.toString("base64"));
     assert.equal(record.env.CLAUDE_CODE_TMPDIR, null);
     assert.equal(record.env.CLAUDE_CODE_CLI_PATH, null);
+    assert.equal(record.env.INK_CLAUDE_BARE_PROFILE, null);
+    assert.deepEqual(record.env.authenticationPresence, {
+      ANTHROPIC_API_KEY: true,
+      ANTHROPIC_AUTH_TOKEN: true,
+      CLAUDE_CODE_OAUTH_TOKEN: true,
+      CLAUDE_CODE_USE_BEDROCK: true,
+      CLAUDE_CODE_USE_VERTEX: true,
+      CLAUDE_CODE_USE_FOUNDRY: true,
+    });
   }
 
   const nonzero = await run(["mcp", "get", "missing"], {
@@ -178,7 +301,15 @@ test("Dream MCP management argv and help pass through without thread TMPDIR", as
   assert.equal(nonzero.stdout.toString("utf8"), "opaque-nonzero\n");
 });
 
-test("SDK -v probe needs no TMPDIR, starts core once, and fails on mismatch", async () => {
+test("built entrypoint retains the upstream macOS secure-storage selector marker", async () => {
+  const entrypoint = await readFile(executable);
+  assert.equal(
+    entrypoint.includes(Buffer.from("CLAUDE_SECURESTORAGE_CONFIG_DIR")),
+    true,
+  );
+});
+
+test("SDK -v output is passed through while doctor alone enforces the pin", async () => {
   const root = await mkdtemp(join(tmpdir(), "ink-runtime-version-"));
   const versionCount = join(root, "version-count");
   const good = await run(["-v"], {
@@ -188,17 +319,102 @@ test("SDK -v probe needs no TMPDIR, starts core once, and fails on mismatch", as
     },
   });
   assert.equal(good.code, 0);
-  assert.equal(good.stdout.toString("utf8"), "2.1.235 (Claude Code)\n");
+  assert.equal(good.stdout.toString("utf8"), "2.1.241 (Claude Code)\n");
   assert.equal(await readFile(versionCount, "utf8"), "v");
 
-  const mismatch = await run(["--version"], {
+  const passThroughMismatch = await run(["--version"], {
     env: {
       INK_CLAUDE_CODE_EXECUTABLE: fakeClaude,
-      FAKE_CLAUDE_VERSION: "2.1.241",
+      FAKE_CLAUDE_VERSION: "2.1.240",
     },
   });
-  assert.equal(mismatch.code, 70);
-  assert.match(mismatch.stderr.toString("utf8"), /incompatible/);
+  assert.equal(passThroughMismatch.code, 0);
+  assert.equal(passThroughMismatch.stdout.toString("utf8"), "2.1.240 (Claude Code)\n");
+
+  const doctorMismatch = await run(["--runtime-doctor"], {
+    env: {
+      INK_CLAUDE_CODE_EXECUTABLE: fakeClaude,
+      FAKE_CLAUDE_VERSION: "2.1.240",
+    },
+  });
+  assert.equal(doctorMismatch.code, 70);
+  assert.match(doctorMismatch.stderr.toString("utf8"), /incompatible/);
+
+  const untrustedManifestPath = join(root, "untrusted-release-manifest.json");
+  const untrustedManifest = JSON.parse(
+    await readFile(resolve("runtime/release-manifest.json"), "utf8"),
+  );
+  untrustedManifest.core.version = "2.1.240";
+  await writeFile(untrustedManifestPath, `${JSON.stringify(untrustedManifest)}\n`);
+  const overrideAttempt = await run(["--runtime-doctor"], {
+    env: {
+      INK_CLAUDE_CODE_EXECUTABLE: fakeClaude,
+      INK_CLAUDE_RUNTIME_MANIFEST_PATH: untrustedManifestPath,
+      FAKE_CLAUDE_VERSION: "2.1.240",
+    },
+  });
+  assert.equal(overrideAttempt.code, 70);
+  assert.match(overrideAttempt.stderr.toString("utf8"), /expected 2\.1\.241/);
+});
+
+test("explicit bare profile forwards exact argv and fails closed on missing carriers", async () => {
+  const fixture = await workspaceFixture();
+  const settings = join(fixture.workspace, "explicit-settings.json");
+  const mcpConfig = join(fixture.workspace, "explicit-mcp.json");
+  const pluginDirectory = join(fixture.workspace, "explicit-plugin");
+  const recordPath = join(fixture.workspace, "bare-record.json");
+  await writeFile(settings, '{"hooks":{},"sandbox":{},"permissions":{}}\n');
+  await writeFile(mcpConfig, '{"mcpServers":{"fixture":{"command":"true"}}}\n');
+  await mkdir(pluginDirectory);
+  const args = [
+    "--bare",
+    "-p",
+    "--settings",
+    settings,
+    "--strict-mcp-config",
+    "--mcp-config",
+    mcpConfig,
+    "--plugin-dir",
+    pluginDirectory,
+    "--resume",
+    "session-123",
+  ];
+  const result = await run(args, {
+    cwd: fixture.workspace,
+    env: runtimeEnv(fixture, {
+      INK_CLAUDE_BARE_PROFILE: "dream-explicit-v1",
+      FAKE_CLAUDE_RECORD: recordPath,
+    }),
+  });
+  assert.equal(result.code, 0);
+  const record = JSON.parse(await readFile(recordPath, "utf8"));
+  assert.deepEqual(record.args, args);
+  assert.equal(record.env.INK_CLAUDE_BARE_PROFILE, null);
+
+  const missingProfile = await run(args, {
+    cwd: fixture.workspace,
+    env: runtimeEnv(fixture),
+  });
+  assert.equal(missingProfile.code, 70);
+  assert.match(missingProfile.stderr.toString("utf8"), /requires explicit/);
+
+  const missingPlugin = await run(
+    args.slice(0, args.indexOf("--plugin-dir")),
+    {
+      cwd: fixture.workspace,
+      env: runtimeEnv(fixture, { INK_CLAUDE_BARE_PROFILE: "dream-explicit-v1" }),
+    },
+  );
+  assert.equal(missingPlugin.code, 70);
+  assert.match(missingPlugin.stderr.toString("utf8"), /requires --plugin-dir/);
+});
+
+test("configured external artifact path must be absolute", async () => {
+  const result = await run(["--version"], {
+    env: { INK_CLAUDE_CODE_EXECUTABLE: "relative/claude" },
+  });
+  assert.equal(result.code, 70);
+  assert.match(result.stderr.toString("utf8"), /must be an absolute path/);
 });
 
 test("TMPDIR symlink and loose permissions fail closed", async () => {
@@ -278,8 +494,8 @@ test("timeout terminates the whole process group and returns 124", async () => {
   const pidPath = join(fixture.workspace, "grandchild.pid");
   const result = await run(["--fake-grandchild"], {
     env: runtimeEnv(fixture, {
-      INK_CLAUDE_RUNTIME_TIMEOUT_MS: "120",
-      INK_CLAUDE_RUNTIME_KILL_GRACE_MS: "120",
+      INK_CLAUDE_RUNTIME_TIMEOUT_MS: "500",
+      INK_CLAUDE_RUNTIME_KILL_GRACE_MS: "200",
       FAKE_GRANDCHILD_HEARTBEAT: heartbeat,
       FAKE_GRANDCHILD_PID: pidPath,
     }),
@@ -294,6 +510,7 @@ test("cancellation finishes immediately when the core leader exits and cleans de
   const fixture = await workspaceFixture();
   const heartbeat = join(fixture.workspace, "cancel-heartbeat");
   const pidPath = join(fixture.workspace, "cancel-grandchild.pid");
+  const leaderPidPath = join(fixture.workspace, "cancel-leader.pid");
   const child = spawn(process.execPath, [executable, "--fake-grandchild"], {
     env: {
       ...process.env,
@@ -301,39 +518,36 @@ test("cancellation finishes immediately when the core leader exits and cleans de
         INK_CLAUDE_RUNTIME_KILL_GRACE_MS: "2000",
         FAKE_GRANDCHILD_HEARTBEAT: heartbeat,
         FAKE_GRANDCHILD_PID: pidPath,
+        FAKE_LEADER_PID: leaderPidPath,
         FAKE_LEADER_EXITS_ON_TERM: "1",
       }),
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
+  const closePromise = childClose(child);
+  let leaderPid;
   let grandchildPid;
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    try {
-      grandchildPid = Number(await readFile(pidPath, "utf8"));
-      break;
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-      await new Promise((resolveWait) => setTimeout(resolveWait, 10));
-    }
+  try {
+    grandchildPid = await waitForGrandchildReady(child);
+    leaderPid = Number(await readFile(leaderPidPath, "utf8"));
+    assert.equal(Number(await readFile(pidPath, "utf8")), grandchildPid);
+    const started = performance.now();
+    child.kill("SIGTERM");
+    const result = await closePromise;
+    const elapsed = performance.now() - started;
+    assert.equal(result.code, 143);
+    assert.ok(elapsed < 1000, `cancellation waited ${elapsed}ms for a 2000ms grace`);
+    assert.throws(() => process.kill(grandchildPid, 0), /ESRCH/);
+  } finally {
+    await cleanupLifecycleFixture(child, closePromise, leaderPid, grandchildPid);
   }
-  assert.ok(grandchildPid, "fake grandchild did not start");
-  const started = performance.now();
-  child.kill("SIGTERM");
-  const result = await new Promise((resolveClose, reject) => {
-    child.once("error", reject);
-    child.once("close", (code, signal) => resolveClose({ code, signal }));
-  });
-  const elapsed = performance.now() - started;
-  assert.equal(result.code, 143);
-  assert.ok(elapsed < 1000, `cancellation waited ${elapsed}ms for a 2000ms grace`);
-  assert.throws(() => process.kill(grandchildPid, 0), /ESRCH/);
 });
 
 test("esbuild keeps launcher and Runtime manifest diagnostic behind dynamic imports", async () => {
   const metafile = JSON.parse(
     await readFile(
       resolve(
-        "dist/release/ink-claude-runtime-0.1.0/manifest/esbuild-metafile.json",
+        "dist/release/ink-claude-code-dream-0.1.0/manifest/esbuild-metafile.json",
       ),
       "utf8",
     ),
