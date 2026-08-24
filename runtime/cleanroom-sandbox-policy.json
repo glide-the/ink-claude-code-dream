@@ -1,0 +1,26 @@
+{
+  "schema": "ink-cleanroom-sandbox-policy/v1",
+  "adapter": "@anthropic-ai/sandbox-runtime",
+  "version": "0.0.73",
+  "license": "Apache-2.0",
+  "platforms": ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"],
+  "osIsolation": { "darwin": "sandbox-exec", "linux": "bubblewrap" },
+  "filesystem": {
+    "writeRoots": ["workspace", "workspace/.claude-tmp"],
+    "sensitiveReadRootDenied": true,
+    "tmpdirContract": "exact-workspace-child-0700"
+  },
+  "network": {
+    "default": "deny",
+    "allowedDomains": [],
+    "localBinding": false,
+    "unixSockets": []
+  },
+  "process": {
+    "maxTimeoutMs": 120000,
+    "maxCombinedOutputBytes": 1048576,
+    "terminateProcessGroup": true,
+    "environmentAllowlist": ["LANG", "LC_ALL", "LC_CTYPE", "PATH", "TERM", "TMPDIR"]
+  },
+  "fallback": "fail-closed"
+}

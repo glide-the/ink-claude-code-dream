@@ -1,6 +1,8 @@
-// [Input] Checked npm/core target policies, root lifecycle guards, generator/verifier scripts, and publication workflow.
-// [Output] Prove four-platform scoped layout, closed legal gate, legacy rejection, and zero-source-map tarballs.
+// [Input] Checked legacy/clean-room npm policies, root lifecycle guards, tarball verifiers, and publication workflows.
+// [Output] Prove scoped layouts, closed legacy gates, receipt-bound clean-room publication, OIDC, and zero-map tarballs.
 // [Pos] Provider-free npm publication contract tests; they never publish, authenticate, or copy a vendor core.
+// [Sync] 2026-08-24: recognize the private MIT repository orchestrator without opening the legacy publish gate.
+// [Sync] 2026-08-24: require exact acceptance-receipt hashing in the clean-room qualification/publication path.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -84,7 +86,7 @@ test("all generated shell launchers and Node prepack gates parse before authoriz
 
 test("repository root cannot be npm packed as the legacy envelope", () => {
   assert.equal(packageJson.private, true);
-  assert.equal(packageJson.license, "UNLICENSED");
+  assert.equal(packageJson.license, "MIT");
   assert.equal(packageJson.scripts.prepack, "node scripts/npm-root-guard.mjs");
   assert.equal(packageJson.scripts.prepublishOnly, "node scripts/npm-root-guard.mjs");
   const packed = spawnSync("npm", ["pack", "--dry-run", "--json"], {
@@ -254,31 +256,43 @@ test("authorized fixture executes native stage, real Bun smoke, and exact five-p
   }
 });
 
-test("Trusted Publishing workflow keeps OIDC only in publish job and runs native matrix", async () => {
+test("clean-room CI and Trusted Publishing keep restored inputs out and OIDC only in publish", async () => {
   const workflow = await readFile(path.join(repositoryRoot, ".github/workflows/publish-npm.yml"), "utf8");
   const qualification = await readFile(path.join(repositoryRoot, ".github/workflows/qualify-npm-runtime.yml"), "utf8");
-  for (const runner of ["macos-15", "macos-15-intel", "ubuntu-24.04-arm", "ubuntu-24.04"]) {
-    assert.match(workflow, new RegExp(runner.replaceAll(".", "\\.")));
-  }
+  const ci = await readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
   assert.match(workflow, /environment: npm/);
-  assert.match(workflow, /id-token: write/);
+  assert.equal((workflow.match(/id-token: write/g) ?? []).length, 1);
+  assert.doesNotMatch(qualification, /id-token: write/);
+  assert.doesNotMatch(ci, /id-token: write/);
   assert.match(workflow, /npm publish[\s\S]*--provenance/);
-  assert.match(workflow, /verify-npm-tarball\.mjs/);
-  assert.match(workflow, /npm run npm:legal/);
+  assert.match(workflow, /verify-cleanroom-npm\.mjs/);
+  assert.match(workflow, /businessAcceptance/);
+  assert.match(workflow, /createHash/);
+  assert.match(workflow, /receiptSha256 !== receiptSha256/);
+  assert.match(workflow, /targetHostQualification/);
+  assert.match(workflow, /npmPublishAllowed/);
   assert.match(workflow, /\.head_repository\.full_name == \$repository/);
-  assert.match(workflow, /\.path == \$workflow/);
+  assert.match(workflow, /\.path == "\.github\/workflows\/qualify-npm-runtime\.yml"/);
   assert.match(workflow, /\.head_sha == \$sha/);
-  assert.match(workflow, /\.head_branch == \$ref/);
-  assert.match(workflow, /archives=\(dist\/npm-release-set\/\*\.tgz\)[\s\S]*-eq 5/);
-  for (const body of [workflow, qualification]) {
+  assert.match(workflow, /\.head_branch == "main"/);
+  assert.match(workflow, /archives=\(dist\/npm-publish\/\*\.tgz\)[\s\S]*-eq 5/);
+  for (const body of [ci, workflow, qualification]) {
     for (const match of body.matchAll(/^\s*- uses:\s+([^\s#]+)/gm)) {
       assert.match(match[1], /^[^@]+@[a-f0-9]{40}$/);
     }
+    assert.doesNotMatch(body, /INK_CLAUDE_CODE_SOURCE_ROOT|dist\/core-local|package-core-local|qualify-core-local/);
   }
-  assert.match(qualification, /name: Qualify npm Runtime/);
-  assert.match(qualification, /run-core-sdk-differential\.mjs/);
-  assert.match(qualification, /run-core-mcp-differential\.mjs/);
-  assert.match(qualification, /run-core-mcp-management-contract\.py/);
-  assert.match(qualification, /qualify-core-local\.mjs/);
-  assert.match(qualification, /package-core-local\.mjs/);
+  assert.match(ci, /pull_request:/);
+  assert.match(ci, /npm run lint/);
+  assert.match(ci, /npm test/);
+  assert.match(ci, /cleanroom:build:targets/);
+  assert.match(ci, /cleanroom:npm:verify/);
+  assert.match(qualification, /name: Qualify clean-room npm Runtime/);
+  assert.match(qualification, /businessAcceptance/);
+  assert.match(qualification, /createHash/);
+  assert.match(qualification, /receiptSha256 !== receiptSha256/);
+  assert.match(qualification, /targetHostQualification/);
+  assert.match(qualification, /cleanroom:build:targets/);
+  assert.match(qualification, /cleanroom:npm:package/);
+  assert.match(qualification, /cleanroom:npm:verify/);
 });

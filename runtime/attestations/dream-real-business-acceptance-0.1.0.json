@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "ink-dream-real-business-acceptance/v1",
+  "subject": {
+    "runtime": "ink-claude-code-dream",
+    "version": "0.1.0",
+    "sourceTreeSha256": "2e5f2059db618ae499fee12346d53f13bf0f1460ed600bae602c75b1c60a66ec",
+    "acceptedSelectorTarballSha256": "fd4dcbf27f9af1f8f89594acdc767b82abc32d346537adac3fb73267a6d3ca7b",
+    "acceptedDarwinArm64TarballSha256": "8e0cdc0350b0fc3223e4e1957d182ac0b933b378afd01957c7ce3169ebbc2a73",
+    "acceptedDarwinArm64ExecutableSha256": "04372c5b48d0e49cb2a908401dfb7bd0b8b7cb18e030f2ca4bfeb9949d0d22be"
+  },
+  "acceptance": {
+    "date": "2026-08-24",
+    "status": "passed",
+    "mode": "existing-real-account-and-business-data",
+    "publicProductionEntrypoints": true,
+    "services": [
+      "Dream",
+      "Admin",
+      "Gateway",
+      "PostgreSQL"
+    ],
+    "modelTurns": 2,
+    "sameThreadRefreshAndResume": true,
+    "adminVisibilityConfirmed": true,
+    "gatewayPersistenceConfirmed": true,
+    "mcp": {
+      "serverUrl": "https://cloud.comfy.org/mcp",
+      "browserOAuth": true,
+      "tool": "get_server_info",
+      "successfulCalls": 2,
+      "toolConfirmationObserved": true,
+      "outputAvailableObserved": true,
+      "logoutAndRemovePassed": true
+    },
+    "testReceipt": {
+      "exitCode": 0,
+      "passed": 1,
+      "failed": 0,
+      "durationSeconds": 138
+    }
+  },
+  "targetQualification": {
+    "darwin-arm64": "real-host business, OAuth, MCP, resume, sandbox, package, and resolver execution",
+    "darwin-x64": "Bun 1.4.0 native cross-build, Mach-O identity, exact inventory, verifier, and reproducibility",
+    "linux-arm64": "Bun 1.4.0 native cross-build, ELF identity, exact inventory, verifier, and reproducibility",
+    "linux-x64": "Bun 1.4.0 native cross-build, ELF identity, exact inventory, verifier, and reproducibility"
+  },
+  "privacy": {
+    "accountIdentifierIncluded": false,
+    "rawBusinessLogsIncluded": false,
+    "databaseRowsIncluded": false,
+    "oauthCredentialsIncluded": false,
+    "callbacksIncluded": false,
+    "transcriptsIncluded": false
+  },
+  "authorization": {
+    "explicitPublicNpmReleaseApproved": true,
+    "platformPackagesBeforeSelectorRequired": true,
+    "pypiPublicationApproved": false
+  }
+}

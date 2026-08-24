@@ -1,8 +1,9 @@
-# [Input] One target-native authorized source tree plus explicit official CLI, SDK Python, Dream backend, and OAuth fixture paths on a controlled runner.
-# [Output] One digest-bound, production-qualified local core package for the exact commit and native target.
-# [Pos] Required predecessor of publish-npm.yml; no publication occurs here and all external Actions are immutable-SHA pinned.
+# [Input] Main-branch clean-room source plus checked Dream business, target-host, redistribution, and publication gates.
+# [Output] One exact verified five-tarball clean-room release set bound to the dispatched commit.
+# [Pos] Manual predecessor of publish-npm.yml; it never reads restored source and never publishes.
+# [Sync] 2026-08-24: replace restored-core/native-runner qualification with the clean-room cross-target release set.
 
-name: Qualify npm Runtime
+name: Qualify clean-room npm Runtime
 
 on:
   workflow_dispatch:
@@ -11,23 +12,9 @@ permissions:
   contents: read
 
 jobs:
-  qualify-platform:
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - target: darwin-arm64
-          - target: darwin-x64
-          - target: linux-arm64
-          - target: linux-x64
-    runs-on: [self-hosted, ink-runtime-qualification, ${{ matrix.target }}]
-    env:
-      INK_CLAUDE_CODE_SOURCE_ROOT: ${{ vars.INK_CLAUDE_CODE_SOURCE_ROOT }}
-      INK_TEST_REFERENCE_CLI: ${{ vars.INK_TEST_REFERENCE_CLI }}
-      INK_SDK_PYTHON: ${{ vars.INK_SDK_PYTHON }}
-      INK_DREAM_BACKEND: ${{ vars.INK_DREAM_BACKEND }}
-      INK_MCP_OAUTH_FIXTURE_PYTHON: ${{ vars.INK_MCP_OAUTH_FIXTURE_PYTHON }}
-      INK_MCP_OAUTH_FIXTURE_ROOT: ${{ vars.INK_MCP_OAUTH_FIXTURE_ROOT }}
+  qualify:
+    runs-on: macos-15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -35,78 +22,41 @@ jobs:
           node-version: 24.13.0
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: 1.4.0
-      - run: bun install --frozen-lockfile --ignore-scripts
-      - name: Require checked redistribution/publication authorization
-        run: npm run npm:legal
-      - name: Validate explicit qualification inputs
+          bun-version: 1.2.20
+      - name: Require main and every checked external qualification gate
         shell: bash
         run: |
-          for variable in \
-            INK_CLAUDE_CODE_SOURCE_ROOT \
-            INK_TEST_REFERENCE_CLI \
-            INK_SDK_PYTHON \
-            INK_DREAM_BACKEND \
-            INK_MCP_OAUTH_FIXTURE_PYTHON \
-            INK_MCP_OAUTH_FIXTURE_ROOT; do
-            value="${!variable:-}"
-            test -n "$value"
-            case "$value" in /*) ;; *) echo "$variable must be absolute" >&2; exit 78;; esac
-            test -e "$value"
-          done
-      - name: Build target-native minimal core and launcher
-        env:
-          INK_CLAUDE_CODE_BUILD_TARGET: ${{ matrix.target }}
-        shell: bash
+          test "$GITHUB_REF_NAME" = main
+          node --input-type=module <<'EOF'
+          import { createHash } from "node:crypto";
+          import { readFileSync } from "node:fs";
+          const artifact = JSON.parse(readFileSync("runtime/cleanroom-artifact-policy.json", "utf8"));
+          const npmPolicy = JSON.parse(readFileSync("runtime/cleanroom-npm-policy.json", "utf8"));
+          const gate = artifact.publicationGate;
+          const hosts = Object.values(gate.targetHostQualification ?? {});
+          const receiptBody = readFileSync(gate.businessAcceptance?.receiptPath);
+          const receiptSha256 = createHash("sha256").update(receiptBody).digest("hex");
+          if (
+            gate.productionEligible !== true ||
+            gate.publicationAllowed !== true ||
+            gate.redistributionAllowed !== true ||
+            gate.businessAcceptance?.passed !== true ||
+            gate.businessAcceptance?.receiptSha256 !== receiptSha256 ||
+            hosts.length !== 4 || hosts.some(value => value !== true) ||
+            npmPolicy.publication?.npmPublishAllowed !== true
+          ) throw new Error("checked Dream business, four-host, redistribution, or npm publication gate is closed");
+          EOF
+      - run: bun install --frozen-lockfile
+      - run: npm run lint
+      - run: npm test
+      - name: Build and verify exact five-package release set
         run: |
-          bun run build:core-local
-          node scripts/verify-core-prune.mjs
-          mkdir -p dist/core-local/bin dist/core-local/qualification
-          printf '%s\n' '#!/usr/bin/env bash' 'set -euo pipefail' 'exec "'"$PWD"'/node_modules/.bin/bun" "'"$PWD"'/dist/core-local/bundle/cli.js" "$@"' > dist/core-local/bin/ink-claude-code-dream
-          chmod 0755 dist/core-local/bin/ink-claude-code-dream
-      - name: Run official/candidate SDK and MCP differential contracts
-        env:
-          INK_TEST_CANDIDATE_CLI: ${{ github.workspace }}/dist/core-local/bin/ink-claude-code-dream
-          INK_CORE_BUILD_RECEIPT: ${{ github.workspace }}/dist/core-local/build-receipt.json
-          INK_CORE_BUNDLE_PATH: ${{ github.workspace }}/dist/core-local/bundle/cli.js
-          INK_CORE_SDK_RECEIPT: ${{ github.workspace }}/dist/core-local/qualification/sdk-differential.json
-          INK_CORE_MCP_RECEIPT: ${{ github.workspace }}/dist/core-local/qualification/mcp-differential.json
-        run: |
-          node scripts/run-core-sdk-differential.mjs
-          node scripts/run-core-mcp-differential.mjs
-      - name: Run Dream production MCP management process contract
-        run: >-
-          "$INK_SDK_PYTHON" scripts/run-core-mcp-management-contract.py
-          --cli "$GITHUB_WORKSPACE/dist/core-local/bin/ink-claude-code-dream"
-          --output "$GITHUB_WORKSPACE/dist/core-local/qualification/mcp-management.json"
-          --dream-backend "$INK_DREAM_BACKEND"
-          --mode candidate
-          --bun "$GITHUB_WORKSPACE/node_modules/.bin/bun"
-          --core-receipt "$GITHUB_WORKSPACE/dist/core-local/build-receipt.json"
-          --core-bundle "$GITHUB_WORKSPACE/dist/core-local/bundle/cli.js"
-      - name: Aggregate qualification and package exact native artifact
-        env:
-          INK_CORE_BUILD_RECEIPT: ${{ github.workspace }}/dist/core-local/build-receipt.json
-          INK_CORE_BUNDLE_PATH: ${{ github.workspace }}/dist/core-local/bundle/cli.js
-          INK_CORE_SDK_RECEIPT: ${{ github.workspace }}/dist/core-local/qualification/sdk-differential.json
-          INK_CORE_MCP_RECEIPT: ${{ github.workspace }}/dist/core-local/qualification/mcp-differential.json
-          INK_CORE_MCP_MANAGEMENT_RECEIPT: ${{ github.workspace }}/dist/core-local/qualification/mcp-management.json
-          INK_CORE_FULL_RECEIPT: ${{ github.workspace }}/dist/core-local/qualification/full-runtime-qualification.json
-          INK_REQUIRE_CORE_OAUTH_FIXTURE: "1"
-        shell: bash
-        run: |
-          node scripts/qualify-core-local.mjs
-          node scripts/package-core-local.mjs \
-            --sdk-receipt "$INK_CORE_SDK_RECEIPT" \
-            --mcp-receipt "$INK_CORE_MCP_RECEIPT" \
-            --full-receipt "$INK_CORE_FULL_RECEIPT"
-          artifact_name=$(node -p "require('./runtime/local-artifact-policy.json').artifact.name")
-          artifact_version=$(node -p "require('./runtime/local-artifact-policy.json').artifact.version")
-          node scripts/verify-core-package-local.mjs "dist/core-package-local/$artifact_name-$artifact_version"
-      - name: Upload exact commit/target qualification artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+          npm run cleanroom:build:targets
+          npm run cleanroom:npm:package
+          npm run cleanroom:npm:verify
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: qualified-core-${{ matrix.target }}
-          path: dist/core-package-local
+          name: cleanroom-npm-${{ github.sha }}
+          path: dist/cleanroom-npm/tarballs
           if-no-files-found: error
           retention-days: 1

@@ -2,7 +2,7 @@
   "name": "ink-claude-code-dream",
   "version": "0.1.0",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "ink-claude-code-dream": "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream"
@@ -19,7 +19,14 @@
   "packageManager": "bun@1.2.20",
   "inkBuild": {
     "archiveNode": "24.13.0",
-    "coreBun": "1.4.0"
+    "coreBun": "1.4.0",
+    "cleanroomBun": "1.4.0",
+    "cleanroomTargets": [
+      "darwin-arm64",
+      "darwin-x64",
+      "linux-arm64",
+      "linux-x64"
+    ]
   },
   "scripts": {
     "lint": "node scripts/lint.mjs",
@@ -46,6 +53,10 @@
     "npm:stage": "node scripts/npm-release.mjs stage",
     "npm:aggregate-meta": "node scripts/npm-release.mjs aggregate-meta",
     "npm:smoke": "node scripts/smoke-npm-release.mjs",
+    "cleanroom:build:targets": "./node_modules/.bin/bun scripts/build-cleanroom-targets.ts",
+    "cleanroom:npm:package": "node scripts/package-cleanroom-npm.mjs all",
+    "cleanroom:npm:verify": "node scripts/verify-cleanroom-npm.mjs",
+    "cleanroom:npm:test": "node --test tests/cleanroom-npm-packaging.test.mjs",
     "prepack": "node scripts/npm-root-guard.mjs",
     "prepublishOnly": "node scripts/npm-root-guard.mjs"
   },
@@ -67,6 +78,8 @@
     "zod-to-json-schema": "3.25.2"
   },
   "dependencies": {
+    "@anthropic-ai/sandbox-runtime": "0.0.73",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "ansi-styles": "6.2.3",
     "is-fullwidth-code-point": "5.1.0",
     "signal-exit": "4.1.0"

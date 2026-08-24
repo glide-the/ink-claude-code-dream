@@ -1,12 +1,16 @@
 # [Input] Local dependency installs, transient test outputs, and optional archives.
 # [Output] Keep source plus the reviewed dist/release directory, while excluding reproducible local-only material.
 # [Pos] Repository hygiene contract.
+# [Sync] 2026-08-24: ignore reproducible clean-room cross-target and five-package outputs.
 
 node_modules/
 dist/core-local/
 dist/core-package-local/
 dist/npm-stage/
 dist/npm-tarballs/
+dist/cleanroom/
+dist/cleanroom-targets/
+dist/cleanroom-npm/
 dist/*.tar.gz
 dist/*.sha256
 .DS_Store

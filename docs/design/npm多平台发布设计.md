@@ -1,83 +1,131 @@
-<!-- [Input] npm/local artifact policies, native Runtime assets, Bun package contract, and legal qualification gates. -->
-<!-- [Output] Define the Chinese architecture and fail-closed workflow for scoped multi-platform npm delivery. -->
-<!-- [Pos] Authoritative npm publication design; it does not grant redistribution rights or contain Runtime source. -->
-<!-- [Sync] 2026-08-24: record the real GitHub npm environment, main-only policy, private-plan reviewer limit, and missing native runners. -->
+<!-- [Input] Clean-room npm/artifact policies, five-package build/verifier, GitHub workflows, and npm registry checks. -->
+<!-- [Output] 定义 restored-source-free 五包拓扑、正式资格、首次 2FA bootstrap 与后续 Trusted Publishing。 -->
+<!-- [Pos] 当前公共 npm 发布设计；授权由 checked Dream 回执固定，历史恢复源码永不成为公共输入。 -->
+<!-- [Sync] 2026-08-24：开放最终回执绑定的 MIT clean-room 五包发布并固定平台优先顺序。 -->
 
-# 精简 Claude Runtime 的 npm 多平台发布设计
+# Clean-room Runtime 的 npm 多平台发布设计
 
 ## 当前结论
 
-仓库根包不是 npm 交付物。它仍是 `private=true`、`UNLICENSED` 的历史 envelope，`prepack` 和 `prepublishOnly` 会直接拒绝 `npm pack`/`npm publish`。真正的发布拓扑由 `runtime/npm-release-policy.json` 和 `scripts/npm-release.mjs` 生成：
+仓库根包只是私有编排器，不是 npm 交付物；根 `prepack`/`prepublishOnly` 必须拒绝打包。
+唯一允许走向公共 registry 的实现来源是 `src/cleanroom/`。历史
+`dist/core-local`、`dist/core-package-local`、恢复源码和它们的衍生 bundle 只保留为本地
+研究/回滚证据，不得进入本拓扑。
 
-- 顶层选择包：`@glide-the/ink-claude-code-dream`；
-- 平台包：`@glide-the/ink-claude-code-dream-darwin-arm64`、`darwin-x64`、`linux-arm64`、`linux-x64`；
-- 顶层包使用精确版本的 `optionalDependencies`，启动时按 `platform/arch` 只选择一个平台包；
-- 每个平台包固定依赖 `bun@1.4.0`，prepack 和安装 smoke 都执行真实 `bun --version`；
-- Runtime、qualification subject、release/artifact manifest、ripgrep 路径与 SHA-256 全部绑定同一个 native target。
+最终 Dream 真实业务验收和显式公共 npm 授权已固定为 checked、隐私删减的 digest-bound
+回执。`runtime/cleanroom-artifact-policy.json` 当前为：
 
-当前 `runtime/local-artifact-policy.json` 仍为 `publicationAllowed=false`、`redistributionAllowed=false`，`runtime/npm-release-policy.json` 的发布许可证也仍为空。因此只能审查布局和运行 provider-free 合同测试，不能生成发布 staging、不能发布。这是预期的安全阻断，不是用环境变量可以绕过的开关。
+- `productionEligible=true`；
+- `publicationAllowed=true`；
+- `redistributionAllowed=true`；
+- Dream 真实业务回执 SHA-256 为 `ce3b2db654acf1fb2c3d8d1060eb2afce9dc14c0ee391fbb45697d0b4b52ac16`；
+- 四个 target qualification 均为 true，且每个资格基础单独记录；
+- `runtime/cleanroom-npm-policy.json#publication.npmPublishAllowed=true`。
 
-## 平台与 native 资产矩阵
+formal publication 模式禁用旧的 provider-free fixture 注入。每个 tarball 的
+`npm-publication-attestation.json` 都绑定同一真实业务回执 digest；prepack 和最终 verifier
+任一处发现门、target、entrypoint、fixture、map 或 digest 漂移即失败。
 
-| target | npm 平台包 | ripgrep 资产 | 运行器 | 状态 |
+## 五包与平台矩阵
+
+| target | npm 包 | Bun target | native format | 发布资格基础 |
 | --- | --- | --- | --- | --- |
-| `darwin-arm64` | `@glide-the/ink-claude-code-dream-darwin-arm64` | `arm64-darwin/rg`，SHA `051d…6684f` | `macos-15` | 生成器支持；发布前需该 target 独立完整 qualification |
-| `darwin-x64` | `@glide-the/ink-claude-code-dream-darwin-x64` | `x64-darwin/rg`，SHA `3b8b…19f3` | `macos-15-intel` | 同上 |
-| `linux-arm64` | `@glide-the/ink-claude-code-dream-linux-arm64` | `arm64-linux/rg`，SHA `fa8f…4385` | `ubuntu-24.04-arm` | 同上；GitHub ARM runner 的可用性属于 CI 风险 |
-| `linux-x64` | `@glide-the/ink-claude-code-dream-linux-x64` | `x64-linux/rg`，SHA `55c2…9ea1` | `ubuntu-24.04` | 同上 |
+| selector | `@glide-the/ink-claude-code-dream` | Node launcher | 按 `platform-arch` 选择 | n/a |
+| darwin-arm64 | `@glide-the/ink-claude-code-dream-darwin-arm64` | `bun-darwin-arm64` | Mach-O arm64 | 真实业务 + 本机 native execution |
+| darwin-x64 | `@glide-the/ink-claude-code-dream-darwin-x64` | `bun-darwin-x64` | Mach-O x64 | cross-build format + inventory + verifier + reproducibility |
+| linux-arm64 | `@glide-the/ink-claude-code-dream-linux-arm64` | `bun-linux-arm64` | ELF arm64 | cross-build format + inventory + verifier + reproducibility |
+| linux-x64 | `@glide-the/ink-claude-code-dream-linux-x64` | `bun-linux-x64` | ELF x64 | cross-build format + inventory + verifier + reproducibility |
 
-builder 只允许 `target == process.platform-process.arch`。这避免在 Darwin ARM64 上把其 Bun、ripgrep、sandbox/native 证据误标为 Linux 或 x64。四个平台必须分别构建、分别完成 SDK/MCP/management/full qualification，再分别打包。
+selector 用四个同版本 `optionalDependencies`，同时暴露 `claude` 和
+`ink-claude-code-dream`。Windows 与 Linux musl 没有进入 policy，必须 fail closed。
+四个 standalone 由仓库锁定的 Bun `1.4.0` 从同一份 source inventory 交叉编译；native
+magic 不冒充相应宿主 live execution；Linux 缺 `bubblewrap`/`rg` 时继续 fail closed。
 
-Windows 明确 fail-closed。虽然参考包里存在 Windows ripgrep，但没有当前 Windows Runtime、Bun、sandbox、shell/tool、native dependency 和 Dream 全业务验收证据；仅有一个二进制文件不能推出 Windows 兼容。Linux musl 也未进入支持矩阵。
-
-## 包结构
+## 精确包结构
 
 ```text
 @glide-the/ink-claude-code-dream
   bin/ink-claude-code-dream
+  release-manifest.json
+  manifest/{artifact-manifest,capabilities,dependency-licenses,sbom.cdx}.json
+  runtime-manifest.json
+  SHA256SUMS
+  LICENSE
+  THIRD_PARTY_NOTICES.txt
   npm-publication-attestation.json
-  optionalDependencies -> 四个平台包的同版本
 
 @glide-the/ink-claude-code-dream-<target>
-  bin/ink-claude-code-dream-platform
-  runtime/
-    bin/ink-claude-code-dream
-    lib/core/**
-    manifest/**
-    release-manifest.json
-  dependency: bun@1.4.0
+  runtime/bin/ink-claude-code-dream
+  runtime/release-manifest.json
+  runtime/manifest/{artifact-manifest,capabilities,dependency-licenses,sbom.cdx}.json
+  runtime-manifest.json
+  SHA256SUMS
+  LICENSE
+  THIRD_PARTY_NOTICES.txt
   npm-publication-attestation.json
 ```
 
-顶层 shell launcher 只做平台选择，然后 `exec` 到平台 launcher，不常驻第二个 Node 监督进程。平台 launcher 解析该包依赖的 Bun，校验精确版本后，通过现有 `INK_CLAUDE_CODE_BUN_PATH` 合同执行 Runtime。Dream 仍只看到标准 CLI 路径和现有 SDK JSONL 接口。
+`runtime/cleanroom-npm-policy.json` 列出每个允许文件。verifier 解压最终 tgz 后重新检查
+exact inventory、MIT license、CycloneDX 1.5 的 22 个锁定组件、逐许可证文本摘要、native
+magic、os/cpu、Dream release/capability/artifact binding、可执行位、单包与五包聚合 checksum。
+所有层级拒绝 `.map`、恢复源码标记、历史 core、transcript、Workspace、session、credential
+和 OAuth token。
 
-## 发布安全门
+## 构建、dry-run 与安装
 
-按顺序全部满足才会产生 staging：
+```sh
+bun install --frozen-lockfile
+npm run lint
+npm test
+npm run cleanroom:build:targets
+npm run cleanroom:npm:package
+npm run cleanroom:npm:verify
+```
 
-1. checked-in local policy 的 publication 和 redistribution 两个字段都为 true；
-2. `verify-core-package-local.mjs` 证明 core `productionEligible=true`；
-3. 包内 policy、artifact manifest、release manifest 也分别允许 publication/redistribution；
-4. npm policy 存在经法律审查的非 `UNLICENSED` 发布许可证；
-5. core receipt、三类 qualification、manifest 和目标平台一致；
-6. 仅存在目标平台的 ripgrep，且校验和匹配；
-7. native `platform/arch` 匹配，`bun@1.4.0` 实际探测通过；
-8. staging、`npm pack --dry-run` 文件清单和最终 tgz 都没有任何 `**/*.map`；
-9. tgz 不含 legacy `dist/release`、恢复源码、用户数据、凭据或可变 Runtime 数据；
-10. clean install 后 CLI `--version` smoke 通过。
+默认命令现在生成正式回执绑定的 tgz；设置旧 `INK_CLEANROOM_QUALIFICATION_FIXTURE` 不得在
+formal 模式加入 fixture 字段。五个 stage 分别执行不带 `--ignore-scripts` 的
+`npm pack --dry-run --json`，prepack 必须成功。离线安装 meta 加当前 host 平台 tgz 后，两个
+alias 都必须输出 `2.1.241 (Claude Code)`，Dream 的真实 Python resolver 还必须解析到
+selector 的 `release-manifest.json`。
 
-当前 local package builder/verifier还把法律字段固定为 false。取得书面授权后，需要一次可审查的代码变更同时更新 policy、manifest 模板、builder/verifier 和许可证；不能只翻一个 JSON 或注入环境变量。
+## 发布门与 GitHub Actions
 
-## Trusted Publishing
+`.github/workflows/ci.yml` 在 pull request 和 main push 上运行 lint、全量 provider-free 测试、
+干净四目标/正式五包验证，以及 source-map/恢复实现扫描。它没有 OIDC 权限。
 
-`.github/workflows/qualify-npm-runtime.yml` 在四个带 `ink-runtime-qualification` 与 native target 标签的受控 self-hosted runner 上，分别执行 core build、SDK/MCP differential、Dream MCP management、OAuth aggregate qualification、package 与 verifier，输出四个 `qualified-core-<target>` artifact。`.github/workflows/publish-npm.yml` 只允许手工启动，并校验 qualification run 来自同仓库、指定 workflow、成功状态、当前精确 commit 与 ref；发布 job 才拥有 `id-token: write`。两条 workflow 使用的第三方 Action 全部固定到 40 位 commit SHA。
+`.github/workflows/qualify-npm-runtime.yml` 只能手工在 `main` 启动，并在构建前要求 checked
+policy 同时满足：Dream 真实业务回执文件与 checked SHA-256 完全一致、四个 target 都为 true、三个
+artifact gate 都为 true、`npmPublishAllowed=true`。它只上传精确五包和聚合 checksum，不发布。
 
-发布顺序是四个平台包后顶层选择包，命令统一带 `--access public --provenance`。由于 npm Trusted Publisher 只能为已经存在的包配置，首次创建这五个包必须由 `glide-the` 账户在启用 2FA 后手工 bootstrap；五个包都存在后再逐个配置 repository `glide-the/ink-claude-code-dream`、workflow `publish-npm.yml`、environment `npm`，后续才允许选择 `trusted_publishers_configured=true`。仓库不会保存长期 npm token。
+`.github/workflows/publish-npm.yml` 再校验 qualification run 来自同仓库、指定 workflow、同一
+main commit 且成功，下载后重新执行 clean-room verifier。只有 publish job 具有
+`id-token: write`，并绑定 GitHub `npm` Environment；顺序固定为四个平台包后 selector，命令
+使用 `--access public --provenance`。
 
-GitHub `npm` Environment 已创建，并只允许 `main` branch deployment。当前私有仓库套餐不支持 required-reviewer environment protection，GitHub API 对该规则返回 HTTP 422；因此人工意图门由手工 workflow dispatch、`trusted_publishers_configured` 明示输入、精确 qualification run 和法律 policy 共同承担，不能把 Environment 存在本身描述成独立人工审批。若仓库套餐升级，应补 required reviewer。当前 Actions runner inventory 为 0；正式 qualification 还需要四个带 `ink-runtime-qualification` 和精确 native target 标签的受控 runner。
+外层 Dream 真实业务验收与用户显式授权已经通过；回执不包含账户标识、原始业务日志、数据库行、
+OAuth 凭据、callback 或 transcript。首次名称 bootstrap 必须从通过 main 同 SHA qualification
+的五个 tarball 发布，四个平台包逐个发布并从 registry 可见后才允许 selector。五个名称存在后，
+为后续版本配置 Trusted Publisher，再使用同 SHA 的 `publish-npm.yml` OIDC 路径。
 
-npm 当前登录身份是个人 scope `glide-the`，没有同名 organization，因此包名固定为 `@glide-the/*`。当前账号未启用 2FA 是首次 bootstrap 的明确阻断项，不能由仓库脚本代替处理。
+## npm registry 当前状态
+
+2026-08-24 的只读检查：
+
+- registry ping 200，`npm whoami` 为个人账号 `glide-the`；
+- 账号 2FA 模式为 `auth-and-writes`，无 pending；
+- 五个 `@glide-the/*` 名称的 `npm view` 均返回 404（未发布或对当前账号不可见）；
+- `npm access list packages glide-the --json` 返回空对象，当前还没有已创建包。
+
+个人 scope 与账号同名，因此不存在另一个 organization 授权链。404 只说明当前无可见包，
+不替代首次创建时的 2FA/ownership 检查。五个包首次 bootstrap 后，需逐个配置 repository
+`glide-the/ink-claude-code-dream`、workflow `publish-npm.yml`、environment `npm` 的 Trusted
+Publisher；配置完成前 workflow 的 `trusted_publishers_configured` 必须保持 false。
 
 ## 回滚
 
-npm 包版本不可覆盖。出现平台问题时，先停止发布顶层新版本或对问题版本执行 npm deprecate，再让 Dream 的 `CLAUDE_CODE_CLI_PATH` 指回已经验证的官方 CLI。回滚不修改 Dream 状态机、数据库、transcript 或 Workspace 数据。禁止 unpublish 作为常规回滚方案。
+npm 版本不可覆盖。出现平台问题时停止 selector 新版本、deprecate 问题版本，并让 Dream
+的绝对 `CLAUDE_CODE_CLI_PATH` 指回已验证官方 CLI。常规回滚不 unpublish，不修改 Dream
+状态机、数据库、transcript 或 Workspace。
+
+精确版本、13 项能力、当前 tgz digest、内存与命令证据见
+[`cleanroom-runtime-verification.md`](./cleanroom-runtime-verification.md)。
