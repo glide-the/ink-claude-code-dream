@@ -161,4 +161,4 @@ node scripts/smoke-npm-release.mjs dist/npm-stage/darwin-arm64
 
 四个平台必须在对应 native runner 上分别执行；禁止交叉打包。平台包固定依赖并实测 `bun@1.4.0`，同时校验 target、manifest、ripgrep SHA-256。所有 `*.map` 在 core material、staging、prepack、npm dry-run inventory 和最终 tgz 五层都被拒绝。
 
-先由 `.github/workflows/qualify-npm-runtime.yml` 在四个受控 native self-hosted runner 生成精确 commit/target 的 qualification artifact，再由 `.github/workflows/publish-npm.yml` 校验 workflow path、同仓库、成功状态、head SHA 与 ref 后进入 Trusted Publishing OIDC 流程；法律 gate 为 false 时不会打包或发布。五个包首次创建必须在账户启用 2FA 后手工 bootstrap，之后才能配置 Trusted Publisher。完整架构和外部 npm 设置见 [npm 多平台发布设计](../design/npm多平台发布设计.md)。
+先由 `.github/workflows/qualify-npm-runtime.yml` 在四个受控 native self-hosted runner 生成精确 commit/target 的 qualification artifact，再由 `.github/workflows/publish-npm.yml` 校验 workflow path、同仓库、成功状态、head SHA 与 ref 后进入 Trusted Publishing OIDC 流程；法律 gate 为 false 时不会打包或发布。GitHub `npm` Environment 已创建并限定 `main`，但当前 private plan 不支持 required reviewers，且仓库当前没有任何 self-hosted runner。五个包首次创建必须在账户启用 2FA 后手工 bootstrap，之后才能配置 Trusted Publisher。完整架构和外部 npm 设置见 [npm 多平台发布设计](../design/npm多平台发布设计.md)。
