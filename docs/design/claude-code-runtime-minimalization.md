@@ -2,8 +2,14 @@
 <!-- [Output] Define the local minimal Runtime architecture, capability boundary, build/publish gate, compatibility layers, and three-level acceptance contract. -->
 <!-- [Pos] Canonical 20-section design for the locally built ink-claude-code-dream Runtime. -->
 <!-- [Sync] 2026-08-24: add native-target qualification and fail-closed scoped npm publication architecture. -->
+<!-- [Sync] 2026-08-24: mark the restored-source build as local historical evidence after the public npm path moved to a clean-room core. -->
 
 # Claude Code Runtime minimalization
+
+> 当前决策：本文记录的恢复源码裁剪 Runtime 仅保留为本地历史研究、差分和回滚证据，
+> 不再作为公共 npm 包的实现输入。公共发布目标已迁移到
+> [`cleanroom-runtime-architecture.md`](./cleanroom-runtime-architecture.md)，该路径必须完全
+> 排除恢复源码与旧衍生 bundle，并独立通过 Dream 的 13 项能力门。
 
 Evidence date: 2026-08-24.
 

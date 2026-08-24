@@ -1,0 +1,47 @@
+# [Input] Repository-authored clean-room source, locked dependencies, and provider-free fixtures.
+# [Output] Lint, full tests, clean four-target/five-package verification, and restricted-material evidence.
+# [Pos] Required pull-request/main CI; it never qualifies production or publishes npm packages.
+# [Sync] 2026-08-24: verify the formal receipt-bound clean-room release set without publication authority.
+
+name: Runtime CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.13.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.2.20
+      - run: bun install --frozen-lockfile
+      - run: npm run lint
+      - run: npm test
+      - name: Rebuild the formal receipt-bound release set from clean outputs
+        run: |
+          npm run cleanroom:build:targets
+          npm run cleanroom:npm:package
+          npm run cleanroom:npm:verify
+      - name: Assert zero maps and zero restored implementation inventory
+        shell: bash
+        run: |
+          test -z "$(find dist/cleanroom-targets dist/cleanroom-npm -type f -name '*.map' -print -quit)"
+          test -z "$(git ls-files | awk -F/ '$1 == "restored-src" || $1 == "vendor" { print; exit }')"
+          if grep -R -E -n 'restored-src|core-package-local|claude-code-sourcemap|LicenseRef-Anthropic-All-Rights-Reserved' src/cleanroom; then
+            exit 1
+          fi
