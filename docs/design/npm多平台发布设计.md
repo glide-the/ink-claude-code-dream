@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room npm/artifact policies, five-package build/verifier, GitHub workflows, and npm registry checks. -->
 <!-- [Output] 定义 restored-source-free 五包拓扑、正式资格、首次 2FA bootstrap 与后续 Trusted Publishing。 -->
 <!-- [Pos] 当前公共 npm 发布设计；授权由 checked Dream 回执固定，历史恢复源码永不成为公共输入。 -->
-<!-- [Sync] 2026-08-24：开放最终回执绑定的 MIT clean-room 五包发布并固定平台优先顺序。 -->
+<!-- [Sync] 2026-08-24：记录 0.1.0 平台优先公共发布及匿名 registry fresh-install 通过。 -->
 
 # Clean-room Runtime 的 npm 多平台发布设计
 
@@ -107,19 +107,25 @@ OAuth 凭据、callback 或 transcript。首次名称 bootstrap 必须从通过 
 的五个 tarball 发布，四个平台包逐个发布并从 registry 可见后才允许 selector。五个名称存在后，
 为后续版本配置 Trusted Publisher，再使用同 SHA 的 `publish-npm.yml` OIDC 路径。
 
-## npm registry 当前状态
+## npm registry 发布结果
 
-2026-08-24 的只读检查：
+2026-08-24 的首次发布结果：
 
-- registry ping 200，`npm whoami` 为个人账号 `glide-the`；
-- 账号 2FA 模式为 `auth-and-writes`，无 pending；
-- 五个 `@glide-the/*` 名称的 `npm view` 均返回 404（未发布或对当前账号不可见）；
-- `npm access list packages glide-the --json` 返回空对象，当前还没有已创建包。
+- main commit `c4fb8df1de43d756c3bde90523cc589c8f66e837` 的 qualification run
+  `32726262238` 全绿并产出精确五包；
+- 账号 `glide-the` 通过 `auth-and-writes` WebAuthn 完成首次 bootstrap；
+- 四个平台包按 darwin-arm64、darwin-x64、linux-arm64、linux-x64 顺序全部 `PUT 200`，
+  visibility 均为 public；selector 最后 `PUT 200`；
+- 五个 `npm view @glide-the/*@0.1.0` 均返回版本 `0.1.0`、MIT 与公共 tarball，registry
+  integrity 与 qualification tgz 逐包一致；
+- 无用户 npm 凭据、空 cache/空目录的 Node `24.13.0` 安装、两个 alias、no-map、attestation
+  digest 和 Dream resolver 全部通过。
 
-个人 scope 与账号同名，因此不存在另一个 organization 授权链。404 只说明当前无可见包，
-不替代首次创建时的 2FA/ownership 检查。五个包首次 bootstrap 后，需逐个配置 repository
-`glide-the/ink-claude-code-dream`、workflow `publish-npm.yml`、environment `npm` 的 Trusted
-Publisher；配置完成前 workflow 的 `trusted_publishers_configured` 必须保持 false。
+个人 scope 与账号同名，不存在另一条 organization 授权链。首次 bootstrap 因本机没有 OIDC
+provider 显式关闭自动 provenance，并由 npm WebAuthn 批准；这不改变包内 receipt/SBOM/checksum。
+后续版本需为五包逐个配置 repository `glide-the/ink-claude-code-dream`、workflow
+`publish-npm.yml`、environment `npm` 的 Trusted Publisher；配置完成前 workflow 的
+`trusted_publishers_configured` 必须保持 false。
 
 ## 回滚
 
