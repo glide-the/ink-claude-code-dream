@@ -1,7 +1,7 @@
 // [Input] Explicit authorized restored-source/package roots, reviewed prune profile/resolution map, and Bun 1.4.0.
 // [Output] Write only local ignored bundle/assets, source digest, sanitized metafile, resolution gaps, and DCE receipt under dist/core-local.
 // [Pos] Fail-closed, read-only external-source core-prune builder; never copies source into the repository or release.
-// [Sync] 2026-08-24: separate reviewed 2.1.88 source provenance from the qualified 2.1.241 Dream CLI compatibility contract.
+// [Sync] 2026-08-24: bind actor selectors to deterministic 0600 storage and safe OAuth lifecycle.
 
 import { createHash } from "node:crypto";
 import { builtinModules } from "node:module";
@@ -485,8 +485,46 @@ for (const sourceTransform of profile.sourceTransforms) {
     fail(`source transform target digest drift: ${sourceTransform.path}`);
   }
 }
+const headlessManualOAuthTransform = {
+  path: "src/services/mcp/auth.ts",
+  sha256: "fce615a24470f433b43976917a83db8ff388caeeb75a50ac543c48a70ea4a2e8",
+};
+const headlessManualOAuthBody = await readFile(
+  join(sourceRoot, headlessManualOAuthTransform.path),
+);
+if (
+  createHash("sha256").update(headlessManualOAuthBody).digest("hex") !==
+  headlessManualOAuthTransform.sha256
+) {
+  fail(`headless manual OAuth transform target digest drift: ${headlessManualOAuthTransform.path}`);
+}
+const secureStorageSelectorTransforms = [
+  {
+    path: "src/utils/secureStorage/macOsKeychainHelpers.ts",
+    sha256: "4909e3a8a1a374f1a2183887087ae23c1859e6882fc8b2bfb070c02b8e2ec17d",
+  },
+  {
+    path: "src/utils/secureStorage/plainTextStorage.ts",
+    sha256: "5be4533db9ed637c7c3ed6d521554906ec0601ef66ed46ba74f0d8becaec2bf7",
+  },
+  {
+    path: "src/utils/secureStorage/index.ts",
+    sha256: "e73e784ce18ba8f5e2b1d8c8fc6877662257b9d8df0ee3f89c9118670c79ab51",
+  },
+];
+for (const transform of secureStorageSelectorTransforms) {
+  const body = await readFile(join(sourceRoot, transform.path));
+  if (createHash("sha256").update(body).digest("hex") !== transform.sha256) {
+    fail(`secure-storage selector transform target digest drift: ${transform.path}`);
+  }
+}
+const secureStorageSelectorTransformsByPath = new Map(
+  secureStorageSelectorTransforms.map(transform => [transform.path, transform]),
+);
 const gaps = new Map<string, ResolutionGap>();
 const appliedTransforms = new Set<string>();
+let appliedHeadlessManualOAuthTransform = false;
+const appliedSecureStorageSelectorTransforms = new Set<string>();
 const appliedMcpCompatibilityIds = new Set<string>();
 const mcpCompatibilityAssertions: unknown[] = [];
 const removedStaticImports = new Map<string, { path: string; specifier: string; bindings: string[] }>();
@@ -2580,6 +2618,389 @@ function applySourceTransform(source: string, transform: CorePruneProfile["sourc
   }
 }
 
+function transformHeadlessManualOAuth(source: string): string {
+  let transformed = replaceUnique(
+    source,
+    `): Promise<void> {
+  // XAA (SEP-990): if configured, bypass the per-server consent dance.`,
+    `): Promise<void> {
+  const recordInkOAuthStage = (stage: string) => {
+    try {
+      const recorder = (globalThis as any)[Symbol.for('ink.claude.runtime.mcpOAuthStage')]
+      if (typeof recorder === 'function') recorder(stage)
+    } catch {}
+  }
+
+  // XAA (SEP-990): if configured, bypass the per-server consent dance.`,
+    "headless-manual-oauth.stageRecorder",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "export class ClaudeAuthProvider implements OAuthClientProvider {",
+    `const recordInkOAuthProviderStage = (stage: string) => {
+  try {
+    const recorder = (globalThis as any)[Symbol.for('ink.claude.runtime.mcpOAuthStage')]
+    if (typeof recorder === 'function') recorder(stage)
+  } catch {}
+}
+
+export class ClaudeAuthProvider implements OAuthClientProvider {`,
+    "headless-manual-oauth.providerStageRecorder",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "  private _codeVerifier?: string",
+    "  private _clientInformation?: OAuthClientInformation\n  private _codeVerifier?: string",
+    "headless-manual-oauth.clientInformationMemoField",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "  async clientInformation(): Promise<OAuthClientInformation | undefined> {\n    const storage = getSecureStorage()",
+    `  async clientInformation(): Promise<OAuthClientInformation | undefined> {
+    if (this._clientInformation) {
+      logMCPDebug(this.serverName, \`Found instance client info\`)
+      recordInkOAuthProviderStage('client_information_present')
+      return this._clientInformation
+    }
+    const storage = getSecureStorage()`,
+    "headless-manual-oauth.clientInformationMemoRead",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "  ): Promise<void> {\n    const storage = getSecureStorage()\n    const existingData = storage.read() || {}\n    const serverKey = getServerKey(this.serverName, this.serverConfig)\n\n    const updatedData: SecureStorageData = {",
+    `  ): Promise<void> {
+    this._clientInformation = {
+      client_id: clientInformation.client_id,
+      client_secret: clientInformation.client_secret,
+    }
+    const storage = getSecureStorage()
+    const existingData = storage.read() || {}
+    const serverKey = getServerKey(this.serverName, this.serverConfig)
+
+    const updatedData: SecureStorageData = {`,
+    "headless-manual-oauth.clientInformationMemoWrite",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "      logMCPDebug(this.serverName, `Found client info`)\n      return {",
+    "      logMCPDebug(this.serverName, `Found client info`)\n      recordInkOAuthProviderStage('client_information_present')\n      return {",
+    "headless-manual-oauth.storedClientInformationStage",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "      logMCPDebug(this.serverName, `Using pre-configured client ID`)\n      return {",
+    "      logMCPDebug(this.serverName, `Using pre-configured client ID`)\n      recordInkOAuthProviderStage('client_information_present')\n      return {",
+    "headless-manual-oauth.configClientInformationStage",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "    logMCPDebug(this.serverName, `No client info found`)\n    return undefined",
+    "    logMCPDebug(this.serverName, `No client info found`)\n    recordInkOAuthProviderStage('client_information_missing')\n    return undefined",
+    "headless-manual-oauth.missingClientInformationStage",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "    logMCPDebug(this.serverName, `Returning code verifier`)\n    return this._codeVerifier",
+    "    logMCPDebug(this.serverName, `Returning code verifier`)\n    recordInkOAuthProviderStage('code_verifier_present')\n    return this._codeVerifier",
+    "headless-manual-oauth.codeVerifierStage",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "    storage.update(updatedData)\n  }\n\n  /**\n   * XAA silent refresh:",
+    `    recordInkOAuthProviderStage('token_save_started')
+    const storageResult = storage.update(updatedData)
+    if (!storageResult.success) {
+      recordInkOAuthProviderStage('token_save_failed')
+      throw new Error('OAuth token persistence failed')
+    }
+    recordInkOAuthProviderStage('token_save_completed')
+  }
+
+  /**
+   * XAA silent refresh:`,
+    "headless-manual-oauth.tokenSaveStages",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "      server = createServer((req, res) => {",
+    `      const startSdkAuth = async () => {
+        try {
+          recordInkOAuthStage('initial_sdk_auth_started')
+          logMCPDebug(serverName, \`Starting SDK auth\`)
+          logMCPDebug(serverName, \`Server URL: \${serverConfig.url}\`)
+
+          // Start the existing SDK OAuth flow. The same provider is later
+          // completed with authorizationCode and persists tokens normally.
+          const result = await sdkAuth(provider, {
+            serverUrl: serverConfig.url,
+            scope: wwwAuthParams.scope,
+            resourceMetadataUrl: wwwAuthParams.resourceMetadataUrl,
+          })
+          recordInkOAuthStage('initial_sdk_auth_completed')
+          logMCPDebug(serverName, \`Initial auth result: \${result}\`)
+
+          if (result !== 'REDIRECT') {
+            logMCPDebug(
+              serverName,
+              \`Unexpected auth result, expected REDIRECT: \${result}\`,
+            )
+          }
+        } catch (error) {
+          logMCPDebug(serverName, \`SDK auth error: \${error}\`)
+          cleanup()
+          rejectOnce(new Error(\`SDK auth failed: \${errorMessage(error)}\`))
+        }
+      }
+
+      if (options?.onWaitingForCallback) {
+        // Headless/manual mode deliberately owns no localhost listener. This
+        // prevents a browser callback from racing the stdin callback while
+        // retaining the configured redirect URI, state check and SDK flow.
+        void startSdkAuth()
+      } else {
+        server = createServer((req, res) => {`,
+    "headless-manual-oauth.createServerBranch",
+  );
+  transformed = replaceUniqueSpan(
+    transformed,
+    "      server.listen(port, '127.0.0.1', async () => {",
+    "      // Don't let the callback server or timeout pin the event loop",
+    `        server.listen(port, '127.0.0.1', () => {
+          void startSdkAuth()
+        })
+
+        // Don't let the callback server or timeout pin the event loop`,
+    "headless-manual-oauth.sdkAuthStart",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "      server.unref()\n\n      timeoutId = setTimeout(",
+    "        server.unref()\n      }\n\n      timeoutId = setTimeout(",
+    "headless-manual-oauth.listenerBranchClose",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "            logMCPDebug(\n              serverName,\n              `Received auth code via manual callback URL`,",
+    "            recordInkOAuthStage('callback_validated')\n            logMCPDebug(\n              serverName,\n              `Received auth code via manual callback URL`,",
+    "headless-manual-oauth.callbackValidatedStage",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "    // Now complete the auth flow with the received code\n    logMCPDebug(serverName, `Completing auth flow with authorization code`)",
+    "    // Now complete the auth flow with the received code\n    recordInkOAuthStage('token_exchange_started')\n    logMCPDebug(serverName, `Completing auth flow with authorization code`)",
+    "headless-manual-oauth.tokenExchangeStartedStage",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "    logMCPDebug(serverName, `Auth result: ${result}`)",
+    "    recordInkOAuthStage('token_exchange_completed')\n    logMCPDebug(serverName, `Auth result: ${result}`)",
+    "headless-manual-oauth.tokenExchangeCompletedStage",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "      const savedTokens = await provider.tokens()\n      logMCPDebug(",
+    `      const savedTokens = await provider.tokens()
+      if (!savedTokens) {
+        recordInkOAuthStage('credentials_missing')
+        throw new Error('OAuth credentials unavailable after token exchange')
+      }
+      recordInkOAuthStage('credentials_present')
+      logMCPDebug(`,
+    "headless-manual-oauth.credentialsStage",
+  );
+  transformed = replaceUnique(
+    transformed,
+    "    logEvent('tengu_mcp_oauth_flow_error', {",
+    `    if (authorizationCodeObtained) {
+      const oauthFailureStages: Record<string, string> = {
+        invalid_client: 'token_exchange_failed_invalid_client',
+        invalid_grant: 'token_exchange_failed_invalid_grant',
+        invalid_request: 'token_exchange_failed_invalid_request',
+        access_denied: 'token_exchange_failed_access_denied',
+        unsupported_grant_type: 'token_exchange_failed_unsupported_grant_type',
+        server_error: 'token_exchange_failed_server_error',
+        temporarily_unavailable: 'token_exchange_failed_temporarily_unavailable',
+      }
+      const fixedHttpStages: Record<number, string> = {
+        400: 'token_exchange_failed_http_400',
+        401: 'token_exchange_failed_http_401',
+        403: 'token_exchange_failed_http_403',
+        404: 'token_exchange_failed_http_404',
+        429: 'token_exchange_failed_http_429',
+      }
+      let failureStage = oauthErrorCode ? oauthFailureStages[oauthErrorCode] : undefined
+      if (!failureStage && httpStatus !== undefined) {
+        failureStage =
+          fixedHttpStages[httpStatus] ??
+          (httpStatus >= 400 && httpStatus < 500
+            ? 'token_exchange_failed_http_4xx'
+            : httpStatus >= 500 && httpStatus < 600
+              ? 'token_exchange_failed_http_5xx'
+              : undefined)
+      }
+      if (!failureStage) {
+        if (oauthErrorCode) {
+          failureStage = 'token_exchange_failed_oauth_other'
+        } else {
+          const errorObject =
+            typeof error === 'object' && error !== null
+              ? (error as { name?: unknown; issues?: unknown; message?: unknown })
+              : undefined
+          const errorName =
+            typeof errorObject?.name === 'string' ? errorObject.name : undefined
+          const schemaFailureStages: Record<string, string> = {
+            access_token: 'token_exchange_failed_schema_access_token',
+            token_type: 'token_exchange_failed_schema_token_type',
+            expires_in: 'token_exchange_failed_schema_expires_in',
+            scope: 'token_exchange_failed_schema_scope',
+            refresh_token: 'token_exchange_failed_schema_refresh_token',
+            id_token: 'token_exchange_failed_schema_id_token',
+          }
+          // This deliberately supersedes the narrower
+          // errorName === 'ZodError' && Array.isArray(errorObject?.issues) gate.
+          if (Array.isArray(errorObject?.issues)) {
+            failureStage = 'token_exchange_failed_schema_other'
+            for (const issue of errorObject.issues) {
+              if (typeof issue !== 'object' || issue === null) continue
+              const issuePath = (issue as { path?: unknown }).path
+              const field = Array.isArray(issuePath) ? issuePath[0] : undefined
+              if (typeof field === 'string' && schemaFailureStages[field]) {
+                failureStage = schemaFailureStages[field]
+                break
+              }
+            }
+          } else if (errorName === 'SyntaxError') {
+            failureStage = 'token_exchange_failed_invalid_json'
+          } else if (errorName === 'TypeError') {
+            failureStage = 'token_exchange_failed_network_type_error'
+          } else if (errorName === 'AbortError' || errorName === 'TimeoutError') {
+            failureStage = 'token_exchange_failed_network_timeout'
+          } else if (errorName === 'Error') {
+            const genericMessage =
+              typeof errorObject?.message === 'string' ? errorObject.message : ''
+            if (
+              genericMessage ===
+              'OAuth credentials unavailable after token exchange'
+            ) {
+              failureStage = 'token_exchange_failed_credentials_unavailable'
+            } else if (
+              genericMessage.includes(
+                'Existing OAuth client information is required when exchanging an authorization code',
+              )
+            ) {
+              failureStage = 'token_exchange_failed_existing_client_information_missing'
+            } else if (
+              genericMessage.includes(
+                'client_secret_basic authentication requires a client_secret',
+              )
+            ) {
+              failureStage = 'token_exchange_failed_client_secret_missing'
+            } else if (
+              genericMessage.includes('Unsupported client authentication method:')
+            ) {
+              failureStage = 'token_exchange_failed_unsupported_client_auth'
+            } else if (genericMessage.includes('No code verifier saved')) {
+              failureStage = 'token_exchange_failed_code_verifier_missing'
+            } else if (
+              genericMessage.includes('redirectUrl is required for authorization_code flow')
+            ) {
+              failureStage = 'token_exchange_failed_redirect_uri_missing'
+            } else {
+              failureStage = 'token_exchange_failed_runtime_unknown'
+            }
+          } else {
+            failureStage = 'token_exchange_failed_runtime_unknown'
+          }
+        }
+      }
+      recordInkOAuthStage(failureStage)
+    }
+
+    logEvent('tengu_mcp_oauth_flow_error', {`,
+    "headless-manual-oauth.tokenExchangeFailureStage",
+  );
+  return transformed;
+}
+
+function transformSecureStorageSelector(path: string, source: string): string {
+  if (path === "src/utils/secureStorage/index.ts") {
+    let transformed = replaceUnique(
+      source,
+      "import type { SecureStorage } from './types.js'",
+      "import { isAbsolute, normalize } from 'path'\nimport type { SecureStorage } from './types.js'",
+      "secure-storage-selector.storageIndexPathImports",
+    );
+    transformed = replaceUnique(
+      transformed,
+      "export function getSecureStorage(): SecureStorage {\n  if (process.platform === 'darwin') {",
+      `export function getSecureStorage(): SecureStorage {
+  const secureSelector = process.env.CLAUDE_SECURESTORAGE_CONFIG_DIR
+  if (secureSelector) {
+    if (
+      !isAbsolute(secureSelector) ||
+      normalize(secureSelector) !== secureSelector ||
+      secureSelector.normalize('NFC') !== secureSelector
+    ) {
+      throw new Error(
+        'CLAUDE_SECURESTORAGE_CONFIG_DIR must be an absolute normalized NFC path',
+      )
+    }
+    return plainTextStorage
+  }
+  if (process.platform === 'darwin') {`,
+      "secure-storage-selector.deterministicActorStorage",
+    );
+    return transformed;
+  }
+  if (path === "src/utils/secureStorage/macOsKeychainHelpers.ts") {
+    let transformed = replaceUnique(
+      source,
+      "import { userInfo } from 'os'",
+      "import { userInfo } from 'os'\nimport { isAbsolute, normalize } from 'path'",
+      "secure-storage-selector.keychainPathImports",
+    );
+    transformed = replaceUnique(
+      transformed,
+      "  const configDir = getClaudeConfigHomeDir()\n  const isDefaultDir = !process.env.CLAUDE_CONFIG_DIR",
+      `  const secureSelector = process.env.CLAUDE_SECURESTORAGE_CONFIG_DIR
+  const selectedSecureDir =
+    secureSelector &&
+    isAbsolute(secureSelector) &&
+    normalize(secureSelector) === secureSelector &&
+    secureSelector.normalize('NFC') === secureSelector
+      ? secureSelector
+      : undefined
+  const configDir = selectedSecureDir ?? getClaudeConfigHomeDir()
+  const isDefaultDir = !selectedSecureDir && !process.env.CLAUDE_CONFIG_DIR`,
+      "secure-storage-selector.keychainIdentity",
+    );
+    return transformed;
+  }
+  if (path === "src/utils/secureStorage/plainTextStorage.ts") {
+    let transformed = replaceUnique(
+      source,
+      "import { join } from 'path'",
+      "import { isAbsolute, join, normalize } from 'path'",
+      "secure-storage-selector.plainTextPathImports",
+    );
+    transformed = replaceUnique(
+      transformed,
+      "  const storageDir = getClaudeConfigHomeDir()",
+      `  const secureSelector = process.env.CLAUDE_SECURESTORAGE_CONFIG_DIR
+  const storageDir =
+    secureSelector &&
+    isAbsolute(secureSelector) &&
+    normalize(secureSelector) === secureSelector &&
+    secureSelector.normalize('NFC') === secureSelector
+      ? secureSelector
+      : getClaudeConfigHomeDir()`,
+      "secure-storage-selector.plainTextIdentity",
+    );
+    return transformed;
+  }
+  fail(`unknown secure-storage selector transform: ${path}`);
+}
+
 function runtimeFacadeForBase(base: string): string | null {
   const candidates = [base];
   const extension = extname(base);
@@ -2598,6 +3019,11 @@ function runtimeFacadeForBase(base: string): string | null {
 const runtimeFacadeSources: Record<string, string> = {
   "mcp-management-entry": `
 import { Command } from '@commander-js/extra-typings'
+import {
+  chmodSync, closeSync, constants, lstatSync, mkdirSync, openSync,
+  renameSync, unlinkSync, writeSync,
+} from 'node:fs'
+import { isAbsolute, join, normalize, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js'
 import { init } from 'src/entrypoints/init.js'
@@ -2609,6 +3035,114 @@ import {
   clearMcpClientConfig, clearServerTokensFromLocalStorage,
   performMCPOAuthFlow, revokeServerTokens,
 } from 'src/services/mcp/auth.js'
+import { buildRedirectUri } from 'src/services/mcp/oauthPort.js'
+
+const oauthStageKey = Symbol.for('ink.claude.runtime.mcpOAuthStage')
+const oauthStageAllowlist = new Set([
+  'action_started', 'reader_ready', 'callback_line_received',
+  'callback_validated', 'initial_sdk_auth_started',
+  'initial_sdk_auth_completed', 'token_exchange_started',
+  'client_information_present', 'client_information_missing',
+  'code_verifier_present', 'token_save_started', 'token_save_completed',
+  'token_save_failed',
+  'token_exchange_completed', 'credentials_present',
+  'credentials_missing', 'flow_resolved', 'success_stdout_flushed',
+  'flow_failed',
+  'token_exchange_failed_invalid_client',
+  'token_exchange_failed_invalid_grant',
+  'token_exchange_failed_invalid_request',
+  'token_exchange_failed_access_denied',
+  'token_exchange_failed_unsupported_grant_type',
+  'token_exchange_failed_server_error',
+  'token_exchange_failed_temporarily_unavailable',
+  'token_exchange_failed_http_400', 'token_exchange_failed_http_401',
+  'token_exchange_failed_http_403', 'token_exchange_failed_http_404',
+  'token_exchange_failed_http_429', 'token_exchange_failed_http_4xx',
+  'token_exchange_failed_http_5xx', 'token_exchange_failed_oauth_other',
+  'token_exchange_failed_schema_access_token',
+  'token_exchange_failed_schema_token_type',
+  'token_exchange_failed_schema_expires_in',
+  'token_exchange_failed_schema_scope',
+  'token_exchange_failed_schema_refresh_token',
+  'token_exchange_failed_schema_id_token',
+  'token_exchange_failed_schema_other', 'token_exchange_failed_invalid_json',
+  'token_exchange_failed_network_type_error',
+  'token_exchange_failed_network_timeout',
+  'token_exchange_failed_runtime_unknown',
+  'token_exchange_failed_existing_client_information_missing',
+  'token_exchange_failed_client_secret_missing',
+  'token_exchange_failed_unsupported_client_auth',
+  'token_exchange_failed_code_verifier_missing',
+  'token_exchange_failed_redirect_uri_missing',
+  'token_exchange_failed_credentials_unavailable',
+])
+
+function requireSecureStorageSelector() {
+  const selector = process.env.CLAUDE_SECURESTORAGE_CONFIG_DIR
+  if (
+    selector &&
+    (!isAbsolute(selector) ||
+      normalize(selector) !== selector ||
+      selector.normalize('NFC') !== selector)
+  ) {
+    throw new Error(
+      'CLAUDE_SECURESTORAGE_CONFIG_DIR must be an absolute normalized NFC path',
+    )
+  }
+}
+
+function createMcpOAuthStageRecorder() {
+  const noRecord = () => {}
+  const configRoot = process.env.CLAUDE_CONFIG_DIR
+  if (!configRoot || !isAbsolute(configRoot) || resolve(configRoot) !== configRoot) return noRecord
+  const noFollow = constants.O_NOFOLLOW
+  if (typeof noFollow !== 'number') return noRecord
+  const diagnosticsDirectory = join(configRoot, '.ink-runtime-diagnostics')
+  const receiptPath = join(diagnosticsDirectory, 'mcp-oauth-stage.jsonl')
+  const replacementPath = join(diagnosticsDirectory, 'mcp-oauth-stage.jsonl.tmp')
+  let sequence = 0
+  const recordedStages = new Set()
+  try {
+    mkdirSync(diagnosticsDirectory, { recursive: true, mode: 0o700 })
+    const directoryInfo = lstatSync(diagnosticsDirectory)
+    if (!directoryInfo.isDirectory() || directoryInfo.isSymbolicLink()) return noRecord
+    chmodSync(diagnosticsDirectory, 0o700)
+    const replacement = openSync(
+      replacementPath,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | noFollow,
+      0o600,
+    )
+    closeSync(replacement)
+    chmodSync(replacementPath, 0o600)
+    renameSync(replacementPath, receiptPath)
+    chmodSync(receiptPath, 0o600)
+  } catch {
+    try { unlinkSync(replacementPath) } catch {}
+    return noRecord
+  }
+  return stage => {
+    if (sequence >= 16 || !oauthStageAllowlist.has(stage) || recordedStages.has(stage)) return
+    let descriptor
+    try {
+      descriptor = openSync(receiptPath, constants.O_WRONLY | constants.O_APPEND | noFollow)
+      const record = {
+        schemaVersion: 1,
+        seq: sequence + 1,
+        at: new Date().toISOString(),
+        stage,
+      }
+      writeSync(descriptor, JSON.stringify(record) + '\\n')
+      sequence += 1
+      recordedStages.add(stage)
+    } catch {
+      // Diagnostics are fail-safe and must never change OAuth behavior.
+    } finally {
+      if (descriptor !== undefined) {
+        try { closeSync(descriptor) } catch {}
+      }
+    }
+  }
+}
 
 function requireOAuthServer(name) {
   const server = getMcpConfigByName(name)
@@ -2631,22 +3165,61 @@ export async function runMcpManagement(args) {
     .description('Authenticate with an MCP server (HTTP or SSE)')
     .option('--no-browser', 'Print the authorization URL and read the callback URL from stdin')
     .action(async (name, options) => {
-      const server = requireOAuthServer(name)
-      await performMCPOAuthFlow(
-        name,
-        server,
-        url => process.stdout.write(\`Open this URL to authenticate:\\n\${url}\\n\`),
-        undefined,
-        options.noBrowser ? {
-          skipBrowserOpen: true,
-          onWaitingForCallback: submit => {
-            process.stdout.write('Paste the OAuth callback URL and press Enter:\\n')
-            const input = createInterface({ input: process.stdin, terminal: false })
-            input.once('line', line => { input.close(); submit(line.trim()) })
-          },
-        } : undefined,
-      )
-      process.stdout.write(\`Authenticated MCP server \${name}\\n\`)
+      const noBrowser = options.browser === false
+      const recordStage = noBrowser ? createMcpOAuthStageRecorder() : () => {}
+      const previousStageRecorder = globalThis[oauthStageKey]
+      if (noBrowser) globalThis[oauthStageKey] = recordStage
+      recordStage('action_started')
+      const lifecyclePin = noBrowser ? setInterval(() => {}, 60_000) : undefined
+      let callbackInput
+      try {
+        requireSecureStorageSelector()
+        const server = requireOAuthServer(name)
+        const loginServer = noBrowser && !server.oauth?.callbackPort
+          ? {
+              ...server,
+              oauth: {
+                ...server.oauth,
+                callbackPort: Number(new URL(buildRedirectUri()).port),
+              },
+            }
+          : server
+        await performMCPOAuthFlow(
+          name,
+          loginServer,
+          url => process.stdout.write(\`Open this URL to authenticate:\\n\${url}\\n\`),
+          undefined,
+          noBrowser ? {
+            skipBrowserOpen: true,
+            onWaitingForCallback: submit => {
+              process.stdout.write('Paste the OAuth callback URL and press Enter:\\n')
+              callbackInput = createInterface({ input: process.stdin, terminal: false })
+              recordStage('reader_ready')
+              callbackInput.once('line', line => {
+                recordStage('callback_line_received')
+                submit(line.trim())
+              })
+            },
+          } : undefined,
+        )
+        recordStage('flow_resolved')
+        const message = \`Authenticated MCP server \${name}\\n\`
+        if (noBrowser) await new Promise(resolve => process.stdout.write(message, resolve))
+        else process.stdout.write(message)
+        recordStage('success_stdout_flushed')
+      } catch {
+        recordStage('flow_failed')
+        process.exitCode = 1
+        await new Promise(resolve => process.stderr.write('MCP OAuth login failed\\n', resolve))
+      } finally {
+        callbackInput?.close()
+        if (noBrowser) process.stdin.pause()
+        if (lifecyclePin) clearInterval(lifecyclePin)
+        if (noBrowser) {
+          if (previousStageRecorder === undefined) delete globalThis[oauthStageKey]
+          else globalThis[oauthStageKey] = previousStageRecorder
+        }
+      }
     })
   mcp.command('logout <name>')
     .description('Clear stored OAuth credentials for an MCP server')
@@ -2953,9 +3526,19 @@ const resolverPlugin = {
     build.onLoad({ filter: /\.[cm]?[jt]sx?$/ }, async (args: { path: string }) => {
       const path = sourceRelative(args.path);
       const transform = sourceTransforms.get(path);
+      const applyHeadlessManualOAuth = path === headlessManualOAuthTransform.path;
+      const secureStorageSelectorTransform = secureStorageSelectorTransformsByPath.get(path);
       const mcpTransformIds = mcpTransformsByPath.get(path);
       const dependencyTransform = dependencyTransformsByPath.get(args.path);
-      if (!transform && !mcpTransformIds && !dependencyTransform) return undefined;
+      if (
+        !transform &&
+        !applyHeadlessManualOAuth &&
+        !secureStorageSelectorTransform &&
+        !mcpTransformIds &&
+        !dependencyTransform
+      ) {
+        return undefined;
+      }
       const source = await readFile(args.path, "utf8");
       let contents = source;
       if (mcpTransformIds) {
@@ -2967,6 +3550,14 @@ const resolverPlugin = {
         mcpCompatibilityAssertions.push(...result.assertions);
       }
       if (transform) contents = applySourceTransform(contents, transform);
+      if (applyHeadlessManualOAuth) {
+        contents = transformHeadlessManualOAuth(contents);
+        appliedHeadlessManualOAuthTransform = true;
+      }
+      if (secureStorageSelectorTransform) {
+        contents = transformSecureStorageSelector(path, contents);
+        appliedSecureStorageSelectorTransforms.add(path);
+      }
       if (dependencyTransform) {
         contents = transformDependencySource(contents, dependencyTransform);
       }
@@ -3309,6 +3900,12 @@ const requiredRemovedMainImports = [
   "./interactiveHelpers.js",
 ];
 const dceViolations = [
+  ...(!appliedHeadlessManualOAuthTransform
+    ? [`headless manual OAuth transform was not applied: ${headlessManualOAuthTransform.path}`]
+    : []),
+  ...secureStorageSelectorTransforms
+    .filter(transform => !appliedSecureStorageSelectorTransforms.has(transform.path))
+    .map(transform => `secure-storage selector transform was not applied: ${transform.path}`),
   ...profile.sourceTransforms
     .filter(transform => !appliedTransforms.has(transform.path))
     .map(transform => `source transform was not applied: ${transform.path}`),

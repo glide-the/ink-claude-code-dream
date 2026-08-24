@@ -1,7 +1,7 @@
 <!-- [Input] Core build receipts, paired SDK/CLI fixtures, MCP compatibility tests, official comparator, and real Dream topology. -->
 <!-- [Output] Define three ordered test layers, commands, interpretation, and non-claims. -->
 <!-- [Pos] Test execution and compatibility-claim guide. -->
-<!-- [Sync] 2026-08-24: record completed static/interface gates and keep current-core real business QA explicit. -->
+<!-- [Sync] 2026-08-24: record passing real Comfy OAuth/inventory acceptance and final exact-Node verification. -->
 
 # Test guide
 
@@ -25,7 +25,7 @@ Required result before moving on:
 - streaming/control/resume/tools/permissions/Workspace/sandbox/TMPDIR/MCP/extensions/auth inputs are present;
 - deterministic bundle/checksum succeeds.
 
-Current result: passed for source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `6904d3cd7954ead347cc5f5dd65f1313cfa78e0a080514e9efc874e51ff88893`. The graph has 1,989 inputs, 48 outputs, zero gaps, and passing DCE assertions. The receipt independently binds source provenance `2.1.88` and CLI compatibility `2.1.241`.
+Current result: passed for source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5`. The graph has 1,989 inputs, 48 outputs, zero gaps, and passing DCE assertions. The receipt independently binds source provenance `2.1.88` and CLI compatibility `2.1.241`.
 
 ## Layer 2: interface-level differential
 
@@ -59,13 +59,27 @@ bun run test:acceptance
 INK_ACCEPTANCE_REAL_CLAUDE=/path/to/official/claude bun run test:official-difference
 bun run test:mcp-matrix
 bun run test:mcp-auth-compat
+
+INK_MCP_OAUTH_FIXTURE_PYTHON=/absolute/path/to/pinned/venv/bin/python \
+INK_MCP_OAUTH_FIXTURE_ROOT=/absolute/path/to/python-sdk/examples/servers/simple-auth \
+  bun run test:core-oauth
 ```
 
-The current real-process SDK differential, MCP differential, MCP management receipt, and aggregate qualification all pass and bind the exact hashes above. OAuth help/management behavior is covered; a complete real OAuth browser login is deliberately outside that technical receipt. The older envelope/fake-core suites remain historical carrier baselines rather than additional current-core proof.
+The standard full repository suite is `node --test --test-concurrency=1 tests/*.test.mjs` (the `bun run test` package command). Test files share the built artifact and process-level fixtures, so cross-file serialization avoids contention in the 500 ms lifecycle fixture and PTY resources. The individual process/protocol assertions remain unchanged, and the pipe and PTY OAuth lanes stay separate contracts.
+
+The executable OAuth contract pins the official MCP Python SDK `2.0.0` provider at commit `6f69a3758ebf2ee55ce050f58b470ce11af71133` and passes 3/3. It proves Commander `mcp login --no-browser`, identical advertised/submitted `http://localhost:3118/callback`, no competing callback listener, and delayed token exchange in both pipe and Dream-compatible real-PTY lanes; PTY cleanup explicitly pauses stdin so the process exits deterministically. DCR client information is memoized only on the provider instance. The contract requires successful token persistence followed by `credentials_present` and covers fixed failure classifications.
+
+When a valid explicit `CLAUDE_SECURESTORAGE_CONFIG_DIR` is set, the only credential store is that actor-owned `0700` directory's `0600` `.credentials.json`; `CLAUDE_CONFIG_DIR` remains configuration only, and the user's macOS keychain is not accessed. A fake `security` sentinel makes any accidental keychain call fail the actor-selector tests. When no secure selector is set, official keychain behavior is preserved. The helper also fixes the `waitForExit` race in which a child could exit before the listener was registered.
+
+This selector rule was required by real-business evidence from the preceding candidate: it reached `token_save_completed` and then `credentials_missing` because macOS keychain primary storage shadowed the actor plaintext fallback. The new candidate's final real Comfy rerun passed: the 16-stage receipt ended with `credentials_present` → `flow_resolved` → `success_stdout_flushed`, contained no `flow_failed`, and the selector credential was a regular `0600` file under its `0700` directory.
+
+The actor-local stage receipt is overwritten per login, bounded to 16 unique allowlisted stages and 4,096 bytes, and enforces directory/file modes `0700`/`0600`. It records only schema version, sequence, timestamp, and stage; server identity, URLs, callback/query values, OAuth parameters, credentials, error details, and environment values are excluded. The current SDK real-process differential, stdio/HTTP MCP tools/resources differential, management lifecycle, aggregate qualifier, and real Comfy lane all pass and bind the exact hashes above. The older envelope/fake-core suites remain historical carrier baselines rather than additional current-core proof.
 
 ## Layer 3: real Dream business acceptance
 
-Layers 1 and 2 now pass. If real-business acceptance is selected, use the normal local Dream, Admin, Gateway, and current PostgreSQL through public production entrypoints. Use the specified existing account and Deck. Verify new session, first token, multi-turn, resume, SSE, tool use/result, Workspace files, sandbox, transcript, MCP stdio/HTTP/OAuth/Resources, plugin/Slash Skill/hook, Agent/Task, cancel, timeout, Runtime abnormal exit, persistence, token settlement, and Admin visibility.
+All three layers now pass for the selected Runtime scope. The real Comfy lane used public production endpoints, connected `comfyui-cloud` `0.40.1`, reported 41 tools, and cleaned up through cancel/logout/remove. Resources and Prompts were `not_reported`. No tool was called because the available metadata did not prove a zero-cost operation: some tools were marked read-only, but an ordinary Agent turn would still consume model tokens, so the three-gate charging policy correctly refused execution. This is a safety decision, not a Runtime or MCP failure. Authenticated Admin UI visibility remains unverified solely because no administrator browser session was available.
+
+The final standard command is `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify`; it exits 0 with Node 45/45, MCP compatibility 46 passed plus 6 authorized-source fixture skips, SDK contract, acceptance, release verification, and archive reproducibility passing.
 
 Fault injection and destructive testing must remain isolated; those results are technical validation and cannot be reported as real-business acceptance.
 
@@ -76,3 +90,4 @@ Fault injection and destructive testing must remain isolated; those results are 
 - Layer 3 proves the integrated business journey, not unexercised protocol branches.
 - Layers 1 and 2 establish the current technical package's local `productionEligible=true` state; they do not authorize publication, redistribution, deployment, or claim layer 3.
 - Old wrapper receipts in `acceptance-results.md` remain historical baselines and do not substitute for a current-core real-business result.
+- The restored source is a read-only local input; Git holds only replayable builders/patches/manifests/tests/docs, not restored source or generated artifacts. Without Anthropic redistribution authorization, neither may be publicly published or redistributed.

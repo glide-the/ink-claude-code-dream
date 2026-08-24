@@ -1,7 +1,7 @@
 // [Input] Synthetic zero-gap core bundles/receipts and local artifact package/verify scripts.
 // [Output] Prove reproducibility, qualification gating/binding, Bun wrapper behavior, tamper detection, and user/source material exclusion.
 // [Pos] Provider-free local artifact contract tests; fixtures contain no restored/vendor implementation or Dream business state.
-// [Sync] 2026-08-24: assert packaged source provenance and qualified CLI compatibility version remain distinct.
+// [Sync] 2026-08-24: prove actor-local OAuth stage receipts remain outside reproducible artifacts.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -202,7 +202,15 @@ async function writeQualification(context, id, evidenceType, overrides = {}) {
 test("packages a reproducible local candidate with closed production/publication gates", async () => {
   const context = await fixture();
   try {
-    const result = runPackage(context);
+    const actorConfig = path.join(context.root, "actor-config");
+    const actorDiagnostics = path.join(actorConfig, ".ink-runtime-diagnostics");
+    await mkdir(actorDiagnostics, { recursive: true, mode: 0o700 });
+    await writeFile(
+      path.join(actorDiagnostics, "mcp-oauth-stage.jsonl"),
+      '{"schemaVersion":1,"seq":1,"at":"2026-08-24T00:00:00.000Z","stage":"action_started"}\n',
+      { mode: 0o600 },
+    );
+    const result = runPackage(context, [], { CLAUDE_CONFIG_DIR: actorConfig });
     assert.equal(result.status, 0, result.stderr);
     const output = JSON.parse(result.stdout.trim());
     assert.equal(output.productionEligible, false);
@@ -235,6 +243,9 @@ test("packages a reproducible local candidate with closed production/publication
     assert.equal(reproducibility.byteIdentical, true);
     assert.equal(reproducibility.passCount, 2);
     assert.equal(reproducibility.generatedAt, "2026-08-23T00:00:00.000Z");
+    const packagedPaths = (await artifactEntries(context.artifactRoot)).map(([relative]) => relative);
+    assert.ok(packagedPaths.every(relative => !relative.includes(".ink-runtime-diagnostics")));
+    assert.ok(packagedPaths.every(relative => !relative.endsWith("mcp-oauth-stage.jsonl")));
   } finally {
     await rm(context.root, { recursive: true, force: true });
   }

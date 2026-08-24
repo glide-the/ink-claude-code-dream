@@ -1,7 +1,7 @@
 // [Input] Checked-in core-prune profile, deterministic resolution map, builder/verifier sources, and git ignore policy.
 // [Output] Prove local-only ownership, Bun 1.4.0 pin, capability retention, feature separation, resolver rules, and DCE assertions.
 // [Pos] Provider-free static contract test; it does not read, copy, modify, or build restored source.
-// [Sync] 2026-08-24: require independent source provenance and Dream-facing CLI compatibility versions.
+// [Sync] 2026-08-24: require secure-selector fail-closed and post-save credential proof.
 
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -18,6 +18,12 @@ const resolutionMap = JSON.parse(
 );
 const builder = await readFile(resolve(repositoryRoot, "scripts/build-core-prune.ts"), "utf8");
 const verifier = await readFile(resolve(repositoryRoot, "scripts/verify-core-prune.mjs"), "utf8");
+const qualifier = await readFile(resolve(repositoryRoot, "scripts/qualify-core-local.mjs"), "utf8");
+const oauthRunner = await readFile(
+  resolve(repositoryRoot, "scripts/run-core-oauth-cli-contract.mjs"),
+  "utf8",
+);
+const packageJson = JSON.parse(await readFile(resolve(repositoryRoot, "package.json"), "utf8"));
 
 test("core-prune build is pinned, local-only, and requires an explicit source root", () => {
   assert.equal(profile.builder.version, "1.4.0");
@@ -274,4 +280,148 @@ test("MCP compatibility, runtime facades, and dependency roots are executable an
     ]) assert.ok(runtimeFacades.has(facade));
   assert.match(builder, /dependency tree digest drift/);
   assert.match(builder, /runtime facade target digest drift/);
+});
+
+test("headless MCP login owns one listener-free manual callback path and safe stage receipt", () => {
+  assert.match(builder, /\.option\('--no-browser'/);
+  assert.match(builder, /const noBrowser = options\.browser === false/);
+  assert.match(builder, /callbackPort: Number\(new URL\(buildRedirectUri\(\)\)\.port\)/);
+  assert.match(builder, /const headlessManualOAuthTransform = \{/);
+  assert.match(builder, /path: "src\/services\/mcp\/auth\.ts"/);
+  assert.match(builder, /headless manual OAuth transform target digest drift/);
+  assert.match(builder, /private _clientInformation\?: OAuthClientInformation/);
+  assert.match(builder, /headless-manual-oauth\.clientInformationMemoField/);
+  assert.match(builder, /headless-manual-oauth\.clientInformationMemoRead/);
+  assert.match(builder, /headless-manual-oauth\.clientInformationMemoWrite/);
+  assert.match(
+    builder,
+    /if \(this\._clientInformation\)[\s\S]*return this\._clientInformation[\s\S]*const storage = getSecureStorage\(\)/,
+  );
+  assert.match(
+    builder,
+    /this\._clientInformation = \{\s*client_id: clientInformation\.client_id,\s*client_secret: clientInformation\.client_secret/,
+  );
+  assert.match(builder, /secure-storage selector transform target digest drift/);
+  assert.match(builder, /secure-storage-selector\.keychainIdentity/);
+  assert.match(builder, /secure-storage-selector\.plainTextIdentity/);
+  assert.match(builder, /secure-storage-selector\.deterministicActorStorage/);
+  assert.match(builder, /return plainTextStorage/);
+  assert.match(builder, /isAbsolute\(secureSelector\)/);
+  assert.match(builder, /normalize\(secureSelector\) === secureSelector/);
+  assert.match(
+    builder,
+    /CLAUDE_SECURESTORAGE_CONFIG_DIR must be an absolute normalized NFC path/,
+  );
+  assert.match(
+    builder,
+    /!selectedSecureDir && !process\.env\.CLAUDE_CONFIG_DIR/,
+  );
+  assert.match(builder, /const storageResult = storage\.update\(updatedData\)/);
+  assert.match(builder, /if \(!storageResult\.success\)/);
+  assert.match(
+    builder,
+    /if \(!savedTokens\)[\s\S]*recordInkOAuthStage\('credentials_missing'\)[\s\S]*throw new Error\('OAuth credentials unavailable after token exchange'\)/,
+  );
+  assert.match(builder, /token_exchange_failed_credentials_unavailable/);
+  assert.doesNotMatch(builder, /_pendingSavedTokens/);
+  assert.match(builder, /if \(options\?\.onWaitingForCallback\) \{/);
+  assert.match(builder, /void startSdkAuth\(\)/);
+  assert.match(builder, /else \{\s*server = createServer/);
+  assert.match(builder, /const lifecyclePin = noBrowser \? setInterval/);
+  assert.match(builder, /let callbackInput/);
+  assert.match(builder, /callbackInput = createInterface/);
+  assert.match(
+    builder,
+    /callbackInput\.once\('line', line => \{\s*recordStage\('callback_line_received'\)\s*submit\(line\.trim\(\)\)/,
+  );
+  assert.match(builder, /await new Promise\(resolve => process\.stdout\.write\(message, resolve\)\)/);
+  assert.match(
+    builder,
+    /finally \{\s*callbackInput\?\.close\(\)\s*if \(noBrowser\) process\.stdin\.pause\(\)/,
+  );
+  assert.match(
+    builder,
+    /await new Promise\(resolve => process\.stderr\.write\('MCP OAuth login failed\\\\n', resolve\)\)/,
+  );
+  assert.doesNotMatch(builder, /forceFailureExit/);
+  assert.doesNotMatch(builder, /line => \{ input\.close\(\); submit/);
+  assert.match(builder, /\.ink-runtime-diagnostics/);
+  assert.match(builder, /mcp-oauth-stage\.jsonl/);
+  assert.match(builder, /constants\.O_NOFOLLOW/);
+  assert.match(builder, /chmodSync\(diagnosticsDirectory, 0o700\)/);
+  assert.match(builder, /chmodSync\(receiptPath, 0o600\)/);
+  assert.match(builder, /sequence >= 16/);
+  assert.match(builder, /Diagnostics are fail-safe and must never change OAuth behavior/);
+  for (const stage of [
+    "action_started",
+    "reader_ready",
+    "callback_line_received",
+    "callback_validated",
+    "initial_sdk_auth_started",
+    "initial_sdk_auth_completed",
+    "client_information_present",
+    "client_information_missing",
+    "code_verifier_present",
+    "token_save_started",
+    "token_save_completed",
+    "token_save_failed",
+    "token_exchange_started",
+    "token_exchange_completed",
+    "credentials_present",
+    "credentials_missing",
+    "flow_resolved",
+    "success_stdout_flushed",
+    "flow_failed",
+    "token_exchange_failed_invalid_client",
+    "token_exchange_failed_invalid_grant",
+    "token_exchange_failed_invalid_request",
+    "token_exchange_failed_access_denied",
+    "token_exchange_failed_unsupported_grant_type",
+    "token_exchange_failed_server_error",
+    "token_exchange_failed_temporarily_unavailable",
+    "token_exchange_failed_http_400",
+    "token_exchange_failed_http_401",
+    "token_exchange_failed_http_403",
+    "token_exchange_failed_http_404",
+    "token_exchange_failed_http_429",
+    "token_exchange_failed_http_4xx",
+    "token_exchange_failed_http_5xx",
+    "token_exchange_failed_oauth_other",
+    "token_exchange_failed_schema_access_token",
+    "token_exchange_failed_schema_token_type",
+    "token_exchange_failed_schema_expires_in",
+    "token_exchange_failed_schema_scope",
+    "token_exchange_failed_schema_refresh_token",
+    "token_exchange_failed_schema_id_token",
+    "token_exchange_failed_schema_other",
+    "token_exchange_failed_invalid_json",
+    "token_exchange_failed_network_type_error",
+    "token_exchange_failed_network_timeout",
+    "token_exchange_failed_runtime_unknown",
+  ]) assert.match(builder, new RegExp(`['"]${stage}['"]`));
+  assert.match(builder, /if \(authorizationCodeObtained\) \{/);
+  assert.match(builder, /failureStage = oauthErrorCode \? oauthFailureStages\[oauthErrorCode\]/);
+  assert.match(builder, /recordInkOAuthStage\(failureStage\)/);
+  assert.match(builder, /errorName === 'ZodError' && Array\.isArray\(errorObject\?\.issues\)/);
+  assert.match(builder, /errorName === 'SyntaxError'/);
+  assert.match(builder, /errorName === 'TypeError'/);
+  assert.match(builder, /errorName === 'AbortError' \|\| errorName === 'TimeoutError'/);
+  assert.match(builder, /performMCPOAuthFlow\([\s\S]*loginServer/);
+  assert.match(builder, /noBrowser \? \{/);
+  assert.match(builder, /skipBrowserOpen: true/);
+  assert.match(builder, /createInterface\(\{ input: process\.stdin, terminal: false \}\)/);
+  assert.doesNotMatch(builder, /options\.noBrowser \? \{/);
+});
+
+test("full qualification requires the exact official MCP SDK OAuth process contract", () => {
+  assert.equal(packageJson.scripts["test:core-oauth"], "node scripts/run-core-oauth-cli-contract.mjs");
+  assert.match(qualifier, /official MCP SDK headless OAuth CLI contract/);
+  assert.match(qualifier, /scripts\/run-core-oauth-cli-contract\.mjs/);
+  assert.match(oauthRunner, /INK_MCP_OAUTH_FIXTURE_PYTHON: fixturePython/);
+  assert.match(oauthRunner, /INK_MCP_OAUTH_FIXTURE_ROOT: fixtureRoot/);
+  assert.match(oauthRunner, /must be an explicit absolute path/);
+  assert.match(oauthRunner, /sdkVersion !== "2\.0\.0"/);
+  assert.match(oauthRunner, /fixtureTag !== "v2\.0\.0"/);
+  assert.match(oauthRunner, /INK_REQUIRE_CORE_OAUTH_FIXTURE: "1"/);
+  assert.doesNotMatch(oauthRunner, /\/private\/tmp\//);
 });

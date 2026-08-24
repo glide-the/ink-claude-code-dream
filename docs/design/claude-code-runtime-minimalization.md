@@ -1,15 +1,15 @@
 <!-- [Input] Dream call-chain evidence, Claude Code 2.1.88 restored source, Bun 1.4 feature-DCE evidence, current SDK/CLI contracts, and MCP 2.1.238/2.1.239 deltas. -->
 <!-- [Output] Define the local minimal Runtime architecture, capability boundary, build/publish gate, compatibility layers, and three-level acceptance contract. -->
 <!-- [Pos] Canonical 20-section design for the locally built ink-claude-code-dream Runtime. -->
-<!-- [Sync] 2026-08-24: record the qualified zero-gap core, applied MCP compatibility, local package policy, and separate business/publication decisions. -->
+<!-- [Sync] 2026-08-24: record passing real Comfy acceptance, authoritative actor storage, and final exact-Node verification. -->
 
 # Claude Code Runtime minimalization
 
 Evidence date: 2026-08-24.
 
-Decision status: **technical implementation and qualification complete for the current local artifact**. The user-authorized Claude Code `2.1.88` restored tree is an explicit local reference and build input. Bun `1.4.0` compile-time features remove IM-irrelevant branches into Git-ignored `dist/core-local/`. The repository stores only repository-authored source-bound transformation code, capability profiles, resolution metadata, tests, and documentation; it does not store the restored tree or the derived core artifact. These are technical provenance claims, not a finding of redistribution permission.
+Decision status: **technical implementation and qualification complete for the current local artifact**. The user-authorized Claude Code `2.1.88` restored tree is a read-only local reference and build input. Bun `1.4.0` compile-time features remove IM-irrelevant branches into Git-ignored `dist/core-local/`. The repository stores only replayable repository-authored build/patch code, capability profiles, manifests, resolution metadata, tests, and documentation; it does not store the restored tree or the derived artifact. These are technical provenance claims, not a finding of redistribution permission.
 
-The exact artifact has source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `6904d3cd7954ead347cc5f5dd65f1313cfa78e0a080514e9efc874e51ff88893`. Its sanitized graph contains 1,989 inputs and 48 outputs with zero resolution gaps; feature-DCE and required-input assertions pass. SDK, MCP protocol, MCP management, and aggregate qualification receipts bind those same hashes. The build and release manifests keep `sourceVersionEvidence=2.1.88` distinct from the qualified Dream-facing `cliCompatibilityVersion=2.1.241`. The reproducible 62-file package has tree SHA-256 `90e205c41a4fcda5c4ba72a2cd84b6f82e8a7fd1b0b7055b50ea4ef7cd7f5a78` and records `productionEligible=true`, `publicationAllowed=false`, and `redistributionAllowed=false`.
+The exact artifact has source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5`. Its sanitized graph contains 1,989 inputs and 48 outputs with zero resolution gaps; feature-DCE and required-input assertions pass. SDK real-process, stdio/HTTP MCP tools/resources, MCP management lifecycle, and aggregate qualification all exit 0 and bind those same hashes. The build and release manifests keep `sourceVersionEvidence=2.1.88` distinct from the qualified Dream-facing `cliCompatibilityVersion=2.1.241`. The reproducible package has 62 files, 61 checksum entries, artifact-tree SHA-256 `728e758f7c7f0294d504c67805eb29453636f3f5cbfbcf49fdef9f1a5c018fb3`, two byte-identical passes, and records `productionEligible=true`, `publicationAllowed=false`, and `redistributionAllowed=false`.
 
 ## 1. Background and problem definition
 
@@ -153,12 +153,13 @@ Current result: build and verifier pass with 1,989 inputs, 48 outputs, zero gaps
 
 ## 9. Recommended solution
 
-The implementation completed two strictly ordered layers:
+The implementation completed three strictly ordered layers:
 
 1. The `2.1.88` source resolver produced a zero-gap minimal core using the reviewed feature profile, with KEEP and REMOVE assertions proven in the Bun metafile.
 2. The MCP `2.1.238`/`2.1.239` compatibility layer was applied independently, bound to exact old-source hashes, and the digest-bound interface and management suites passed.
+3. A source-bound headless OAuth repair preserved the restored provider flow while closing CLI, secure-identity, DCR memoization, persistence-postcondition, PTY-cleanup, error-classification, and safe-receipt gaps.
 
-The custom core now has its own real Dream/Gateway/PostgreSQL main-journey evidence. Remaining decisions are whether to provide a working OAuth MCP endpoint and Admin browser session for the two blocked UI lanes, and whether to authorize deployment/publication. Do not reinterpret the old wrapper's green OAuth lane as evidence for the current core.
+The custom core has real Dream/Gateway/PostgreSQL main-journey evidence. The complete local OAuth CLI contract passes 3/3 against the official MCP Python SDK `2.0.0` fixture at commit `6f69a3758ebf2ee55ce050f58b470ce11af71133`. The preceding candidate's real Comfy run exposed a separate storage-selection flaw—`token_save_completed` followed by `credentials_missing`—and is retained as fixed-failure evidence. The final candidate's real Comfy rerun passed through public configure/auth/callback/inventory/logout/remove endpoints with a complete 16-stage receipt and 41-tool connected inventory. Do not reinterpret the old wrapper's green OAuth lane as evidence for the current core.
 
 ## 10. MCP compatibility strategy
 
@@ -167,7 +168,11 @@ Restored `2.1.88` already contains substantial OAuth/DCR/PKCE/token/revoke logic
 - `2.1.238`: stdio MCP initialization before discovery; disabled servers not connected by list/get; trusted `headersHelper` cwd/scoping; credential-like environment removal.
 - `2.1.239`: bounded recovery for transient remote MCP 5xx during mid-session reconnect/cloud/SDK server updates; 401/403 remain non-retryable and error output is redacted.
 
-The repository-authored compatibility patch is now integrated into the qualified headless artifact through six exact-source-bound transformations. Digest-bound MCP differential and management receipts pass, including stdio/HTTP lifecycle, colon-containing server identity, isolation/redaction, and OAuth help/management commands. Restored `2.1.88` continues to own OAuth/DCR/PKCE/token/revoke behavior; the patch does not implement another OAuth flow, MCP client, or Agent state machine. A complete real OAuth browser login remains a real-business QA decision.
+The repository-authored compatibility patch is now integrated into the qualified headless artifact through six exact-source-bound transformations. Digest-bound MCP differential and management receipts pass, including stdio/HTTP lifecycle, colon-containing server identity, isolation/redaction, and OAuth help/management commands. Restored `2.1.88` continues to own OAuth/DCR/PKCE/token/revoke behavior; the repair does not implement another OAuth flow, MCP client, or Agent state machine.
+
+The complete CLI contract proves Commander `mcp login --no-browser`, the same `http://localhost:3118/callback` advertised and submitted with no competing listener, and separate pipe and real-PTY lanes. PTY cleanup explicitly calls `process.stdin.pause()` so the process exits deterministically. DCR client information is memoized only on the provider instance. Token persistence must report success and be followed by `credentials_present`; missing credentials fail closed. Provider/OAuth/validation/parse/network/timeout/client-information/secret/auth-method/verifier/redirect/save/credential failures map only to fixed safe receipt stages.
+
+Secure storage has one source of truth per process. If a valid explicit `CLAUDE_SECURESTORAGE_CONFIG_DIR` is set, it is authoritative: the Runtime uses only that actor-owned `0700` directory's `0600` `.credentials.json`, keeps `CLAUDE_CONFIG_DIR` configuration-only, and never calls the user's macOS keychain. If the selector is unset, official keychain behavior remains unchanged. This avoids the previous mixed mode in which keychain primary storage shadowed the actor plaintext fallback. A fake `security` sentinel proves actor-selector tests do not invoke macOS `security`; the OAuth harness also handles children that already exited before `waitForExit` listener registration.
 
 ## 11. Runtime artifact layout
 
@@ -186,11 +191,13 @@ dist/core-package-local/         # reproducible local-only package; Git-ignored
     manifest/                    # checksums, SBOM, licenses, policy, qualification summary
 ```
 
-Git may contain `scripts/build-core-prune.ts`, `scripts/verify-core-prune.mjs`, `runtime/core-prune-profile.json`, `runtime/core-resolution-map.json`, contract tests, source-bound compatibility policies/manifests, and docs. Git and published releases must not contain restored/vendor source, derived core output, source maps with vendor content, user data, credentials, or tokens.
+Git may contain replayable repository-authored builders, patches, profiles, resolution maps, manifests, contract tests, and documentation. It must not contain the read-only restored/vendor source input or generated artifact. Public releases also exclude source maps with vendor content, user data, credentials, and tokens.
 
 ## 12. Transcript, workspace, and plugin metadata lifecycle
 
-Runtime distribution data is immutable; user/session data is not distribution data. Dream owns the canonical thread workspace and binds `CLAUDE_CODE_TMPDIR={AGENT_CWD}/{thread_id}/.claude-tmp`, a normalized real child with no symlink and mode `0700`. Runtime transcript files remain in the Runtime's session store for resume. Dream owns its persisted projection. Plugin/workspace materialization is recreated or restored by Dream before launch. OAuth credentials and user MCP configuration stay in their existing user/config stores and are never copied into the artifact.
+Runtime distribution data is immutable; user/session data is not distribution data. Dream owns the canonical thread workspace and binds `CLAUDE_CODE_TMPDIR={AGENT_CWD}/{thread_id}/.claude-tmp`, a normalized real child with no symlink and mode `0700`. Runtime transcript files remain in the Runtime's session store for resume. Dream owns its persisted projection. Plugin/workspace materialization is recreated or restored by Dream before launch. OAuth credentials and user MCP configuration stay in their existing user/config stores and are never copied into the artifact. Actor configuration uses `CLAUDE_CONFIG_DIR`. A valid explicit `CLAUDE_SECURESTORAGE_CONFIG_DIR` must be an absolute normalized NFC path and fixes credential storage to its `0600` `.credentials.json`; no selector retains the official keychain.
+
+Manual `mcp login --no-browser` also owns one bounded operational receipt at `${CLAUDE_CONFIG_DIR}/.ink-runtime-diagnostics/mcp-oauth-stage.jsonl`. Each login synchronously replaces the prior file before recording, so it represents only the actor's single active operation; the directory is forced to `0700` and the file to `0600`. The file is capped at 16 unique allowlisted stages and 4,096 bytes. Records contain only schema version, increasing sequence, ISO timestamp, and stage. They never contain server identity, URLs, paths, callback/query values, OAuth parameters, credentials, error text, or environment values. Recorder I/O is fail-safe and cannot change authentication success/failure. `logout` and `remove` neither read nor require the receipt. It is actor Runtime data, excluded from Git and all artifacts, and the next manual login overwrites it.
 
 ## 13. SDK and Runtime interface contract
 
@@ -214,6 +221,7 @@ flowchart LR
     C["Capability profile and resolution map"] --> B
     B -->|"1,989 inputs / 48 outputs / zero gaps / DCE pass"| L["Qualified Git-ignored dist/core-local"]
     M["Separate MCP compatibility patch"] -->|"six source-bound transforms applied"| B
+    Q["Source-bound OAuth repair"] -->|"official SDK 2.0.0 contract 3/3"| B
     P --> T["Interface differential suite"]
     L --> T
     O["Official CLI 2.1.241 comparator"] --> T
@@ -221,11 +229,11 @@ flowchart LR
     A -->|"source-bound tooling only"| G["Private Git remote"]
 ```
 
-The current build moved through `blocked` → `built` → `verified` → `qualified`; a DCE pass alone was not sufficient. The package is locally production-eligible under its artifact contract, and its real Dream main journey passed. Publication, redistribution, deployment, external OAuth endpoint readiness, and authenticated Admin UI evidence remain separate decisions.
+The current build moved through `blocked` → `built` → `verified` → `qualified`; a DCE pass alone was not sufficient. The package is locally production-eligible under its artifact contract; its real Dream main journey and final real Comfy lane passed. Authenticated Admin UI evidence remains unavailable because no administrator browser session was supplied. Publication, redistribution, and deployment remain separate decisions.
 
 ## 15. Security and license boundary
 
-The user has explicitly authorized local use of the recovered `2.1.88` source as a reference/build input. That resolves the local task boundary; it does not itself establish public redistribution rights. The target repository therefore records only repository-authored source-bound tooling and evidence, while the derived core stays ignored locally. Private repository visibility is not treated as a license grant.
+The user has explicitly authorized local read-only use of the recovered `2.1.88` source as a reference/build input. That resolves the local task boundary; it does not establish public redistribution rights. The target repository records only replayable repository-authored builders, patches, manifests, tests, and documentation, while both the restored source and derived artifact stay out of Git. No Anthropic redistribution authorization has been obtained, so neither restored source nor derived artifact may be publicly published or redistributed. Private repository visibility is not treated as a license grant.
 
 No secret, OAuth token, complete environment, transcript body, Workspace body, user config, or materialized plugin content may enter Git, receipts, logs, or artifacts. Source-root absolute paths are sanitized from receipts.
 
@@ -245,7 +253,7 @@ Testing is deliberately layered in this order:
 2. **Interface-level differential**: custom SDK against official and custom Runtime for JSONL/control/session/resume/tools/permissions/errors/cancel/MCP/plugins/skills/hooks/workspace/sandbox/auth carriers and semantics. This is the primary Runtime compatibility gate.
 3. **Real Dream business journey**: public production entry with the local Dream/Admin/Gateway/PostgreSQL topology verifies SSE, persistence, UI, real MCP and Admin visibility. It detects integration/business regressions but cannot replace layer 2.
 
-The current static and interface layers pass through digest-bound local-core receipts. The current custom-core Dream journey also passes for new session, first token, three persisted turns, same-session resume across a Runtime rebuild, SSE, Workspace/TMPDIR/sandbox/transcript, Gateway settlement, ledger, and Story projection. Historical wrapper/official receipts remain comparator evidence only.
+The current static and interface layers pass through digest-bound local-core receipts. The SDK real-process differential, stdio/HTTP MCP tools/resources differential, management lifecycle, and aggregate qualifier all exit 0. The official MCP Python SDK `2.0.0` OAuth CLI contract passes 3/3 through source-bound, pipe, and real-PTY lanes, including the fake-`security` sentinel and already-exited `waitForExit` case. The standard full repository suite runs `node --test --test-concurrency=1 tests/*.test.mjs`: test files share the built artifact and process-level fixtures, so cross-file serialization avoids lifecycle/PTY resource contention without reducing individual protocol assertions. The custom-core Dream main journey and final real Comfy lane pass. Comfy Resources/Prompts were `not_reported`; no tool was invoked because the three-gate charging policy lacked zero-cost evidence, not because of a functional failure. Historical wrapper/official receipts remain comparator evidence only.
 
 ## 19. Acceptance criteria
 
@@ -253,12 +261,14 @@ The minimal Runtime's technical artifact gate requires:
 
 - core build and verifier exit 0 with zero resolution gaps;
 - DCE/metafile proves every selected removal and every required KEEP input;
-- the separate MCP patch is applied and source-bound, and its stdio/HTTP/OAuth-management/Resources/inventory/reconnect technical contracts pass;
+- the separate MCP patch and OAuth repair are applied and source-bound; stdio/HTTP tools/resources, management lifecycle, Commander no-browser, port-3118 callback, pipe/PTY, DCR memo, authoritative actor-selector storage, no-keychain sentinel, token-persistence, postcondition, error-classification, and safe-receipt contracts pass;
 - SDK wheel/sdist install and both official/custom CLI-path tests pass;
 - interface differential is clean or every intentional difference is documented and accepted;
 - artifact contains no vendor source or user material and its local/publication license decision is explicit.
 
-The current artifact meets these technical criteria: the Dream manifest gate passed, the Dream backend suite reported 1,954 passed / 24 skipped / 607 subtests, the Runtime lifecycle suite reported 40/40, and the reproducible package reports `productionEligible=true`. The real custom-core Dream main journey passed through the production UI and persisted topology. A complete OAuth/Resources read did not run because the existing remote MCP URL returned 404 to `initialize`; authenticated Admin UI visibility also remains unverified because no administrator session was available. Publication and redistribution remain prohibited without separate authorization.
+The current artifact meets these technical criteria: the Dream manifest gate passed, the Dream backend suite reported 1,954 passed / 24 skipped / 607 subtests, the Runtime lifecycle suite reported 45/45, and the reproducible package reports `productionEligible=true`. The real custom-core Dream main journey passed through the production UI and persisted topology. The complete local OAuth CLI/provider-fixture contract passed 3/3. The preceding candidate's `token_save_completed` → `credentials_missing` result is recorded as a fixed failure; the final real Comfy rerun passed with `credentials_present`, 41 tools, and complete cleanup. Publication and redistribution remain prohibited without Anthropic authorization.
+
+The final command `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify` exited 0: Node 45/45, MCP compatibility 46 passed with 6 authorized-source fixtures skipped, SDK contract, acceptance, release verification, and archive reproducibility passed. With `INK_AUTHORIZED_CORE_SOURCE_ROOT` set to the read-only restored-source root, the follow-up MCP compatibility replay executed all source-bound fixtures and passed 52/52 with zero failures. Archive SHA-256 is `64c919d1f11b2770497a080c4cdeb8587925f45d928912459b31647e1b68eb38`; checksum-inventory SHA-256 is `61e12c7c1828c05fb6e70535abb36ff1fbe924aaba2d78787b9ce8e832b3947c`.
 
 ## 20. Open items and design self-review
 
@@ -266,14 +276,14 @@ The current artifact meets these technical criteria: the Dream manifest gate pas
 | --- | --- |
 | Focused on Runtime rather than Dream workarounds? | Yes; Dream is an interface consumer and test target only. |
 | Evidence before deletion? | Yes for CCR, swarm/team, interactive REPL/IDE UI, updater command/UI, and feedback UI; unknown shared code remains. |
-| SDK/MCP/tools/SSE/Workspace/sandbox/resume/auth retained? | Yes: required-input assertions and digest-bound SDK/MCP/management receipts pass; the custom-core Dream main journey also passed SSE, Workspace/sandbox/transcript and same-session resume. A working external OAuth MCP remains unavailable for the final real-provider lane. |
+| SDK/MCP/tools/SSE/Workspace/sandbox/resume/auth retained? | Yes: required-input assertions and digest-bound SDK/MCP/management receipts pass; the official SDK OAuth CLI contract passes 3/3; the custom-core Dream main journey passed SSE, Workspace/sandbox/transcript and same-session resume; final real Comfy OAuth and 41-tool inventory passed. |
 | Slash Skill and ordinary Agent/Task preserved? | Yes; they are explicitly KEEP and not conflated with swarm/team or interactive fork UI. |
-| Depending blindly on old behavior? | No; old source is the build baseline, while current deltas are separately evidenced and patched. |
+| Blind reliance on old behavior? | No; old source is the build baseline, while current deltas are separately evidenced and patched. |
 | Second Agent/MCP state machine introduced? | No. |
 | Python SDK over-rewritten? | No; distribution rename/build flow only, public namespace and upstream launcher retained. |
 | User data packaged? | No; output and receipts exclude it. |
-| License boundary explicit? | Yes: local input authorization does not imply public redistribution. |
+| License boundary explicit? | Yes: restored source is read-only/local, source and artifacts stay out of Git, and no Anthropic public redistribution authorization exists. |
 | Replayable and independently reversible? | Yes: exact digests/manifests, two byte-identical package passes, and the official CLI path provide replay and rollback evidence. |
 | Minimal implementation? | Yes: delete proven non-IM surfaces first; defer telemetry/diagnostics/shared updater logic. |
 
-Open decisions: supply a working OAuth MCP endpoint for the complete browser OAuth/Resources lane, supply an authenticated Admin browser session if UI evidence is required, and separately decide whether to authorize deployment, publication, or redistribution. No Runtime technical gap/wiring blocker remains for the qualified hashes above. Official CLI `2.1.241` remains the external comparator and direct rollback; restored `2.1.88` plus the separate MCP patch remains the local implementation.
+Open decisions: supply an authenticated Admin browser session if UI evidence is required, and separately decide whether to authorize deployment. Publication and redistribution remain prohibited absent Anthropic authorization. No Runtime technical gap/wiring blocker remains for the qualified hashes above. Official CLI `2.1.241` remains the external comparator and direct rollback; restored `2.1.88` plus the separate MCP and OAuth repairs remains the local implementation.

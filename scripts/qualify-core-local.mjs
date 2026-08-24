@@ -2,7 +2,7 @@
 // [Input] A verified local core bundle plus digest-bound SDK, session-MCP, and MCP-management process receipts.
 // [Output] An ignored full-runtime qualification receipt bound to the exact core bytes/source digest.
 // [Pos] Technical release gate before packaging and real Dream business acceptance; no user data is read.
-// [Sync] 2026-08-24: require independently bound 2.1.88 provenance and 2.1.241 Dream CLI compatibility.
+// [Sync] 2026-08-24: bind version provenance and require the official-SDK headless OAuth CLI process contract.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -187,6 +187,9 @@ const checks = [
     "--cwd",
     "compat/mcp-auth",
     "test",
+  ]),
+  run("official MCP SDK headless OAuth CLI contract", process.execPath, [
+    "scripts/run-core-oauth-cli-contract.mjs",
   ]),
   run("repository lint", process.execPath, ["scripts/lint.mjs"]),
 ];
