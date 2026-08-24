@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room Runtime tooling, authorized external restored source, capability profile, compatibility policies, and verification evidence. -->
 <!-- [Output] Explain the qualified local minimal-core workflow, remaining business gate, legacy envelope, and safe Git/release boundary. -->
 <!-- [Pos] Operator-facing entry point for ink-claude-code-dream. -->
-<!-- [Sync] 2026-08-24: add fail-closed local installation and isolated exact-Bun discovery. -->
+<!-- [Sync] 2026-08-24: add fail-closed scoped npm layout, four native targets, and zero-source-map gate. -->
 
 # ink-claude-code-dream
 
@@ -83,3 +83,9 @@ The final exact-Node verification command, `PATH=/Users/dmeck/.nvm/versions/node
 The official CLI `2.1.241` remains the current behavior comparator and direct rollback target. It is not the source of this core: the implementation is restored `2.1.88` plus the separate `2.1.238`/`2.1.239` MCP compatibility patch and source-bound OAuth repair. The custom package business path and final real Comfy lane passed. Authenticated Admin UI evidence remains unavailable because no administrator browser session was supplied; publication/redistribution remain prohibited.
 
 See the [canonical design](docs/design/claude-code-runtime-minimalization.md), [build guide](docs/build/README.md), and [test guide](docs/test/README.md).
+
+## npm 发布状态
+
+仓库根 `package.json` 是私有构建编排器和历史 envelope，不是发布包；根级 `npm pack`/`npm publish` 会被 lifecycle 拒绝。可审查的目标布局是 `@glide-the/ink-claude-code-dream` 顶层选择包，加 Darwin/Linux 的 arm64/x64 四个平台包。每个平台必须使用同平台 qualification、ripgrep 和 `bun@1.4.0`，Windows 暂无完整证据并 fail-closed。
+
+当前 `publicationAllowed=false`、`redistributionAllowed=false`，所以 `npm run npm:legal` 和 staging 都会阻断，未发布任何包。所有 npm 包清单和 tgz 强制不包含 `*.map`。详见 [npm 多平台发布设计](docs/design/npm多平台发布设计.md)。

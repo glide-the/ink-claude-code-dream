@@ -73,15 +73,15 @@
     "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream.mjs": {
       "imports": [
         {
-          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-QFQAPTG2.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-3CBAPCMW.mjs",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-SIHXUL7S.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-HVRPQDBY.mjs",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-SIHXUL7S.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-HVRPQDBY.mjs",
           "kind": "dynamic-import"
         }
       ],
@@ -94,13 +94,7 @@
       },
       "bytes": 1697
     },
-    "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream.mjs.map": {
-      "imports": [],
-      "exports": [],
-      "inputs": {},
-      "bytes": 1212
-    },
-    "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-SIHXUL7S.mjs": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-HVRPQDBY.mjs": {
       "imports": [
         {
           "path": "node:fs",
@@ -123,7 +117,7 @@
           "external": true
         },
         {
-          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-QFQAPTG2.mjs",
+          "path": "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-3CBAPCMW.mjs",
           "kind": "dynamic-import"
         }
       ],
@@ -141,13 +135,7 @@
       },
       "bytes": 12008
     },
-    "dist/release/ink-claude-code-dream-0.1.0/lib/launcher-SIHXUL7S.mjs.map": {
-      "imports": [],
-      "exports": [],
-      "inputs": {},
-      "bytes": 8045
-    },
-    "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-QFQAPTG2.mjs": {
+    "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-3CBAPCMW.mjs": {
       "imports": [
         {
           "path": "node:crypto",
@@ -170,12 +158,6 @@
         }
       },
       "bytes": 2510
-    },
-    "dist/release/ink-claude-code-dream-0.1.0/lib/manifest-QFQAPTG2.mjs.map": {
-      "imports": [],
-      "exports": [],
-      "inputs": {},
-      "bytes": 1425
     }
   }
 }

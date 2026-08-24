@@ -1,7 +1,7 @@
 // [Input] Explicit authorized restored-source/package roots, reviewed prune profile/resolution map, and Bun 1.4.0.
 // [Output] Write only local ignored bundle/assets, source digest, sanitized metafile, resolution gaps, and DCE receipt under dist/core-local.
 // [Pos] Fail-closed, read-only external-source core-prune builder; never copies source into the repository or release.
-// [Sync] 2026-08-24: bind actor selectors to deterministic 0600 storage and safe OAuth lifecycle.
+// [Sync] 2026-08-24: select one native darwin/linux target and its checksum-pinned ripgrep asset.
 
 import { createHash } from "node:crypto";
 import { builtinModules } from "node:module";
@@ -42,6 +42,7 @@ type CorePruneProfile = {
   cliCompatibilityVersion: string;
   sourceRootEnvironment: string;
   packageRootEnvironment: string;
+  targetEnvironment: string;
   outputDirectory: string;
   entrypoints: string[];
   runtimeAssets: Array<{
@@ -51,6 +52,13 @@ type CorePruneProfile = {
     mode: number;
     license: string;
   }>;
+  runtimeAssetTargets: Record<string, Array<{
+    source: string;
+    output: string;
+    sha256: string;
+    mode: number;
+    license: string;
+  }>>;
   builder: {
     runtime: string;
     version: string;
@@ -199,6 +207,28 @@ if (
 if (profile.outputDirectory !== "dist/core-local") {
   fail("outputDirectory must be exactly dist/core-local");
 }
+if (profile.targetEnvironment !== "INK_CLAUDE_CODE_BUILD_TARGET") {
+  fail("targetEnvironment must be exactly INK_CLAUDE_CODE_BUILD_TARGET");
+}
+const supportedRuntimeTargets = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
+if (
+  JSON.stringify(Object.keys(profile.runtimeAssetTargets).sort()) !==
+  JSON.stringify([...supportedRuntimeTargets].sort())
+) {
+  fail("runtimeAssetTargets must cover exactly darwin/linux arm64/x64");
+}
+const hostRuntimeTarget = `${process.platform}-${process.arch}`;
+const runtimeTarget = process.env[profile.targetEnvironment]?.trim() || hostRuntimeTarget;
+if (!supportedRuntimeTargets.includes(runtimeTarget)) {
+  fail(`unsupported Runtime target: ${runtimeTarget}`);
+}
+if (runtimeTarget !== hostRuntimeTarget) {
+  fail(`cross-target core build is forbidden: host=${hostRuntimeTarget}, requested=${runtimeTarget}`);
+}
+const selectedRuntimeAssets = [
+  ...profile.runtimeAssets,
+  ...profile.runtimeAssetTargets[runtimeTarget],
+];
 if (profile.mcpCompatibility.artifactKind !== "headless") {
   fail("core-prune MCP compatibility artifact must be headless");
 }
@@ -350,7 +380,7 @@ const packageRoot = await realpath(packageRootRaw);
 if (packageRoot !== packageRootRaw || !(await stat(packageRoot)).isDirectory()) {
   fail(`${profile.packageRootEnvironment} must be a real directory without symlink traversal`);
 }
-for (const asset of profile.runtimeAssets) {
+for (const asset of selectedRuntimeAssets) {
   assertRelativeRepositoryPath(asset.source, `runtime asset source ${asset.source}`);
   assertRelativeRepositoryPath(asset.output, `runtime asset output ${asset.output}`);
   if (!/^[a-f0-9]{64}$/.test(asset.sha256) || !asset.license || ![0o644, 0o755].includes(asset.mode)) {
@@ -3815,7 +3845,7 @@ if (buildResult?.success) {
       if (scrubbed.includes(forbidden)) forbiddenOutputMatches.add(forbidden);
     }
   }
-  for (const asset of profile.runtimeAssets) {
+  for (const asset of selectedRuntimeAssets) {
     const target = join(outputRoot, "bundle", asset.output);
     await mkdir(dirname(target), { recursive: true });
     await copyFile(join(packageRoot, asset.source), target);
@@ -3985,6 +4015,7 @@ const receipt = {
   status: buildSuccess && dceStatus === "passed" ? "built" : "blocked",
   sourceVersionEvidence: profile.sourceVersionEvidence,
   cliCompatibilityVersion: profile.cliCompatibilityVersion,
+  runtimeTarget,
   sourceDigest,
   builder: {
     runtime: "bun",
@@ -3994,7 +4025,7 @@ const receipt = {
   },
   entrypoints: profile.entrypoints,
   outputDirectory: profile.outputDirectory,
-  runtimeAssets: profile.runtimeAssets.map(({ output, sha256, mode, license }) => ({
+  runtimeAssets: selectedRuntimeAssets.map(({ output, sha256, mode, license }) => ({
     output,
     sha256,
     mode,

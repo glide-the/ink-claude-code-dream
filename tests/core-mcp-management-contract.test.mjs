@@ -76,6 +76,7 @@ async function coreBindingFixture(root) {
     `${JSON.stringify({
       status: "built",
       build: { success: true },
+      runtimeTarget: `${process.platform}-${process.arch}`,
       sourceDigest: { digest: "4".repeat(64) },
     })}\n`,
   );
@@ -157,6 +158,7 @@ test("provider-free candidate fixture passes colon lifecycle, isolation, and pro
     assert.equal(receipt.subject.version, "0.1.0");
     assert.match(receipt.subject.coreBundleSha256, /^[a-f0-9]{64}$/);
     assert.equal(receipt.subject.sourceDigest, "4".repeat(64));
+    assert.equal(receipt.subject.runtimeTarget, `${process.platform}-${process.arch}`);
     assert.equal(receipt.evidenceType, "real-process-mcp-management-contract");
     assert.equal(receipt.httpUserScope.addGetListRemove, "passed");
     assert.equal(receipt.httpUserScope.colonNameSupported, true);

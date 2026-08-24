@@ -1,0 +1,213 @@
+# [Input] One successful same-repository qualification run for this exact commit/ref plus checked legal/package policies.
+# [Output] Four verified native platform tgz files and one digest-bound meta tgz, then OIDC Trusted Publishing.
+# [Pos] Subsequent-release workflow only; the first five package names require manual account-2FA bootstrap.
+
+name: Publish qualified npm Runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      qualification_run_id:
+        description: Successful qualify-npm-runtime workflow run ID for this exact commit/ref
+        required: true
+        type: string
+      trusted_publishers_configured:
+        description: Confirm all five package names were bootstrapped and Trusted Publishers are configured
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  legal-gate:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      artifact_id: ${{ steps.release.outputs.artifact_id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.13.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Refuse OIDC before manual five-package bootstrap
+        if: ${{ inputs.trusted_publishers_configured != true }}
+        run: |
+          echo "All five npm names must first be published manually under account 2FA, then configured for Trusted Publishing." >&2
+          exit 78
+      - name: Validate qualification run provenance and exact source identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QUALIFICATION_RUN_ID: ${{ inputs.qualification_run_id }}
+          EXPECTED_REPOSITORY: ${{ github.repository }}
+          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_REF: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          expected_workflow=$(node -p "require('./runtime/npm-release-policy.json').publish.qualificationWorkflow")
+          gh api "repos/$EXPECTED_REPOSITORY/actions/runs/$QUALIFICATION_RUN_ID" > "$RUNNER_TEMP/qualification-run.json"
+          jq -e \
+            --arg repository "$EXPECTED_REPOSITORY" \
+            --arg workflow "$expected_workflow" \
+            --arg sha "$EXPECTED_SHA" \
+            --arg ref "$EXPECTED_REF" \
+            '.head_repository.full_name == $repository and
+             .path == $workflow and
+             .head_sha == $sha and
+             .head_branch == $ref and
+             .status == "completed" and
+             .conclusion == "success"' \
+            "$RUNNER_TEMP/qualification-run.json"
+      - name: Require checked publication and redistribution authorization
+        run: npm run npm:legal
+      - id: release
+        name: Resolve version and artifact identity from checked policy
+        shell: bash
+        run: |
+          version=$(node -p "require('./runtime/npm-release-policy.json').version")
+          artifact_name=$(node -p "require('./runtime/local-artifact-policy.json').artifact.name")
+          artifact_version=$(node -p "require('./runtime/local-artifact-policy.json').artifact.version")
+          test "$version" = "$artifact_version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "artifact_id=$artifact_name-$artifact_version" >> "$GITHUB_OUTPUT"
+
+  package-platform:
+    needs: legal-gate
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - target: darwin-arm64
+            runner: macos-15
+          - target: darwin-x64
+            runner: macos-15-intel
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - target: linux-x64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.13.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Download target-native qualification artifact from validated run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh run download ${{ inputs.qualification_run_id }}
+          --repo ${{ github.repository }}
+          --name qualified-core-${{ matrix.target }}
+          --dir dist/npm-input/${{ matrix.target }}
+      - name: Gate and stage target-native package
+        run: >-
+          node scripts/npm-release.mjs stage
+          --target ${{ matrix.target }}
+          --package-root dist/npm-input/${{ matrix.target }}/${{ needs.legal-gate.outputs.artifact_id }}
+          --output-root dist/npm-stage
+      - name: Install reviewed bun@1.4.0 postinstall, pack, and smoke
+        run: node scripts/smoke-npm-release.mjs dist/npm-stage/${{ matrix.target }}
+      - name: Create and strictly verify one platform tgz
+        shell: bash
+        run: |
+          shopt -s nullglob
+          mkdir -p dist/npm-tarballs/${{ matrix.target }}
+          npm pack --json --pack-destination dist/npm-tarballs/${{ matrix.target }} dist/npm-stage/${{ matrix.target }}/platform
+          archives=(dist/npm-tarballs/${{ matrix.target }}/*.tgz)
+          test "${#archives[@]}" -eq 1
+          node scripts/verify-npm-tarball.mjs "${archives[0]}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-platform-${{ matrix.target }}
+          path: dist/npm-tarballs/${{ matrix.target }}/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  aggregate-release:
+    needs: [legal-gate, package-platform]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.13.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: npm-platform-*
+          path: dist/npm-platform-tarballs
+          merge-multiple: true
+      - name: Build meta package bound to all four platform tarballs and qualifications
+        run: >-
+          node scripts/npm-release.mjs aggregate-meta
+          --tarball-dir dist/npm-platform-tarballs
+          --output-root dist/npm-stage
+      - name: Pack meta and assert exact five-package release inventory
+        shell: bash
+        run: |
+          shopt -s nullglob
+          mkdir -p dist/npm-release-set
+          cp dist/npm-platform-tarballs/*.tgz dist/npm-release-set/
+          npm pack --json --pack-destination dist/npm-release-set dist/npm-stage/meta
+          archives=(dist/npm-release-set/*.tgz)
+          test "${#archives[@]}" -eq 5
+          node scripts/verify-npm-tarball.mjs "${archives[@]}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-release-${{ needs.legal-gate.outputs.version }}
+          path: dist/npm-release-set/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: [legal-gate, aggregate-release]
+    runs-on: ubuntu-24.04
+    environment: npm
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.13.0
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: npm-release-${{ needs.legal-gate.outputs.version }}
+          path: dist/npm-publish
+      - name: Recheck legal gate and exact immutable five-package set
+        shell: bash
+        run: |
+          shopt -s nullglob
+          npm run npm:legal
+          archives=(dist/npm-publish/*.tgz)
+          test "${#archives[@]}" -eq 5
+          node scripts/verify-npm-tarball.mjs "${archives[@]}"
+      - name: Publish four platforms before selector with OIDC provenance
+        shell: bash
+        run: |
+          shopt -s nullglob
+          for target in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
+            matches=(dist/npm-publish/*-"$target"-${{ needs.legal-gate.outputs.version }}.tgz)
+            test "${#matches[@]}" -eq 1
+            npm publish "${matches[0]}" --access public --provenance
+          done
+          meta=(dist/npm-publish/glide-the-ink-claude-code-dream-${{ needs.legal-gate.outputs.version }}.tgz)
+          test "${#meta[@]}" -eq 1
+          test -f "${meta[0]}"
+          npm publish "${meta[0]}" --access public --provenance

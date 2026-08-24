@@ -2,7 +2,7 @@
 // [Input] Explicit official/candidate CLI paths and an Ink SDK Python executable.
 // [Output] A real-process stdio/HTTP MCP differential receipt.
 // [Pos] Protocol release gate for handshake, tools, resources, inventory, and colon names.
-// [Sync] 2026-08-24: add provider-free MCP differential orchestration.
+// [Sync] 2026-08-24: bind MCP differential evidence to the exact native Runtime target.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -105,6 +105,7 @@ async function qualificationSubject() {
     coreReceipt.build?.success !== true ||
     coreReceipt.resolution?.edgeGapCount !== 0 ||
     coreReceipt.resolution?.uniqueGapCount !== 0 ||
+    !["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"].includes(coreReceipt.runtimeTarget) ||
     !/^[a-f0-9]{64}$/.test(coreReceipt.sourceDigest?.digest ?? "")
   ) {
     throw new Error("core build receipt is not a successful zero-gap build");
@@ -115,6 +116,7 @@ async function qualificationSubject() {
     version: "0.1.0",
     coreBundleSha256: createHash("sha256").update(bundle).digest("hex"),
     sourceDigest: coreReceipt.sourceDigest.digest,
+    runtimeTarget: coreReceipt.runtimeTarget,
   };
 }
 

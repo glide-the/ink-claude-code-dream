@@ -7,7 +7,13 @@
     "entrypoint": "bin/ink-claude-code-dream",
     "coreEntrypoint": "lib/core/cli.js",
     "bunVersion": "1.4.0",
-    "bunExecutableName": "ink-claude-code-bun-1.4.0"
+    "bunExecutableName": "ink-claude-code-bun-1.4.0",
+    "supportedTargets": [
+      "darwin-arm64",
+      "darwin-x64",
+      "linux-arm64",
+      "linux-x64"
+    ]
   },
   "coreGate": {
     "receiptSchemaVersion": "ink-core-prune-build/v1",
@@ -111,6 +117,8 @@
     "publicationAllowed": false,
     "redistributionAllowed": false,
     "redistributionStatus": "blocked-without-separate-written-authorization",
+    "publicationLicense": null,
+    "authorizationReference": null,
     "restoredSourceMayBeCommitted": false,
     "derivedBundleMayBeCommitted": false
   }

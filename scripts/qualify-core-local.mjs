@@ -2,7 +2,7 @@
 // [Input] A verified local core bundle plus digest-bound SDK, session-MCP, and MCP-management process receipts.
 // [Output] An ignored full-runtime qualification receipt bound to the exact core bytes/source digest.
 // [Pos] Technical release gate before packaging and real Dream business acceptance; no user data is read.
-// [Sync] 2026-08-24: bind version provenance and require the official-SDK headless OAuth CLI process contract.
+// [Sync] 2026-08-24: bind every qualification lane to the exact native Runtime target.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -66,7 +66,8 @@ function subjectMatches(receiptSubject, expectedSubject) {
     receiptSubject?.runtime === expectedSubject.runtime &&
     receiptSubject?.version === expectedSubject.version &&
     receiptSubject?.coreBundleSha256 === expectedSubject.coreBundleSha256 &&
-    receiptSubject?.sourceDigest === expectedSubject.sourceDigest
+    receiptSubject?.sourceDigest === expectedSubject.sourceDigest &&
+    receiptSubject?.runtimeTarget === expectedSubject.runtimeTarget
   );
 }
 
@@ -160,7 +161,8 @@ if (
   coreReceipt.resolution?.uniqueGapCount !== 0 ||
   coreReceipt.dceAssertions?.status !== "passed" ||
   coreReceipt.dceAssertions?.violations?.length !== 0 ||
-  !/^[a-f0-9]{64}$/.test(coreReceipt.sourceDigest?.digest ?? "")
+  !/^[a-f0-9]{64}$/.test(coreReceipt.sourceDigest?.digest ?? "") ||
+  !["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"].includes(coreReceipt.runtimeTarget)
 ) {
   fail("core build receipt is not a built, zero-gap, DCE-passed artifact");
 }
@@ -170,6 +172,7 @@ const subject = {
   version: "0.1.0",
   coreBundleSha256: createHash("sha256").update(coreBundle).digest("hex"),
   sourceDigest: coreReceipt.sourceDigest.digest,
+  runtimeTarget: coreReceipt.runtimeTarget,
 };
 assertDifferential(sdkReceipt, "real-process-sdk-differential", subject, "SDK receipt");
 assertDifferential(mcpReceipt, "real-process-mcp-differential", subject, "MCP receipt");

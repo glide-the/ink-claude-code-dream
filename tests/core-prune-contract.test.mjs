@@ -1,7 +1,7 @@
 // [Input] Checked-in core-prune profile, deterministic resolution map, builder/verifier sources, and git ignore policy.
 // [Output] Prove local-only ownership, Bun 1.4.0 pin, capability retention, feature separation, resolver rules, and DCE assertions.
 // [Pos] Provider-free static contract test; it does not read, copy, modify, or build restored source.
-// [Sync] 2026-08-24: require secure-selector fail-closed and post-save credential proof.
+// [Sync] 2026-08-24: require native four-target assets without cross-platform ripgrep mixing.
 
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -33,17 +33,41 @@ test("core-prune build is pinned, local-only, and requires an explicit source ro
   assert.equal(profile.outputDirectory, "dist/core-local");
   assert.equal(profile.sourceRootEnvironment, "INK_AUTHORIZED_CORE_SOURCE_ROOT");
   assert.equal(profile.packageRootEnvironment, "INK_AUTHORIZED_CORE_PACKAGE_ROOT");
+  assert.equal(profile.targetEnvironment, "INK_CLAUDE_CODE_BUILD_TARGET");
   assert.deepEqual(profile.entrypoints, ["src/entrypoints/cli.tsx"]);
   assert.match(builder, /Bun\.version !== profile\.builder\.version/);
   assert.match(builder, /must be an explicit absolute path/);
   assert.match(builder, /must not traverse a symlink/);
   assert.match(builder, /git[\s\S]*check-ignore/);
+  assert.match(builder, /cross-target core build is forbidden/);
   assert.doesNotMatch(builder, /claude-code-sourcemap|restored-src/);
   assert.doesNotMatch(verifier, /claude-code-sourcemap|restored-src/);
   const ignored = spawnSync("git", ["check-ignore", "-q", "dist/core-local/.probe"], {
     cwd: repositoryRoot,
   });
   assert.equal(ignored.status, 0, "dist/core-local must be ignored by git");
+});
+
+test("runtime asset matrix covers four native targets with distinct pinned ripgrep", () => {
+  assert.deepEqual(Object.keys(profile.runtimeAssetTargets).sort(), [
+    "darwin-arm64",
+    "darwin-x64",
+    "linux-arm64",
+    "linux-x64",
+  ]);
+  const seen = new Set();
+  for (const [target, assets] of Object.entries(profile.runtimeAssetTargets)) {
+    assert.equal(assets.length, 1, `${target} must carry exactly one target-specific asset`);
+    const asset = assets[0];
+    assert.match(asset.output, new RegExp(`${target.split("-").reverse().join("-")}/rg$`));
+    assert.match(asset.sha256, /^[a-f0-9]{64}$/);
+    assert.equal(seen.has(asset.sha256), false, `${target} reused another platform binary`);
+    seen.add(asset.sha256);
+  }
+  assert.deepEqual(profile.runtimeAssets.map(asset => asset.output), [
+    "chunks/vendor/ripgrep/COPYING",
+  ]);
+  assert.match(verifier, /core receipt target does not match the verifying host/);
 });
 
 test("required Dream capability roots remain explicit", () => {

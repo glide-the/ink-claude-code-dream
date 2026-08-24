@@ -6,6 +6,7 @@
     "mode": "headless-sdk-runtime",
     "sourceVersionEvidence": "2.1.88",
     "cliCompatibilityVersion": "2.1.241",
+    "runtimeTarget": null,
     "corePruned": true,
     "productionEligible": false
   },

@@ -1,7 +1,7 @@
 // [Input] Consume the generated immutable release directory, inventory, Runtime manifest, and material policy.
-// [Output] Fail closed on checksum/contract/target drift, unsafe content, missing maps, or a bundled Claude core.
+// [Output] Fail closed on checksum/contract/target drift, unsafe content, any source map, or a bundled Claude core.
 // [Pos] Post-build executable acceptance gate; it validates no SDK-specific manifest protocol.
-// [Sync] 2026-08-24: require current Dream SDK 0.2.143 throughout generated machine receipts.
+// [Sync] 2026-08-24: require current Dream SDK 0.2.143 and reject source maps throughout generated release material.
 
 import { createHash } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
@@ -223,8 +223,8 @@ for (const path of files) {
     throw new Error(`excluded/obsolete material content found: ${path}`);
   }
 }
-if (!files.some((path) => path.endsWith(".mjs.map"))) {
-  throw new Error("release is missing external source maps");
+if (files.some((path) => path.toLowerCase().endsWith(".map"))) {
+  throw new Error("release contains a forbidden source map");
 }
 const sbom = JSON.parse(await readFile(join(releaseRoot, "manifest", "sbom.cdx.json"), "utf8"));
 if (sbom.bomFormat !== "CycloneDX") throw new Error("CycloneDX SBOM is missing");

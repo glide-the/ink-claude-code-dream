@@ -34,6 +34,7 @@ const jsonFiles = [
   "runtime/bare-profile.json",
   "runtime/dependency-licenses.json",
   "runtime/pruning-decision.json",
+  "runtime/npm-release-policy.json",
 ];
 const parsed = new Map();
 for (const path of jsonFiles) {

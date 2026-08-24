@@ -4,7 +4,7 @@
 [Input] Absolute CLI/output/Dream-backend paths, isolated 0700 config identity, and candidate/reference mode.
 [Output] Secret-safe provider-free receipt for version/help/user HTTP lifecycle, colon names, isolation, and redaction.
 [Pos] Real process-boundary contract; it imports Dream's production driver/parser and does not copy their state machine.
-[Sync] 2026-08-24: initial management-command contract for the custom Runtime.
+[Sync] 2026-08-24: bind candidate management evidence to one qualified native Runtime target.
 """
 
 from __future__ import annotations
@@ -469,11 +469,14 @@ def main() -> int:
             except (OSError, UnicodeError, json.JSONDecodeError) as exc:
                 raise ContractFailure("candidate core binding input is unreadable") from exc
             source_digest = core_receipt.get("sourceDigest", {}).get("digest")
+            runtime_target = core_receipt.get("runtimeTarget")
             if (
                 core_receipt.get("status") != "built"
                 or core_receipt.get("build", {}).get("success") is not True
                 or not isinstance(source_digest, str)
                 or len(source_digest) != 64
+                or runtime_target
+                not in {"darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"}
             ):
                 raise ContractFailure("candidate core binding receipt is not built")
             qualification_subject = {
@@ -481,6 +484,7 @@ def main() -> int:
                 "version": "0.1.0",
                 "coreBundleSha256": _sha256(core_bundle),
                 "sourceDigest": source_digest,
+                "runtimeTarget": runtime_target,
             }
         with tempfile.TemporaryDirectory(prefix="ink-mcp-management-contract-") as raw_root:
             identity_root = Path(raw_root).resolve()

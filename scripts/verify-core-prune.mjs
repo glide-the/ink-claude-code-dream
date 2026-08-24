@@ -1,7 +1,7 @@
 // [Input] Local-only core-prune profile, resolution map, build receipt, metafile, and resolution gaps.
 // [Output] Fail unless Bun/source digest/feature-DCE/output-path/resolution evidence is internally consistent and built.
 // [Pos] Read-only verifier for dist/core-local; it neither builds nor reads external restored source.
-// [Sync] 2026-08-24: gate SDK/MCP transforms, assets, prefix/output DCE, and zero path-identity leakage.
+// [Sync] 2026-08-24: gate native target identity and the target-specific checksum-pinned runtime assets.
 
 import { opendir, readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
@@ -79,8 +79,17 @@ if (
 
 const metafileInputs = Object.keys(metafile.inputs ?? {}).map(path => path.replaceAll("\\", "/"));
 const logicalInputs = metafileInputs.map(path => path.replace(/^<SOURCE_ROOT>\//, ""));
+const supportedRuntimeTargets = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
+if (!supportedRuntimeTargets.includes(receipt.runtimeTarget)) fail("unsupported Runtime target receipt");
+if (receipt.runtimeTarget !== `${process.platform}-${process.arch}`) {
+  fail("core receipt target does not match the verifying host");
+}
+const selectedRuntimeAssets = [
+  ...profile.runtimeAssets,
+  ...(profile.runtimeAssetTargets?.[receipt.runtimeTarget] ?? []),
+];
 if (JSON.stringify(receipt.runtimeAssets) !== JSON.stringify(
-  profile.runtimeAssets.map(({ output, sha256, mode, license }) => ({ output, sha256, mode, license })),
+  selectedRuntimeAssets.map(({ output, sha256, mode, license }) => ({ output, sha256, mode, license })),
 )) fail("runtime-asset receipt drift");
 for (const asset of receipt.runtimeAssets) {
   const assetPath = join(outputRoot, "bundle", asset.output);
@@ -149,5 +158,6 @@ process.stdout.write(
     inputs: metafileInputs.length,
     outputs: Object.keys(metafile.outputs ?? {}).length,
     disabledFeatures: profile.features.disabled.length,
+    runtimeTarget: receipt.runtimeTarget,
   })}\n`,
 );

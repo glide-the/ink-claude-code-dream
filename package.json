@@ -38,7 +38,16 @@
     "test:reproducible": "node scripts/check-reproducible.mjs",
     "verify": "bun run lint && bun run test && bun run test:mcp-auth-compat && bun run test:upstream-sdk && bun run test:acceptance && node scripts/verify-release.mjs && bun run test:reproducible",
     "package": "bun run release:pack",
-    "release:pack": "bun run build && node scripts/verify-release.mjs && node scripts/pack-release.mjs"
+    "release:pack": "bun run build && node scripts/verify-release.mjs && node scripts/pack-release.mjs",
+    "npm:plan": "node scripts/npm-release.mjs plan",
+    "npm:templates": "node scripts/npm-release.mjs templates",
+    "npm:legal": "node scripts/npm-release.mjs legal",
+    "npm:gate": "node scripts/npm-release.mjs gate",
+    "npm:stage": "node scripts/npm-release.mjs stage",
+    "npm:aggregate-meta": "node scripts/npm-release.mjs aggregate-meta",
+    "npm:smoke": "node scripts/smoke-npm-release.mjs",
+    "prepack": "node scripts/npm-root-guard.mjs",
+    "prepublishOnly": "node scripts/npm-root-guard.mjs"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "0.74.0",
