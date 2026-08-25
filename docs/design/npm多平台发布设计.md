@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room npm/artifact policies, five-package build/verifier, GitHub workflows, and npm registry checks. -->
 <!-- [Output] 定义 restored-source-free 五包拓扑、正式资格、首次 2FA bootstrap 与后续 Trusted Publishing。 -->
 <!-- [Pos] 当前公共 npm 发布设计；授权由 checked Dream 回执固定，历史恢复源码永不成为公共输入。 -->
-<!-- [Sync] 2026-08-26：让 token 回退清除 GitHub OIDC 请求载体并关闭不受支持的 Sigstore provenance。 -->
+<!-- [Sync] 2026-08-26：token 回退清除 GitHub OIDC 请求载体，并以 CLI 最高优先级关闭发布 provenance。 -->
 
 # Clean-room Runtime 的 npm 多平台发布设计
 
@@ -109,14 +109,18 @@ token 不进入仓库、artifact、command 参数或日志。该回退不用于 
 Publisher 验证成功后删除或轮换。
 
 当前 GitHub 源仓库为 private，npm registry 不接受由该仓库生成的 Sigstore provenance bundle。
-因此仅在 `npm_access_token_configured=true` 时设置 `NPM_CONFIG_PROVENANCE=false`，并继续依赖
-same-SHA qualification、五包 SHA-256、release manifest、SBOM 和 registry integrity 验证；OIDC
-路径不显式覆盖 npm 的 provenance 行为。
+因此仅在 `npm_access_token_configured=true` 时设置 `NPM_CONFIG_PROVENANCE=false`，并在实际
+`npm publish` 命令增加 CLI 最高优先级的 `--provenance=false`。qualified tarball 仍保留
+`publishConfig.provenance=true`，不会为 token 回退修改或重打包；same-SHA qualification、五包
+SHA-256、release manifest、SBOM 和 registry integrity 验证保持不变。OIDC 路径不覆盖 npm 的
+provenance 行为。
 
 npm CLI 会在 GitHub `id-token: write` 存在时优先选择 OIDC，早于传统 token。token 回退模式还必须
 在同一个 publish shell 内 `unset ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_ID_TOKEN_REQUEST_TOKEN`，
 否则即使 `NPM_TOKEN` 的 `npm whoami` 成功，npm 仍会尝试为 private repository 生成 provenance 并
-返回 422。该清除只由显式 token 输入触发，Trusted Publisher 路径继续保留 OIDC carrier。
+返回 422。仅设置 `NPM_CONFIG_PROVENANCE=false` 也不足以覆盖 tarball 内的
+`publishConfig.provenance=true`，所以必须同时使用上述 CLI flag。该处理只由显式 token 输入触发，
+Trusted Publisher 路径继续保留 OIDC carrier 与 provenance。
 
 外层 Dream 真实业务验收与用户显式授权已经通过；回执不包含账户标识、原始业务日志、数据库行、
 OAuth 凭据、callback 或 transcript。首次名称 bootstrap 必须从通过 main 同 SHA qualification
