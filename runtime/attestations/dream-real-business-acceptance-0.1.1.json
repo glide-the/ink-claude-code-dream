@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "ink-dream-real-business-acceptance/v1",
+  "subject": {
+    "runtime": "ink-claude-code-dream",
+    "version": "0.1.1",
+    "sourceTreeSha256": "b231362f22e588d4963420c85471a07baf6943767e25d3a1d3afddbfcae4d4a6",
+    "acceptedSelectorTarballSha256": "7df05d7c8440a76ee6bb978ba1f08feca28e1590ac91573d56cee1309301338a",
+    "acceptedDarwinArm64TarballSha256": "579124efcfaa1a2d4ec02f68de8b81876c3386caab379608f44a4542d54a0d72",
+    "acceptedDarwinArm64ExecutableSha256": "a4da19cf6b5153d722f7203ec8968698495608e9a74404233df3466f55ad3e2d"
+  },
+  "acceptance": {
+    "date": "2026-08-26",
+    "status": "passed",
+    "mode": "existing-real-account-and-business-data",
+    "publicProductionEntrypoints": true,
+    "services": [
+      "Dream",
+      "Admin",
+      "Gateway",
+      "PostgreSQL"
+    ],
+    "modelTurns": 2,
+    "sameThreadRefreshAndResume": true,
+    "adminVisibilityConfirmed": true,
+    "gatewayPersistenceConfirmed": true,
+    "mcp": {
+      "authenticatedServerUrl": "https://cloud.comfy.org/mcp",
+      "anonymousServerUrl": "https://uu115767-7874bcbb7bac.weste.seetacloud.com:8443/mcp",
+      "authenticationSelectedByBackend": true,
+      "browserOAuthCallbackAutomatic": true,
+      "toolsResourcesPromptsInventoryPassed": true,
+      "partialFailureIsolationPassed": true,
+      "sameThreadResumePassed": true
+    },
+    "testReceipt": {
+      "runtimePullRequest": 7,
+      "runtimeCiRun": 32866418701,
+      "focusedPassed": 29,
+      "authCompatibilityPassed": 46,
+      "authCompatibilitySkipped": 6,
+      "failed": 0
+    }
+  },
+  "targetQualification": {
+    "darwin-arm64": "real-host business, OAuth, anonymous HTTP, SSE, MCP, resume, cancel, package, and resolver execution",
+    "darwin-x64": "Bun 1.4.0 native cross-build, Mach-O identity, exact inventory, verifier, and reproducibility",
+    "linux-arm64": "Bun 1.4.0 native cross-build, ELF identity, exact inventory, verifier, and reproducibility",
+    "linux-x64": "Bun 1.4.0 native cross-build, ELF identity, exact inventory, verifier, and reproducibility"
+  },
+  "privacy": {
+    "accountIdentifierIncluded": false,
+    "rawBusinessLogsIncluded": false,
+    "databaseRowsIncluded": false,
+    "oauthCredentialsIncluded": false,
+    "callbacksIncluded": false,
+    "transcriptsIncluded": false
+  },
+  "authorization": {
+    "explicitPublicNpmReleaseApproved": true,
+    "platformPackagesBeforeSelectorRequired": true,
+    "pypiPublicationApproved": false
+  }
+}

@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room npm/artifact policies, five-package build/verifier, GitHub workflows, and npm registry checks. -->
 <!-- [Output] 定义 restored-source-free 五包拓扑、正式资格、首次 2FA bootstrap 与后续 Trusted Publishing。 -->
 <!-- [Pos] 当前公共 npm 发布设计；授权由 checked Dream 回执固定，历史恢复源码永不成为公共输入。 -->
-<!-- [Sync] 2026-08-24：记录 0.1.0 平台优先公共发布及匿名 registry fresh-install 通过。 -->
+<!-- [Sync] 2026-08-26：准备 0.1.1 Trusted Publisher 五包发布并绑定 MCP 认证路由回执。 -->
 
 # Clean-room Runtime 的 npm 多平台发布设计
 
@@ -18,7 +18,7 @@
 - `productionEligible=true`；
 - `publicationAllowed=true`；
 - `redistributionAllowed=true`；
-- Dream 真实业务回执 SHA-256 为 `ce3b2db654acf1fb2c3d8d1060eb2afce9dc14c0ee391fbb45697d0b4b52ac16`；
+- Dream 真实业务回执 SHA-256 为 `039dad83bb4f50db584bf502ebb32c94c0f52ab7096ec19a6abb9a5d0cc60c6e`；
 - 四个 target qualification 均为 true，且每个资格基础单独记录；
 - `runtime/cleanroom-npm-policy.json#publication.npmPublishAllowed=true`。
 
@@ -108,6 +108,9 @@ OAuth 凭据、callback 或 transcript。首次名称 bootstrap 必须从通过 
 为后续版本配置 Trusted Publisher，再使用同 SHA 的 `publish-npm.yml` OIDC 路径。
 
 ## npm registry 发布结果
+
+`0.1.1` 当前是已验证、待同 SHA qualification/publish workflow 的候选；不得在 registry
+可见性、integrity 与 fresh install 完成前写成已发布。
 
 2026-08-24 的首次发布结果：
 

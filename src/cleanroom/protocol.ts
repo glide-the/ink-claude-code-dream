@@ -2,6 +2,7 @@
 // [Output] Python-SDK-compatible lifecycle frames with durable resume, bounded tool turns, and MCP/OAuth management.
 // [Pos] Single clean-room protocol state machine; feature modules are injected through narrow public APIs.
 // [Sync] 2026-08-24: expose bounded initialization-stage diagnostics without leaking underlying errors.
+// [Sync] 2026-08-26: identify MCP client/session frames as Runtime 0.1.1.
 
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -451,7 +452,7 @@ export class CleanroomProtocol {
     const mcpRegistry = await initializeStage("mcp", async () => {
       const registry = await createMcpRegistryFromArgv(argv, {
         clientName: "ink-claude-code-dream",
-        clientVersion: "0.1.0",
+        clientVersion: "0.1.1",
         cwd,
         ...(oauthConfigDir
           ? {

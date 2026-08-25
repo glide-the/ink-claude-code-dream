@@ -2,7 +2,7 @@
   "schemaVersion": "ink-claude-cli-envelope/v1",
   "runtime": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "entrypoint": "bin/ink-claude-code-dream",
     "toolchain": {
       "name": "Bun",
@@ -15,7 +15,7 @@
       "environment": "CLAUDE_CODE_CLI_PATH",
       "sdkOption": "ClaudeAgentOptions.cli_path",
       "sdkDistribution": "ink-claude-dream-agent-sdk",
-      "sdkVersion": "0.2.143",
+      "sdkVersion": "0.2.144",
       "sdkModified": false
     }
   },

@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room Runtime tooling, authorized external restored source, capability profile, compatibility policies, and verification evidence. -->
 <!-- [Output] Explain the qualified local minimal-core workflow, remaining business gate, legacy envelope, and safe Git/release boundary. -->
 <!-- [Pos] Operator-facing entry point for ink-claude-code-dream. -->
-<!-- [Sync] 2026-08-24: add fail-closed scoped npm layout, four native targets, and zero-source-map gate. -->
+<!-- [Sync] 2026-08-26: prepare clean-room Runtime 0.1.1 for Trusted Publisher release with SDK 0.2.144. -->
 
 # ink-claude-code-dream
 
@@ -64,7 +64,7 @@ bun run test:mcp-auth-compat
 
 ## SDK and Dream integration
 
-Dream installs `ink-claude-dream-agent-sdk==0.2.143` while keeping the upstream `claude_agent_sdk` import namespace and launcher. Official and custom Runtimes are selected through the existing absolute CLI-path injection point. No Dream business implementation is required to switch between them.
+Dream installs `ink-claude-dream-agent-sdk==0.2.144` while keeping the upstream `claude_agent_sdk` import namespace and launcher. Official and custom Runtimes are selected through the existing absolute CLI-path injection point. No Dream business implementation is required to switch between them.
 
 Runtime acceptance has three ordered layers:
 
@@ -88,4 +88,7 @@ See the [canonical design](docs/design/claude-code-runtime-minimalization.md), [
 
 仓库根 `package.json` 是私有构建编排器和历史 envelope，不是发布包；根级 `npm pack`/`npm publish` 会被 lifecycle 拒绝。可审查的目标布局是 `@glide-the/ink-claude-code-dream` 顶层选择包，加 Darwin/Linux 的 arm64/x64 四个平台包。每个平台必须使用同平台 qualification、ripgrep 和 `bun@1.4.0`，Windows 暂无完整证据并 fail-closed。
 
-当前 `publicationAllowed=false`、`redistributionAllowed=false`，所以 `npm run npm:legal` 和 staging 都会阻断，未发布任何包。所有 npm 包清单和 tgz 强制不包含 `*.map`。详见 [npm 多平台发布设计](docs/design/npm多平台发布设计.md)。
+clean-room `0.1.1` 的 `publicationAllowed=true`、`redistributionAllowed=true` 与 Dream 回执摘要已绑定；
+发布仍必须通过 main 同 SHA qualification 与 npm Trusted Publisher，四个平台包先于 selector。
+所有 npm 包清单和 tgz 强制不包含 `*.map`。历史 restored-source/local-core 路径仍禁止发布。
+详见 [npm 多平台发布设计](docs/design/npm多平台发布设计.md)。

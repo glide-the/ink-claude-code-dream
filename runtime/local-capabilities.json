@@ -2,7 +2,7 @@
   "schemaVersion": "ink-core-local-capabilities/v1",
   "runtime": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "mode": "headless-sdk-runtime",
     "sourceVersionEvidence": "2.1.88",
     "cliCompatibilityVersion": "2.1.241",

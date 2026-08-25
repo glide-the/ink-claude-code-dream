@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room policies, source/build manifests, provider-free tests, five npm tarballs, and host measurements. -->
 <!-- [Output] 给出版本/能力矩阵、真实业务回执边界、内存观测、正式制品摘要和发布前命令证据。 -->
 <!-- [Pos] Clean-room Runtime 的 digest-bound 技术、发布资格与 registry 回下载记录。 -->
-<!-- [Sync] 2026-08-24：记录 main qualification、公共 registry 五包和匿名 fresh-install 回执。 -->
+<!-- [Sync] 2026-08-26：记录 0.1.1/SDK 0.2.144 配对、MCP 认证路由回执和五包发布候选摘要。 -->
 
 # Clean-room Runtime 技术验证
 
@@ -11,8 +11,10 @@
 Dream 最终验收又使用既有真实账户和业务数据，经 Dream、Admin、Gateway、本机真实
 PostgreSQL 的公开生产入口完成两轮同 Thread 对话、refresh/resume、Comfy 浏览器 OAuth、
 两次 `get_server_info`、tool confirmation、`output-available`、logout/remove；回执经隐私删减后
-固定在 `runtime/attestations/dream-real-business-acceptance-0.1.0.json`，SHA-256 为
-`ce3b2db654acf1fb2c3d8d1060eb2afce9dc14c0ee391fbb45697d0b4b52ac16`。
+固定在 `runtime/attestations/dream-real-business-acceptance-0.1.1.json`，SHA-256 为
+`039dad83bb4f50db584bf502ebb32c94c0f52ab7096ec19a6abb9a5d0cc60c6e`。该回执同时记录
+匿名 HTTP、OAuth HTTP、legacy SSE、自动 callback、tools/resources/prompts、部分失败、cancel
+和同 Thread resume 的本轮证据边界。
 
 因此三个 artifact gate 和 `npmPublishAllowed` 均已显式置为 true，正式 package prepack 通过。
 darwin-arm64 是真实宿主业务与 native execution 资格；darwin-x64、linux-arm64、linux-x64 的
@@ -23,9 +25,9 @@ true 表示 cross-build native format、精确 inventory、verifier 与复现性
 
 | 层 | 固定版本/合同 | 权威来源 | 当前验证 |
 | --- | --- | --- | --- |
-| clean-room npm Runtime | `0.1.0`，MIT | `runtime/cleanroom-{artifact,npm}-policy.json` | 五包身份一致 |
+| clean-room npm Runtime | `0.1.1`，MIT | `runtime/cleanroom-{artifact,npm}-policy.json` | 五包身份一致 |
 | Claude Code 兼容输出 | `2.1.241 (Claude Code)` | `src/cleanroom/cli.ts`、package tests | host native 与两个 selector alias 通过 |
-| Dream Agent SDK | `ink-claude-dream-agent-sdk==0.2.143` | release manifest integration | `ClaudeAgentOptions.cli_path` resolver 通过 |
+| Dream Agent SDK | `ink-claude-dream-agent-sdk==0.2.144` | release manifest integration | `ClaudeAgentOptions.cli_path` resolver 通过 |
 | SDK 进程协议 | `claude-code-stream-json/v1` | release manifest、`protocol.ts` | initialize/control/SSE/tool/result/interrupt 通过 |
 | clean-room 编译器 | Bun `1.4.0` | npm policy、四份 build manifest | 四 target exact pin 通过 |
 | 根仓库编排器 | Bun `1.2.20` | `packageManager` | frozen install 与 legacy comparator build 通过 |
@@ -59,20 +61,20 @@ true 表示 cross-build native format、精确 inventory、verifier 与复现性
 ## 源与制品证据
 
 干净构建从空的 `dist/cleanroom-targets` 与 `dist/cleanroom-npm` 开始。四份 build manifest
-记录同一份 source inventory：47 个文件、250,859 字节，source-tree SHA-256
-`2e5f2059db618ae499fee12346d53f13bf0f1460ed600bae602c75b1c60a66ec`，lockfile SHA-256
+记录同一份 source inventory：47 个文件、282,090 字节，source-tree SHA-256
+`b231362f22e588d4963420c85471a07baf6943767e25d3a1d3afddbfcae4d4a6`，lockfile SHA-256
 `a934ea1ebc506af2edead95cee392717f1560983ea55fc7c97894deb90db3b55`。
 
 | target/package | executable bytes / format | executable SHA-256 | tgz bytes | tgz SHA-256 |
 | --- | ---: | --- | ---: | --- |
-| selector | Node launcher | `df77ddf569a7f035e868716360d8ee94874c73fbf67a84a60f681224a1aa7d30` | 18,404 | `3c7c357eda4107beded55e87c1e21ee0c7a0c9ec4e46927a3591bdb0557f4d4f` |
-| darwin-arm64 | 64,868,210 / Mach-O arm64 | `04372c5b48d0e49cb2a908401dfb7bd0b8b7cb18e030f2ca4bfeb9949d0d22be` | 26,999,879 | `85906499553664f7af82cd004fcf29041041c9f56c76d675f33a1b8607c7ea63` |
-| darwin-x64 | 71,654,816 / Mach-O x64 | `9a9a86c053ab97944550792efc90b76a0161c1b98bb624be9e7d7e140bd9a6ee` | 29,149,785 | `8aaf33031b2a51495f30a14196f8d8eaa85f9c71853e46601ad5bef561588090` |
-| linux-arm64 | 83,412,984 / ELF arm64 | `c876c14f0d4803af6132ab5a37414a97467ea60e106a3b80b88338e100544884` | 37,961,901 | `aa5f1dea21986b42b88b9f1b4bbfd2c86f0ce4a778343a2ba20ec23aa7ecd583` |
-| linux-x64 | 83,498,184 / ELF x64 | `3d90ec6af53a753fa2c49bb740451243fd79dd37edd198181e90b8ca260426fd` | 37,465,743 | `29b015399b6782dbe0c1ff0eefac04081017bdda5f13c9753436e6f2f3ad0176` |
+| selector | Node launcher | `df77ddf569a7f035e868716360d8ee94874c73fbf67a84a60f681224a1aa7d30` | 18,362 | `494b82e51918bf6ccdca9d31f0669298c7a0d41bfbf80a4e9d08e2bf8252bb1b` |
+| darwin-arm64 | 64,901,234 / Mach-O arm64 | `a4da19cf6b5153d722f7203ec8968698495608e9a74404233df3466f55ad3e2d` | 26,195,748 | `e057a79116915121c5fb10148e967836234df5bd9e9f572eb3524936f99a179d` |
+| darwin-x64 | 71,687,584 / Mach-O x64 | `8e86bb36f9d0ebf0911a9ce91d32544347b0d6b36986517b7cfb9dc2b32759e9` | 28,754,839 | `64b41dfeb2dfa986bcbe500fd9e667edec8e5a100ed515678b6cba3a744d1259` |
+| linux-arm64 | 83,478,520 / ELF arm64 | `db0452bf57701cd89f712684e34f060d43c96f04673a5e40fd8306d6bd30fd91` | 36,877,574 | `ab0671d6b2421563ce66fc8d2cbd6e5cef041edb3a33c19921a3606d33ea52e9` |
+| linux-x64 | 83,518,664 / ELF x64 | `bbb82a11411fee89ef62efa994d465cf8546e57463deeedb41afb2c902ea0951` | 36,882,891 | `4188b1760e9a5bbf0e3482466d76b1e65a3ce329bdf6252e982f751ea1343075` |
 
-表中的 tgz 是 main commit `c4fb8df1de43d756c3bde90523cc589c8f66e837`、qualification run
-`32726262238` 生成并实际发布到 registry 的正式制品，不含 fixture 字段；五个 generated prepack
+表中的 tgz 是 `0.1.1` 发布候选，不含 fixture 字段；main qualification 与 registry
+回下载 run ID 在发布完成后补记。五个 generated prepack
 均要求三个 artifact gate、目标资格、回执 digest 和 npm 授权精确为 true。Dream 实际验收使用
 回执内固定的前一候选 tgz；其 source tree 与四个 executable digest 与正式候选一致，正式 tgz
 仅因加入开放门和回执 attestation 而改变摘要。两次完整四目标编译与该五包打包后，四个 executable SHA 文件和聚合
@@ -113,10 +115,13 @@ darwin-arm64 standalone，不包含 selector Node 进程。`/usr/bin/time -l` �
 - 两轮 executable/tarball `cmp`：exit 0；
 - `find dist/cleanroom-targets dist/cleanroom-npm -name '*.map'`：零输出。
 
-发布后回执：四个平台包先完成 `PUT 200`，并分别由 npm visibility API 确认为 public；selector
+`0.1.0` 发布后回执：四个平台包先完成 `PUT 200`，并分别由 npm visibility API 确认为 public；selector
 随后完成 `PUT 200`。五个公共 packument 均返回 `0.1.0`、MIT 和 tarball URL，其 SHA-512
 integrity 与 qualification tgz 逐包一致。使用 Node `24.13.0`、npm `11.6.2`、空安装目录、
 全新 cache 且 `npm_config_userconfig=/dev/null` 的匿名 registry 安装 exit 0，只安装 selector 与
 darwin-arm64 可选包；`claude --version` 和 `ink-claude-code-dream --version` 均输出
 `2.1.241 (Claude Code)`，安装树零 `.map`，Dream 真实 Python resolver 成功解析 selector 的
 `release-manifest.json`。版本不可覆盖，后续版本需配置五包 Trusted Publisher。
+
+`0.1.1` 必须在同一 main SHA 的 qualification 成功后，使用 Trusted Publisher 按平台包优先、
+selector 最后的固定顺序发布；本节只有 registry 实际回下载后才改为发布完成。

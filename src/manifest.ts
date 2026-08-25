@@ -2,6 +2,7 @@
 // [Output] Return an exact-version, digest-bound evidence envelope for diagnostics and the one-shot version probe.
 // [Pos] Lazy diagnostic reader; callers cannot replace the release trust root through environment configuration.
 // [Sync] 2026-08-24: require Dream's locked SDK distribution/version in the immutable manifest.
+// [Sync] 2026-08-26: require Runtime 0.1.1 and SDK 0.2.144 identities.
 
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -19,13 +20,13 @@ function validateManifest(value: unknown): asserts value is ReleaseManifest {
   if (
     manifest.schemaVersion !== "ink-claude-cli-envelope/v1" ||
     manifest.runtime?.name !== "ink-claude-code-dream" ||
-    manifest.runtime.version !== "0.1.0" ||
+    manifest.runtime.version !== "0.1.1" ||
     manifest.runtime.entrypoint !== "bin/ink-claude-code-dream" ||
     manifest.runtime?.integration.environment !== "CLAUDE_CODE_CLI_PATH" ||
     manifest.runtime.integration.sdkOption !== "ClaudeAgentOptions.cli_path" ||
     manifest.runtime.integration.sdkDistribution !== "ink-claude-dream-agent-sdk" ||
-    manifest.runtime.integration.sdkVersion !== "0.2.143" ||
-    manifest.runtime.integration.dreamObservedSdkVersion !== "0.2.143" ||
+    manifest.runtime.integration.sdkVersion !== "0.2.144" ||
+    manifest.runtime.integration.dreamObservedSdkVersion !== "0.2.144" ||
     manifest.runtime.integration.sdkModified !== false ||
     manifest.core?.version !== "2.1.241" ||
     manifest.core?.delivery !== "external-not-bundled" ||

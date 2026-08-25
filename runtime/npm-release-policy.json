@@ -2,7 +2,7 @@
   "schemaVersion": "ink-npm-release-policy/v1",
   "repository": "glide-the/ink-claude-code-dream",
   "scope": "@glide-the",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "metaPackage": "@glide-the/ink-claude-code-dream",
   "command": "ink-claude-code-dream",
   "runtimePackagePolicy": "runtime/local-artifact-policy.json",

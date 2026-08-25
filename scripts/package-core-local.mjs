@@ -151,7 +151,7 @@ function validatePolicy(policy) {
   if (policy.schemaVersion !== "ink-core-local-artifact-policy/v1") fail("unsupported local artifact policy");
   if (
     policy.artifact?.name !== "ink-claude-code-dream" ||
-    policy.artifact?.version !== "0.1.0" ||
+    policy.artifact?.version !== "0.1.1" ||
     policy.artifact?.entrypoint !== "bin/ink-claude-code-dream" ||
     policy.artifact?.coreEntrypoint !== "lib/core/cli.js" ||
     policy.artifact?.bunVersion !== "1.4.0" ||
@@ -432,7 +432,7 @@ function dependencyLicenseReport(receipt, policy) {
       { name: "Bun", version: policy.artifact.bunVersion, license: "MIT", scope: "external-runtime" },
       {
         name: "ink-claude-dream-agent-sdk",
-        version: "0.2.143",
+        version: "0.2.144",
         license: "MIT",
         scope: "external-integration-not-bundled",
       },
