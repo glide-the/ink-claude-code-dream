@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room npm/artifact policies, five-package build/verifier, GitHub workflows, and npm registry checks. -->
 <!-- [Output] 定义 restored-source-free 五包拓扑、正式资格、首次 2FA bootstrap 与后续 Trusted Publishing。 -->
 <!-- [Pos] 当前公共 npm 发布设计；授权由 checked Dream 回执固定，历史恢复源码永不成为公共输入。 -->
-<!-- [Sync] 2026-08-26：为 private repository 的 token 回退关闭不受支持的 Sigstore provenance。 -->
+<!-- [Sync] 2026-08-26：让 token 回退清除 GitHub OIDC 请求载体并关闭不受支持的 Sigstore provenance。 -->
 
 # Clean-room Runtime 的 npm 多平台发布设计
 
@@ -112,6 +112,11 @@ Publisher 验证成功后删除或轮换。
 因此仅在 `npm_access_token_configured=true` 时设置 `NPM_CONFIG_PROVENANCE=false`，并继续依赖
 same-SHA qualification、五包 SHA-256、release manifest、SBOM 和 registry integrity 验证；OIDC
 路径不显式覆盖 npm 的 provenance 行为。
+
+npm CLI 会在 GitHub `id-token: write` 存在时优先选择 OIDC，早于传统 token。token 回退模式还必须
+在同一个 publish shell 内 `unset ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_ID_TOKEN_REQUEST_TOKEN`，
+否则即使 `NPM_TOKEN` 的 `npm whoami` 成功，npm 仍会尝试为 private repository 生成 provenance 并
+返回 422。该清除只由显式 token 输入触发，Trusted Publisher 路径继续保留 OIDC carrier。
 
 外层 Dream 真实业务验收与用户显式授权已经通过；回执不包含账户标识、原始业务日志、数据库行、
 OAuth 凭据、callback 或 transcript。首次名称 bootstrap 必须从通过 main 同 SHA qualification
