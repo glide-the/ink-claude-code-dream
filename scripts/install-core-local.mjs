@@ -29,7 +29,7 @@ const defaultPackageRoot = path.join(
   repositoryRoot,
   "dist",
   "core-package-local",
-  "ink-claude-code-dream-0.1.0",
+  "ink-claude-code-dream-0.1.1",
 );
 const defaultBunBinary = path.join(repositoryRoot, "node_modules", "bun", "bin", "bun.exe");
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-core-package-local.mjs");

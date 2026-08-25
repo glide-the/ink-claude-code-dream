@@ -481,7 +481,7 @@ def main() -> int:
                 raise ContractFailure("candidate core binding receipt is not built")
             qualification_subject = {
                 "runtime": "ink-claude-code-dream",
-                "version": "0.1.0",
+                "version": "0.1.1",
                 "coreBundleSha256": _sha256(core_bundle),
                 "sourceDigest": source_digest,
                 "runtimeTarget": runtime_target,

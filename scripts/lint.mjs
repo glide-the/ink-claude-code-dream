@@ -2,6 +2,7 @@
 // [Output] Fail on clean-room/legacy contract drift, missing headers, restricted material, secrets, or unsafe package scripts.
 // [Pos] Read-only clean-room lint gate; it never reads user configuration or external Runtime data.
 // [Sync] 2026-08-24: verify the final Dream receipt digest and authorized clean-room publication gate.
+// [Sync] 2026-08-26: validate Runtime 0.1.1, SDK 0.2.144, and the new receipt path.
 
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
@@ -13,7 +14,7 @@ const packageJson = JSON.parse(await readFile(resolve(root, "package.json"), "ut
 if (packageJson.name !== "ink-claude-code-dream") {
   throw new Error("package name must be the unscoped Runtime distribution identity");
 }
-if (packageJson.bin?.["ink-claude-code-dream"] !== "dist/release/ink-claude-code-dream-0.1.0/bin/ink-claude-code-dream") {
+if (packageJson.bin?.["ink-claude-code-dream"] !== "dist/release/ink-claude-code-dream-0.1.1/bin/ink-claude-code-dream") {
   throw new Error("console bin must expose the extensionless Runtime entrypoint");
 }
 if (packageJson.private !== true || packageJson.license !== "MIT") {
@@ -41,7 +42,7 @@ const jsonFiles = [
   "runtime/cleanroom-npm-policy.json",
   "runtime/cleanroom-sandbox-policy.json",
   "runtime/cleanroom-dependency-licenses.json",
-  "runtime/attestations/dream-real-business-acceptance-0.1.0.json",
+  "runtime/attestations/dream-real-business-acceptance-0.1.1.json",
 ];
 const parsed = new Map();
 for (const path of jsonFiles) {
@@ -50,7 +51,7 @@ for (const path of jsonFiles) {
 const release = parsed.get("runtime/release-manifest.json");
 if (
   release.runtime?.name !== "ink-claude-code-dream" ||
-  release.runtime?.integration?.sdkVersion !== "0.2.143" ||
+  release.runtime?.integration?.sdkVersion !== "0.2.144" ||
   release.core?.version !== "2.1.241" ||
   release.core?.execution !== "unmodified-as-published" ||
   release.core?.corePruned !== false ||
@@ -88,7 +89,7 @@ if (
   throw new Error("pruning decision must fail closed until authorization and build inputs exist");
 }
 const cleanroom = parsed.get("runtime/cleanroom-artifact-policy.json");
-const businessReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.0.json";
+const businessReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.1.json";
 const businessReceiptBody = await readFile(resolve(root, businessReceiptPath));
 const businessReceipt = parsed.get(businessReceiptPath);
 const businessReceiptSha256 = createHash("sha256").update(businessReceiptBody).digest("hex");
