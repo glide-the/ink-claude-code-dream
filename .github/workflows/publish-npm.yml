@@ -1,7 +1,7 @@
 # [Input] One successful same-SHA clean-room qualification run plus checked publication gates and an approved npm authentication mode.
 # [Output] Four platform packages followed by the selector package through npm OIDC, with an explicit Environment-secret token fallback.
 # [Pos] Main-only manual publisher; checked acceptance and same-SHA qualification are mandatory.
-# [Sync] 2026-08-26: remove GitHub OIDC request carriers only in explicit scoped-token mode so npm can use its documented auth fallback.
+# [Sync] 2026-08-26: token mode removes OIDC carriers and passes an explicit CLI provenance override without changing qualified tarballs.
 
 name: Publish clean-room npm Runtime
 
@@ -119,6 +119,9 @@ jobs:
         run: |
           if [[ "$NPM_ACCESS_TOKEN_MODE" = true ]]; then
             unset ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_ID_TOKEN_REQUEST_TOKEN
+            publish_args=(--access public --provenance=false)
+          else
+            publish_args=(--access public)
           fi
           shopt -s nullglob
           archives=(dist/npm-publish/*.tgz)
@@ -127,8 +130,8 @@ jobs:
           for target in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
             matches=(dist/npm-publish/*-"$target"-${{ needs.validate.outputs.version }}.tgz)
             test "${#matches[@]}" -eq 1
-            npm publish "${matches[0]}" --access public
+            npm publish "${matches[0]}" "${publish_args[@]}"
           done
           meta=(dist/npm-publish/glide-the-ink-claude-code-dream-${{ needs.validate.outputs.version }}.tgz)
           test "${#meta[@]}" -eq 1
-          npm publish "${meta[0]}" --access public
+          npm publish "${meta[0]}" "${publish_args[@]}"

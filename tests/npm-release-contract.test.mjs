@@ -3,7 +3,7 @@
 // [Pos] Provider-free npm publication contract tests; they never publish, authenticate, or copy a vendor core.
 // [Sync] 2026-08-24: recognize the private MIT repository orchestrator without opening the legacy publish gate.
 // [Sync] 2026-08-24: require exact acceptance-receipt hashing in the clean-room qualification/publication path.
-// [Sync] 2026-08-26: require scoped-token mode to remove OIDC carriers and suppress unsupported private-repository provenance.
+// [Sync] 2026-08-26: require scoped-token mode to remove OIDC carriers and override tarball provenance only at publish time.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -269,7 +269,10 @@ test("clean-room CI keeps restored inputs out and confines OIDC or token auth to
   assert.match(workflow, /npm whoami/);
   assert.match(workflow, /NPM_CONFIG_PROVENANCE:[^\n]*npm_access_token_configured[^\n]*'false'/);
   assert.match(workflow, /unset ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_ID_TOKEN_REQUEST_TOKEN/);
-  assert.doesNotMatch(workflow, /npm publish[^\n]*--provenance/);
+  assert.match(workflow, /publish_args=\(--access public --provenance=false\)/);
+  assert.match(workflow, /npm publish "\$\{matches\[0\]\}" "\$\{publish_args\[@\]\}"/);
+  assert.match(workflow, /npm publish "\$\{meta\[0\]\}" "\$\{publish_args\[@\]\}"/);
+  assert.doesNotMatch(workflow, /npm publish[^\n]*--provenance(?:\s|$)/);
   assert.match(workflow, /verify-cleanroom-npm\.mjs/);
   assert.match(workflow, /businessAcceptance/);
   assert.match(workflow, /createHash/);
