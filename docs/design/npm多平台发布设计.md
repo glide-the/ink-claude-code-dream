@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room npm/artifact policies, five-package build/verifier, GitHub workflows, and npm registry checks. -->
 <!-- [Output] 定义 restored-source-free 五包拓扑、正式资格、首次 2FA bootstrap 与后续 Trusted Publishing。 -->
 <!-- [Pos] 当前公共 npm 发布设计；授权由 checked Dream 回执固定，历史恢复源码永不成为公共输入。 -->
-<!-- [Sync] 2026-08-26：为 0.1.1 五包发布增加受限 npm Environment token 回退，并继续优先使用 Trusted Publisher。 -->
+<!-- [Sync] 2026-08-26：为 private repository 的 token 回退关闭不受支持的 Sigstore provenance。 -->
 
 # Clean-room Runtime 的 npm 多平台发布设计
 
@@ -107,6 +107,11 @@ main commit 且成功，下载后重新执行 clean-room verifier。只有 publi
 secret 注入短期、最小包范围的 Granular Access Token。workflow 会先执行 `npm whoami` fail closed；
 token 不进入仓库、artifact、command 参数或日志。该回退不用于 npm 账户治理操作，并应在 Trusted
 Publisher 验证成功后删除或轮换。
+
+当前 GitHub 源仓库为 private，npm registry 不接受由该仓库生成的 Sigstore provenance bundle。
+因此仅在 `npm_access_token_configured=true` 时设置 `NPM_CONFIG_PROVENANCE=false`，并继续依赖
+same-SHA qualification、五包 SHA-256、release manifest、SBOM 和 registry integrity 验证；OIDC
+路径不显式覆盖 npm 的 provenance 行为。
 
 外层 Dream 真实业务验收与用户显式授权已经通过；回执不包含账户标识、原始业务日志、数据库行、
 OAuth 凭据、callback 或 transcript。首次名称 bootstrap 必须从通过 main 同 SHA qualification
