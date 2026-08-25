@@ -1,7 +1,7 @@
 // [Input] PrivateOAuthStore, public OAuth client metadata, and SDK OAuth lifecycle callbacks.
 // [Output] Persistent public OAuthClientProvider with token synchronization and terminal mutation fencing.
 // [Pos] Adapter between the official MCP SDK OAuth flow and private clean-room persistence.
-// [Sync] 2026-08-24: synchronize token rotation and fence late writes after a cancelled login.
+// [Sync] 2026-08-25: support non-destructive interactive scope upgrades through SDK v1.
 
 import { randomBytes } from "node:crypto";
 import type {
@@ -38,6 +38,7 @@ export class PersistentOAuthClientProvider implements OAuthClientProvider {
   private readonly onTokensChanged?: PersistentOAuthProviderOptions["onTokensChanged"];
   private pendingAuthorization?: PendingAuthorization;
   private acceptingMutations = true;
+  private interactiveScopeUpgrade = false;
 
   constructor(options: PersistentOAuthProviderOptions) {
     const redirectUrl = new URL(options.redirectUrl);
@@ -80,11 +81,15 @@ export class PersistentOAuthClientProvider implements OAuthClientProvider {
   }
 
   async tokens(): Promise<OAuthTokens | undefined> {
-    return (await this.store.read()).tokens;
+    const tokens = (await this.store.read()).tokens;
+    if (!tokens || !this.interactiveScopeUpgrade || !tokens.refresh_token) return tokens;
+    const { refresh_token: _preservedRefreshToken, ...interactiveTokens } = tokens;
+    return interactiveTokens;
   }
 
   async saveTokens(tokens: OAuthTokens): Promise<void> {
     this.requireAcceptingMutations();
+    this.interactiveScopeUpgrade = false;
     await this.store.update((current) => ({ ...current, tokens }));
     await this.notifyTokensChanged();
   }
@@ -100,6 +105,16 @@ export class PersistentOAuthClientProvider implements OAuthClientProvider {
     const pending = this.pendingAuthorization;
     this.pendingAuthorization = undefined;
     return pending ? { ...pending } : undefined;
+  }
+
+  /**
+   * SDK v1 refresh does not carry a challenged scope. Hide the refresh token
+   * from that single in-memory decision so the SDK starts its existing PKCE
+   * authorization path; the persisted working token remains untouched.
+   */
+  requireInteractiveScopeUpgrade(): void {
+    this.requireAcceptingMutations();
+    this.interactiveScopeUpgrade = true;
   }
 
   async saveCodeVerifier(codeVerifier: string): Promise<void> {
@@ -127,6 +142,7 @@ export class PersistentOAuthClientProvider implements OAuthClientProvider {
   ): Promise<void> {
     if (scope === "all") {
       this.pendingAuthorization = undefined;
+      this.interactiveScopeUpgrade = false;
       await this.store.clear();
       await this.notifyTokensChanged();
       return;
@@ -139,6 +155,7 @@ export class PersistentOAuthClientProvider implements OAuthClientProvider {
         delete next.codeVerifier;
         delete next.callbackState;
         this.pendingAuthorization = undefined;
+        this.interactiveScopeUpgrade = false;
       }
       if (scope === "discovery") delete next.discoveryState;
       return next;

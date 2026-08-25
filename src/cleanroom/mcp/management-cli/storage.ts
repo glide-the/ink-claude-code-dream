@@ -1,7 +1,7 @@
 // [Input] An explicit absolute CLAUDE_CONFIG_DIR and user-scoped MCP mutations.
 // [Output] Symlink-safe private `.claude.json` and `.credentials.json` managed keys.
 // [Pos] Filesystem authority boundary for the clean-room MCP management CLI.
-// [Sync] 2026-08-24: add canonical 0700 roots and atomic 0600 managed-key writes.
+// [Sync] 2026-08-25: add HTTP servers without manufacturing an OAuth requirement.
 
 import { randomBytes } from "node:crypto";
 import {
@@ -168,7 +168,7 @@ export class UserMcpStateStore {
     }
     const document = await readPrivateDocument(this.configFile);
     const servers = managedMapping(document, "mcpServers");
-    servers[name] = { type: "http", url: url.href, oauth: true };
+    servers[name] = { type: "http", url: url.href };
     await writePrivateDocument(this.configDir, this.configFile, { ...document, mcpServers: servers });
   }
 

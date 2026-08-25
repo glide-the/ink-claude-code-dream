@@ -1,7 +1,7 @@
 // [Input] MCP server URL, persistent provider, callback code/state, and optional injected fetch.
 // [Output] Headless authorization/refresh/logout results with stable non-secret error DTOs.
 // [Pos] User-interaction-neutral OAuth orchestration over the public MCP SDK API.
-// [Sync] 2026-08-24: add DCR/PKCE begin, callback completion, refresh, logout, and safe failures.
+// [Sync] 2026-08-25: reserve auth-required conversion for 401; SDK owns 403 upscoping.
 
 import {
   auth,
@@ -65,7 +65,7 @@ function safeFailure(code: OAuthSafeErrorCode): OAuthSafeError {
 }
 
 export function oauthNeedsAuthFromStatus(status: number): OAuthSafeError | undefined {
-  return status === 401 || status === 403 ? safeFailure("oauth_required") : undefined;
+  return status === 401 ? safeFailure("oauth_required") : undefined;
 }
 
 export class HeadlessMcpOAuthFlow {

@@ -1,12 +1,13 @@
 // [Input] Clean-room MCP configuration, registry, management, naming, and built-in modules.
 // [Output] Stable public API for provider-free MCP integration.
 // [Pos] Public export surface for the clean-room MCP client slice.
-// [Sync] 2026-08-24: expose headless OAuth, registry lifecycle, and Dream management CLI APIs.
+// [Sync] 2026-08-25: hydrate HTTP and SSE providers from matching projected credentials.
 
 import { parseMcpConfigArgv } from "./config.ts";
 import { McpRegistry, type McpRegistryOptions } from "./registry.ts";
 import {
   createUserOAuthContext,
+  hasProjectedOAuthCredential,
   UserMcpStateStore,
 } from "./management-cli/index.ts";
 import type { PersistentOAuthClientProvider } from "./oauth/provider.ts";
@@ -44,7 +45,9 @@ export async function createMcpRegistryFromArgv(
     const store = await UserMcpStateStore.open(projectedOAuthIdentity.configDir);
     const providers = new Map<string, PersistentOAuthClientProvider>();
     for (const [serverName, config] of configs) {
-      if (config.type !== "http" || !config.requiresOAuth) continue;
+      if (config.type !== "http" && config.type !== "sse") continue;
+      const projection = await store.readOAuth(serverName);
+      if (!config.requiresOAuth && !hasProjectedOAuthCredential(projection, config.url)) continue;
       const context = await createUserOAuthContext({
         store,
         serverName,
