@@ -1,7 +1,7 @@
 // [Input] Untrusted mcpServers JSON and official MCP SDK discovery/call results.
 // [Output] Normalized configuration and immutable public registry/model-tool shapes.
 // [Pos] Shared type contract for the clean-room MCP client slice.
-// [Sync] 2026-08-25: add anonymous-first authentication and safe failure classifications.
+// [Sync] 2026-08-25: model legacy SSE separately while preserving safe auth failures.
 
 export type McpServerStatus =
   | "connected"
@@ -20,6 +20,7 @@ export type McpAuthenticationState = "anonymous" | "required" | "authenticated" 
 
 export type McpFailureCode =
   | "mcp_auth_required"
+  | "mcp_auth_not_advertised"
   | "mcp_forbidden"
   | "mcp_endpoint_not_found"
   | "mcp_timeout"
@@ -43,6 +44,14 @@ export interface HttpMcpServerConfig extends McpServerConfigBase {
   headers: Record<string, string>;
 }
 
+export interface SseMcpServerConfig extends McpServerConfigBase {
+  type: "sse";
+  url: string;
+  headers: Record<string, string>;
+}
+
+export type RemoteMcpServerConfig = HttpMcpServerConfig | SseMcpServerConfig;
+
 export interface UnsupportedMcpServerConfig extends McpServerConfigBase {
   type: "unsupported";
   transport: string;
@@ -51,6 +60,7 @@ export interface UnsupportedMcpServerConfig extends McpServerConfigBase {
 export type McpServerConfig =
   | StdioMcpServerConfig
   | HttpMcpServerConfig
+  | SseMcpServerConfig
   | UnsupportedMcpServerConfig;
 
 export interface McpToolDescription {

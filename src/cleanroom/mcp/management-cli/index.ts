@@ -1,7 +1,7 @@
 // [Input] Public `mcp` argv, explicit process identity, private user state, and shared registry outcomes.
 // [Output] Dream-compatible human status plus stable authentication/failure lines and an exit code.
 // [Pos] Single outer-CLI wire point for clean-room MCP Resources management.
-// [Sync] 2026-08-25: route list/get/login/logout through anonymous-first registry classification.
+// [Sync] 2026-08-25: expose verified, unadvertised, and invalid HTTP authorization separately.
 
 import type { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { parseMcpConfig } from "../config.ts";
@@ -169,6 +169,7 @@ function renderedStatus(entry: McpRegistryEntry): RenderedStatus {
 }
 
 function managementFailureCode(code: McpFailureCode): ManagementFailureCode {
+  if (code === "mcp_auth_not_advertised") return "auth_not_advertised";
   if (code === "mcp_timeout") return "timeout";
   if (code === "mcp_network_error") return "network_unreachable";
   if (code === "mcp_auth_metadata_invalid") return "metadata_invalid";

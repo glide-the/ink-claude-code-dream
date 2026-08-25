@@ -1,15 +1,24 @@
 // [Input] Normalized MCP configs and official SDK v1 client/transports.
 // [Output] Lifecycle registry, discovery inventory, calls, reads, and model tool bindings.
 // [Pos] Stateful connection owner for the clean-room MCP client slice.
-// [Sync] 2026-08-25: make one anonymous-first classifier authoritative for every caller.
+// [Sync] 2026-08-25: add SDK SSE while preserving verified auth and scope-upgrade semantics.
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
+import {
+  discoverOAuthServerInfo,
+  extractWWWAuthenticateParams,
+  UnauthorizedError,
+} from "@modelcontextprotocol/sdk/client/auth.js";
 import {
   getDefaultEnvironment,
   StdioClientTransport,
 } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import {
+  checkResourceAllowed,
+  resourceUrlFromServerUrl,
+} from "@modelcontextprotocol/sdk/shared/auth-utils.js";
 import type { FetchLike, Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { mcpModelToolName } from "./naming.ts";
 import {
@@ -29,6 +38,8 @@ import type {
   McpToolDescription,
   McpToolResult,
   ModelToolBinding,
+  RemoteMcpServerConfig,
+  SseMcpServerConfig,
   StdioMcpServerConfig,
 } from "./types.ts";
 
@@ -42,6 +53,7 @@ interface HttpObservation {
   sawUnauthorized: boolean;
   discoveryAttempted: boolean;
   networkFailed: boolean;
+  authorization: "none" | "validated" | "not-advertised" | "invalid-metadata";
 }
 
 interface MutableEntry extends McpRegistryEntry {
@@ -58,17 +70,98 @@ export interface McpRegistryOptions {
   httpFetch?: FetchLike;
   oauthProviderFactory?: (
     serverName: string,
-    config: HttpMcpServerConfig,
+    config: RemoteMcpServerConfig,
   ) => PersistentOAuthClientProvider | undefined;
 }
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
+
+type HttpAuthorizationFailure = "not-advertised" | "invalid-metadata" | "network" | "timeout";
+
+class McpHttpAuthorizationError extends Error {
+  readonly failure: HttpAuthorizationFailure;
+
+  constructor(failure: HttpAuthorizationFailure) {
+    super("MCP HTTP authorization validation failed");
+    this.name = "McpHttpAuthorizationError";
+    this.failure = failure;
+  }
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+}
+
+function isSafeOAuthUrl(value: string | URL): boolean {
+  try {
+    const url = value instanceof URL ? value : new URL(value);
+    if (url.username || url.password || url.hash) return false;
+    return url.protocol === "https:" || (url.protocol === "http:" && isLoopbackHost(url.hostname));
+  } catch {
+    return false;
+  }
+}
+
+function isSafeIssuerIdentifier(value: string): boolean {
+  if (!isSafeOAuthUrl(value)) return false;
+  const url = new URL(value);
+  return !url.search;
+}
+
+function bearerChallenge(header: string | null): boolean {
+  return Boolean(header && /^Bearer(?:\s|$)/iu.test(header.trim()));
+}
+
+function hasResourceMetadataParameter(header: string): boolean {
+  return /(?:^|[\s,])resource_metadata\s*=/iu.test(header);
+}
+
+function scopeTokens(scope: string | undefined): string[] | undefined {
+  if (!scope) return undefined;
+  const tokens = scope.split(/\s+/u).filter(Boolean);
+  return tokens.length > 0 && tokens.every((token) => /^[\x21\x23-\x5B\x5D-\x7E]+$/u.test(token))
+    ? tokens
+    : undefined;
+}
+
+function replaceChallengeScope(header: string, scope: string): string {
+  if (/(?:^|[\s,])scope\s*=/iu.test(header)) {
+    return header.replace(
+      /((?:^|[\s,])scope\s*=)(?:"[^"]*"|[^\s,]+)/iu,
+      (_match, prefix: string) => `${prefix}"${scope}"`,
+    );
+  }
+  return `${header}, scope="${scope}"`;
+}
+
+function responseWithHeader(response: Response, name: string, value: string): Response {
+  const headers = new Headers(response.headers);
+  headers.set(name, value);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function responseWithStatus(response: Response, status: number): Response {
+  return new Response(response.body, {
+    status,
+    statusText: response.statusText,
+    headers: response.headers,
+  });
+}
 
 function errorStatus(error: unknown): number | undefined {
   if (!error || typeof error !== "object") return undefined;
   const candidate = error as { code?: unknown; status?: unknown };
   if (typeof candidate.status === "number") return candidate.status;
   if (typeof candidate.code === "number") return candidate.code;
+  const message = (candidate as { message?: unknown }).message;
+  if (typeof message === "string") {
+    const match = /^Error POSTing to endpoint \(HTTP (\d{3})\):/u.exec(message);
+    if (match) return Number(match[1]);
+  }
   return undefined;
 }
 
@@ -87,12 +180,192 @@ function isTimeout(error: unknown): boolean {
     (typeof candidate.message === "string" && /timed?\s*out|timeout/iu.test(candidate.message));
 }
 
+function classificationForAuthorizationError(
+  error: McpHttpAuthorizationError,
+): FailureClassification {
+  if (error.failure === "not-advertised") {
+    return {
+      status: "failed",
+      authentication: "unknown",
+      failureCode: "mcp_auth_not_advertised",
+      message: "MCP server did not advertise valid authorization",
+    };
+  }
+  if (error.failure === "invalid-metadata") {
+    return {
+      status: "failed",
+      authentication: "unknown",
+      failureCode: "mcp_auth_metadata_invalid",
+      message: "MCP authorization metadata is invalid",
+    };
+  }
+  if (error.failure === "timeout") {
+    return {
+      status: "failed",
+      authentication: "unknown",
+      failureCode: "mcp_timeout",
+      message: "MCP request timed out",
+    };
+  }
+  return {
+    status: "failed",
+    authentication: "unknown",
+    failureCode: "mcp_network_error",
+    message: "MCP network request failed",
+  };
+}
+
+async function validateBearerAuthorization(
+  response: Response,
+  observation: HttpObservation,
+  baseFetch: FetchLike,
+  requestTimeoutMs: number,
+  oauthProvider?: PersistentOAuthClientProvider,
+): Promise<void> {
+  const header = response.headers.get("www-authenticate")?.trim() ?? "";
+  if (!bearerChallenge(header)) {
+    observation.authorization = "not-advertised";
+    throw new McpHttpAuthorizationError("not-advertised");
+  }
+
+  const challenge = extractWWWAuthenticateParams(response);
+  const explicitlyAdvertised = hasResourceMetadataParameter(header);
+  if (explicitlyAdvertised && !challenge.resourceMetadataUrl) {
+    observation.authorization = "invalid-metadata";
+    throw new McpHttpAuthorizationError("invalid-metadata");
+  }
+  if (challenge.resourceMetadataUrl && !isSafeOAuthUrl(challenge.resourceMetadataUrl)) {
+    observation.authorization = "invalid-metadata";
+    throw new McpHttpAuthorizationError("invalid-metadata");
+  }
+
+  let protectedResourceAdvertised = false;
+  let protectedResourceMissing = false;
+  let discoveryTimedOut = false;
+  let discoveryNetworkFailed = false;
+  const discoveryFetch: FetchLike = async (input, init) => {
+    observation.discoveryAttempted = true;
+    const requestUrl = input instanceof Request ? input.url : String(input);
+    const timeoutSignal = AbortSignal.timeout(requestTimeoutMs);
+    const suppliedSignal = init?.signal;
+    const signal = suppliedSignal && typeof AbortSignal.any === "function"
+      ? AbortSignal.any([suppliedSignal, timeoutSignal])
+      : timeoutSignal;
+    try {
+      const discoveredResponse = await baseFetch(input, { ...init, signal });
+      if (new URL(requestUrl).pathname.includes("/.well-known/oauth-protected-resource")) {
+        if (discoveredResponse.status === 404) protectedResourceMissing = true;
+        else if (discoveredResponse.ok) protectedResourceAdvertised = true;
+      }
+      return discoveredResponse;
+    } catch (error) {
+      if (isTimeout(error)) discoveryTimedOut = true;
+      else discoveryNetworkFailed = true;
+      throw error;
+    }
+  };
+
+  let discovered: Awaited<ReturnType<typeof discoverOAuthServerInfo>>;
+  try {
+    discovered = await discoverOAuthServerInfo(observation.serverUrl, {
+      ...(challenge.resourceMetadataUrl
+        ? { resourceMetadataUrl: challenge.resourceMetadataUrl }
+        : {}),
+      fetchFn: discoveryFetch,
+    });
+  } catch {
+    if (discoveryTimedOut) throw new McpHttpAuthorizationError("timeout");
+    if (discoveryNetworkFailed) throw new McpHttpAuthorizationError("network");
+    observation.authorization = "invalid-metadata";
+    throw new McpHttpAuthorizationError("invalid-metadata");
+  }
+
+  if (discoveryTimedOut) throw new McpHttpAuthorizationError("timeout");
+  if (discoveryNetworkFailed) throw new McpHttpAuthorizationError("network");
+  if (!discovered.resourceMetadata) {
+    observation.authorization = explicitlyAdvertised || protectedResourceAdvertised
+      ? "invalid-metadata"
+      : "not-advertised";
+    throw new McpHttpAuthorizationError(
+      explicitlyAdvertised || protectedResourceAdvertised || !protectedResourceMissing
+        ? "invalid-metadata"
+        : "not-advertised",
+    );
+  }
+  if (
+    !checkResourceAllowed({
+      requestedResource: resourceUrlFromServerUrl(observation.serverUrl),
+      configuredResource: discovered.resourceMetadata.resource,
+    }) ||
+    !discovered.resourceMetadata.authorization_servers?.length ||
+    !discovered.authorizationServerMetadata
+  ) {
+    observation.authorization = "invalid-metadata";
+    throw new McpHttpAuthorizationError("invalid-metadata");
+  }
+
+  const authorizationServerUrl = String(discovered.authorizationServerUrl);
+  const metadata = discovered.authorizationServerMetadata;
+  const endpointUrls = [
+    authorizationServerUrl,
+    metadata.issuer,
+    metadata.authorization_endpoint,
+    metadata.token_endpoint,
+    ...(metadata.registration_endpoint ? [metadata.registration_endpoint] : []),
+  ];
+  if (
+    metadata.issuer !== authorizationServerUrl ||
+    !isSafeIssuerIdentifier(authorizationServerUrl) ||
+    !isSafeIssuerIdentifier(metadata.issuer) ||
+    endpointUrls.some((value) => !isSafeOAuthUrl(value))
+  ) {
+    observation.authorization = "invalid-metadata";
+    throw new McpHttpAuthorizationError("invalid-metadata");
+  }
+
+  await oauthProvider?.saveDiscoveryState({
+    authorizationServerUrl,
+    ...(challenge.resourceMetadataUrl
+      ? { resourceMetadataUrl: challenge.resourceMetadataUrl.href }
+      : {}),
+    resourceMetadata: discovered.resourceMetadata,
+    authorizationServerMetadata: metadata,
+  });
+  observation.authorization = "validated";
+}
+
+async function normalizeInsufficientScopeChallenge(
+  response: Response,
+  oauthProvider: PersistentOAuthClientProvider | undefined,
+): Promise<Response> {
+  if (!oauthProvider || response.status !== 403) return response;
+  const header = response.headers.get("www-authenticate")?.trim() ?? "";
+  if (!bearerChallenge(header)) return response;
+  const challenge = extractWWWAuthenticateParams(response);
+  if (challenge.error !== "insufficient_scope" || !challenge.scope) return response;
+  const challengedScopes = scopeTokens(challenge.scope);
+  if (!challengedScopes) return response;
+  const requested = new Set(scopeTokens((await oauthProvider.tokens())?.scope) ?? []);
+  for (const scope of challengedScopes) requested.add(scope);
+  const union = [...requested].join(" ");
+  oauthProvider.requireInteractiveScopeUpgrade();
+  return union === challenge.scope
+    ? response
+    : responseWithHeader(response, "www-authenticate", replaceChallengeScope(header, union));
+}
+
 function classifyFailure(
   error: unknown,
   observation?: HttpObservation,
 ): FailureClassification {
+  if (error instanceof McpHttpAuthorizationError) {
+    return classificationForAuthorizationError(error);
+  }
   const status = errorStatus(error);
   if (error instanceof UnauthorizedError || status === 401) {
+    if (observation?.authorization !== "validated") {
+      return classificationForAuthorizationError(new McpHttpAuthorizationError("not-advertised"));
+    }
     return {
       status: "needs-auth",
       authentication: "required",
@@ -132,7 +405,12 @@ function classifyFailure(
       message: "MCP network request failed",
     };
   }
-  if (observation?.sawUnauthorized && observation.discoveryAttempted) {
+  if (observation?.authorization === "not-advertised") {
+    return classificationForAuthorizationError(new McpHttpAuthorizationError("not-advertised"));
+  }
+  if (observation?.authorization === "invalid-metadata" ||
+    (observation?.sawUnauthorized && observation.discoveryAttempted &&
+      observation.authorization !== "validated")) {
     return {
       status: "failed",
       authentication: "unknown",
@@ -175,10 +453,11 @@ function cloneEntry(entry: MutableEntry): McpRegistryEntry {
 }
 
 function makeTransport(
-  config: StdioMcpServerConfig | HttpMcpServerConfig,
+  config: StdioMcpServerConfig | HttpMcpServerConfig | SseMcpServerConfig,
   oauthProvider?: PersistentOAuthClientProvider,
   httpFetch?: FetchLike,
   observation?: HttpObservation,
+  requestTimeoutMs: number = DEFAULT_REQUEST_TIMEOUT_MS,
 ): Transport {
   if (config.type === "stdio") {
     return new StdioClientTransport({
@@ -189,28 +468,78 @@ function makeTransport(
       stderr: "pipe",
     });
   }
+  const baseFetch = httpFetch ?? fetch;
   const fetchWithObservation: FetchLike = async (input, init) => {
     const requestUrl = input instanceof Request ? input.url : String(input);
+    let response: Response;
     try {
-      const response = await (httpFetch ?? fetch)(input, init);
-      if (observation) {
-        const isServerEndpoint = new URL(requestUrl).href === observation.serverUrl;
-        if (isServerEndpoint && response.status === 401) observation.sawUnauthorized = true;
-        if (!isServerEndpoint && observation.sawUnauthorized) {
-          observation.discoveryAttempted = true;
-        }
-      }
-      return response;
+      response = await baseFetch(input, init);
     } catch (error) {
       if (observation) observation.networkFailed = true;
       throw error;
     }
+    if (!observation) return normalizeInsufficientScopeChallenge(response, oauthProvider);
+
+    const requestUrlValue = new URL(requestUrl);
+    const configuredUrl = new URL(observation.serverUrl);
+    const method = init?.method?.toUpperCase() ?? "GET";
+    const isServerEndpoint = requestUrlValue.href === configuredUrl.href ||
+      (config.type === "sse" && method === "POST" && requestUrlValue.origin === configuredUrl.origin);
+    if (!isServerEndpoint && observation.sawUnauthorized) {
+      observation.discoveryAttempted = true;
+    }
+    if (isServerEndpoint && response.status === 401) {
+      observation.sawUnauthorized = true;
+      try {
+        await validateBearerAuthorization(
+          response,
+          observation,
+          baseFetch,
+          requestTimeoutMs,
+          oauthProvider,
+        );
+      } catch (error) {
+        await response.body?.cancel().catch(() => undefined);
+        throw error;
+      }
+    }
+    if (isServerEndpoint && response.status === 403 && oauthProvider) {
+      const challenge = extractWWWAuthenticateParams(response);
+      if (bearerChallenge(response.headers.get("www-authenticate")) &&
+        challenge.error === "insufficient_scope") {
+        try {
+          await validateBearerAuthorization(
+            response,
+            observation,
+            baseFetch,
+            requestTimeoutMs,
+            oauthProvider,
+          );
+        } catch (error) {
+          await response.body?.cancel().catch(() => undefined);
+          throw error;
+        }
+      }
+    }
+    const normalized = await normalizeInsufficientScopeChallenge(response, oauthProvider);
+    const challenge = response.status === 403
+      ? extractWWWAuthenticateParams(response)
+      : undefined;
+    const sseScopeUpgrade = config.type === "sse" && oauthProvider &&
+      bearerChallenge(response.headers.get("www-authenticate")) &&
+      challenge?.error === "insufficient_scope" && Boolean(scopeTokens(challenge.scope));
+    return sseScopeUpgrade
+      ? responseWithStatus(normalized, 401)
+      : normalized;
   };
-  return new StreamableHTTPClientTransport(new URL(config.url), {
+  const options = {
     requestInit: { headers: config.headers },
     ...(oauthProvider ? { authProvider: oauthProvider } : {}),
     fetch: fetchWithObservation,
-  });
+  };
+  return config.type === "sse"
+    ? new SSEClientTransport(new URL(config.url), options)
+    : new StreamableHTTPClientTransport(new URL(config.url), options);
 }
 
 export class McpAuthorizationRequiredError extends Error {
@@ -277,13 +606,14 @@ export class McpRegistry {
     delete entry.oauth;
     delete entry.httpObservation;
 
-    if (entry.config.type === "http") {
+    if (entry.config.type === "http" || entry.config.type === "sse") {
       entry.oauthProvider ??= this.oauthProviderFactory?.(entry.name, entry.config);
       entry.httpObservation = {
         serverUrl: entry.config.url,
         sawUnauthorized: false,
         discoveryAttempted: false,
         networkFailed: false,
+        authorization: "none",
       };
     }
     if (entry.config.type === "unsupported") {
@@ -303,6 +633,7 @@ export class McpRegistry {
       entry.oauthProvider,
       this.httpFetch,
       entry.httpObservation,
+      this.requestTimeoutMs,
     );
     entry.connection = { client, transport };
     try {
@@ -331,7 +662,7 @@ export class McpRegistry {
     callback: { code: string; state: string },
   ): Promise<McpRegistryEntry> {
     const entry = this.requireEntry(serverName);
-    if (entry.config.type !== "http" || !entry.oauthProvider) {
+    if ((entry.config.type !== "http" && entry.config.type !== "sse") || !entry.oauthProvider) {
       throw new Error(`MCP server ${serverName} has no configured OAuth provider`);
     }
     const result = await new HeadlessMcpOAuthFlow({
@@ -356,7 +687,7 @@ export class McpRegistry {
       throw new Error(`MCP server ${serverName} has no configured OAuth provider`);
     }
     await new HeadlessMcpOAuthFlow({
-      serverUrl: (entry.config as HttpMcpServerConfig).url,
+      serverUrl: (entry.config as RemoteMcpServerConfig).url,
       provider: entry.oauthProvider,
     }).logout();
     if (!entry.enabled) {
@@ -509,7 +840,8 @@ export class McpRegistry {
 
   private async transitionAuthFailure(entry: MutableEntry, error: unknown): Promise<void> {
     const failure = classifyFailure(error, entry.httpObservation);
-    if (failure.failureCode !== "mcp_auth_required" && failure.failureCode !== "mcp_forbidden") {
+    if (!["mcp_auth_required", "mcp_auth_not_advertised", "mcp_auth_metadata_invalid", "mcp_forbidden"]
+      .includes(failure.failureCode)) {
       return;
     }
     entry.status = failure.status;

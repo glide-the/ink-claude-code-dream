@@ -2,7 +2,7 @@
 // [Input] Provider-free OAuth HTTP fixture and isolated canonical CLAUDE_CONFIG_DIR roots.
 // [Output] Evidence for all Dream MCP management argv, persistence, process reuse, safety, and timeout.
 // [Pos] Process/API contract test for the clean-room Dream Resources management CLI.
-// [Sync] 2026-08-25: cover config-free help, anonymous-first status, safe failure codes, and logout reclassification.
+// [Sync] 2026-08-25: cover verified challenges, metadata safety, cancellation, EOF, and scope selection.
 
 import assert from "node:assert/strict";
 import { once } from "node:events";
@@ -87,9 +87,18 @@ async function startOAuthFixture(options = {}) {
       !options.anonymous &&
       request.headers.authorization !== "Bearer fixture-access-token"
     ) {
+      const challenge = options.challenge === "missing"
+        ? undefined
+        : options.challenge === "basic"
+        ? 'Basic realm="fixture"'
+        : options.challenge === "bearer-no-metadata"
+        ? 'Bearer realm="fixture"'
+        : options.challenge === "invalid-resource-url"
+        ? 'Bearer resource_metadata="http://not loopback.invalid/metadata"'
+        : `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource/mcp"`;
       response.writeHead(401, {
         "content-type": "application/json",
-        "www-authenticate": `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource/mcp"`,
+        ...(challenge ? { "www-authenticate": challenge } : {}),
       });
       response.end('{"error":"authorization_required"}');
       return;
@@ -130,10 +139,15 @@ async function startOAuthFixture(options = {}) {
         response.writeHead(404).end();
         return;
       }
+      if (options.metadataStatus) {
+        response.writeHead(options.metadataStatus).end();
+        return;
+      }
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({
         resource: options.invalidMetadata ? `${origin}/other` : `${origin}/mcp`,
         authorization_servers: [origin],
+        scopes_supported: ["mcp:tools"],
       }));
       return;
     }
@@ -144,8 +158,10 @@ async function startOAuthFixture(options = {}) {
       }
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({
-        issuer: origin,
-        authorization_endpoint: `${origin}/authorize`,
+        issuer: options.invalidIssuer ? `${origin}/different-issuer` : origin,
+        authorization_endpoint: options.unsafeEndpoint
+          ? "http://oauth.example.invalid/authorize"
+          : `${origin}/authorize`,
         token_endpoint: `${origin}/token`,
         registration_endpoint: `${origin}/register`,
         response_types_supported: ["code"],
@@ -274,7 +290,10 @@ test("headless OAuth persists a Dream projection, is reused by get, and logout r
       readRedirectUrl: async () => {
         const authorization = output.join("").match(/Open (https?:\/\/\S+)/)?.[1];
         assert(authorization);
-        const state = new URL(authorization).searchParams.get("state");
+        const authorizationUrl = new URL(authorization);
+        assert.equal(authorizationUrl.searchParams.get("scope"), "mcp:tools");
+        assert.equal(authorizationUrl.searchParams.has("prompt"), false);
+        const state = authorizationUrl.searchParams.get("state");
         return `http://127.0.0.1:54545/callback?code=fixture-code&state=${encodeURIComponent(state)}`;
       },
       authTimeoutMs: 2_000,
@@ -394,7 +413,7 @@ test("management output maps metadata, server, and network failures to the Dream
       await runMcpManagementCli(["mcp", "login", "invalid", "--no-browser"], invalidLogin.options),
       1,
     );
-    assert.match(invalidLogin.stderr.join(""), /Authentication: required/);
+    assert.match(invalidLogin.stderr.join(""), /Authentication: unknown/);
     assert.match(invalidLogin.stderr.join(""), /Failure-Code: metadata_invalid/);
     assert.equal(invalidLogin.stdout.join("").includes("Open "), false);
 
@@ -420,6 +439,113 @@ test("management output maps metadata, server, and network failures to the Dream
   } finally {
     await Promise.all([invalid, forbidden, missing].map((fixture) => fixture.close()));
     if (!offlineClosed) await offline.close();
+    await removeFixtureDirectory(directory);
+  }
+});
+
+test("management CLI separates absent challenges from invalid or unsafe OAuth metadata", async () => {
+  const directory = await canonicalTemp();
+  const configDir = path.join(directory, "config");
+  const fixtures = {
+    missing: await startOAuthFixture({ challenge: "missing" }),
+    basic: await startOAuthFixture({ challenge: "basic" }),
+    unadvertised: await startOAuthFixture({
+      challenge: "bearer-no-metadata",
+      advertiseOAuth: false,
+    }),
+    metadata404: await startOAuthFixture({ metadataStatus: 404 }),
+    invalidUrl: await startOAuthFixture({ challenge: "invalid-resource-url" }),
+    issuer: await startOAuthFixture({ invalidIssuer: true }),
+    unsafe: await startOAuthFixture({ unsafeEndpoint: true }),
+  };
+  try {
+    for (const [name, fixture] of Object.entries(fixtures)) {
+      const added = captureOptions(configDir);
+      assert.equal(await runMcpManagementCli([
+        "mcp", "add", "--transport", "http", "--scope", "user", name, fixture.serverUrl,
+      ], added.options), 0);
+    }
+
+    for (const name of ["missing", "basic", "unadvertised"]) {
+      const attempted = captureOptions(configDir, {
+        readRedirectUrl: async () => assert.fail("unadvertised auth must not request callback input"),
+        authTimeoutMs: 1_000,
+      });
+      assert.equal(await runMcpManagementCli(
+        ["mcp", "login", name, "--no-browser"],
+        attempted.options,
+      ), 1);
+      assert.match(attempted.stderr.join(""), /Failure-Code: auth_not_advertised/);
+      assert.match(attempted.stderr.join(""), /Authentication: unknown/);
+      assert.equal(attempted.stdout.join("").includes("Open "), false);
+    }
+
+    for (const name of ["metadata404", "invalidUrl", "issuer", "unsafe"]) {
+      const attempted = captureOptions(configDir, {
+        readRedirectUrl: async () => assert.fail("invalid metadata must not request callback input"),
+        authTimeoutMs: 1_000,
+      });
+      assert.equal(await runMcpManagementCli(
+        ["mcp", "login", name, "--no-browser"],
+        attempted.options,
+      ), 1);
+      assert.match(attempted.stderr.join(""), /Failure-Code: metadata_invalid/);
+      assert.match(attempted.stderr.join(""), /Authentication: unknown/);
+      assert.doesNotMatch(
+        attempted.stderr.join(""),
+        /oauth\.example|different-issuer|resource_metadata|127\.0\.0\.1/iu,
+      );
+    }
+    await assert.rejects(readFile(path.join(configDir, ".credentials.json"), "utf8"), {
+      code: "ENOENT",
+    });
+  } finally {
+    await Promise.all(Object.values(fixtures).map((fixture) => fixture.close()));
+    await removeFixtureDirectory(directory);
+  }
+});
+
+test("management CLI reports callback cancellation and EOF without retaining pending state", async () => {
+  const directory = await canonicalTemp();
+  const fixture = await startOAuthFixture();
+  try {
+    for (const scenario of ["cancelled", "process_exited"]) {
+      const configDir = path.join(directory, scenario);
+      const name = `callback:${scenario}`;
+      const added = captureOptions(configDir);
+      assert.equal(await runMcpManagementCli([
+        "mcp", "add", "--transport", "http", "--scope", "user", name, fixture.serverUrl,
+      ], added.options), 0);
+      const attempted = captureOptions(configDir, {
+        readRedirectUrl: async () => {
+          if (scenario === "process_exited") return "";
+          const error = new Error("fixture callback cancelled");
+          error.name = "AbortError";
+          throw error;
+        },
+        authTimeoutMs: 1_000,
+      });
+      assert.equal(await runMcpManagementCli(
+        ["mcp", "login", name, "--no-browser"],
+        attempted.options,
+      ), 1);
+      assert.match(attempted.stderr.join(""), new RegExp(`Failure-Code: ${scenario}`));
+      assert.doesNotMatch(
+        attempted.stderr.join(""),
+        /fixture|callback\?|resource_metadata|access_token|refresh_token/iu,
+      );
+      await assert.rejects(readFile(path.join(configDir, ".credentials.json"), "utf8"), {
+        code: "ENOENT",
+      });
+      const oauthDirectory = path.join(configDir, "mcp-oauth");
+      const pendingFiles = await readdir(oauthDirectory).catch((error) => {
+        if (error.code === "ENOENT") return [];
+        throw error;
+      });
+      assert.deepEqual(pendingFiles, []);
+    }
+  } finally {
+    await fixture.close();
     await removeFixtureDirectory(directory);
   }
 });

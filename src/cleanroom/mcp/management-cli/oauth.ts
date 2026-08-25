@@ -1,7 +1,7 @@
 // [Input] One configured HTTP server, Dream's projected mcpOAuth value, and the public MCP OAuth provider.
 // [Output] Hydrated headless OAuth flow with rotation-safe Dream credential projection synchronization.
 // [Pos] Compatibility bridge between clean-room OAuth persistence and Dream thread projection.
-// [Sync] 2026-08-25: cancel pending login state without deleting previously working tokens.
+// [Sync] 2026-08-25: defer initial scope selection to challenge and protected-resource metadata.
 
 import type { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
 import {
@@ -61,7 +61,6 @@ export async function createUserOAuthContext(
     configDir: options.store.configDir,
     serverUrl: options.serverUrl,
     redirectUrl: options.redirectUrl,
-    scope: "mcp:tools offline_access",
     onTokensChanged: async (state) => {
       if (!state.tokens?.access_token) {
         await options.store.deleteOAuth(options.serverName);

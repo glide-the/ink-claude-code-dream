@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// [Input] Local provider-free OAuth/DCR fixture and clean-room persistent OAuth modules.
+// [Input] Local HTTP/SSE OAuth fixtures and clean-room persistent OAuth modules.
 // [Output] Evidence for PKCE, callbacks, refresh, permissions, logout, probes, and safe errors.
 // [Pos] Provider-free clean-room MCP OAuth contract test; it never opens a browser or uses a real token.
-// [Sync] 2026-08-25: preserve OAuth lifecycle while proving marker-free projected-token reuse.
+// [Sync] 2026-08-25: prove projected SSE restart, refresh, scope union, and safe POST failures.
 
 import assert from "node:assert/strict";
 import { once } from "node:events";
@@ -11,6 +11,9 @@ import http from "node:http";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { z } from "zod";
 import {
   HeadlessMcpOAuthFlow,
   PersistentOAuthClientProvider,
@@ -40,7 +43,7 @@ function readRequestBody(request) {
 async function startOAuthFixture(options = {}) {
   const events = [];
   let origin;
-  let validAccessToken = "fixture-access-secret";
+  let validAccessToken = options.initialAccessToken ?? "fixture-access-secret";
   let validRefreshToken = "fixture-refresh-secret";
   let refreshCount = 0;
   let rejectRefresh = false;
@@ -88,6 +91,14 @@ async function startOAuthFixture(options = {}) {
           }],
         };
       } else if (message.method === "tools/call") {
+        if (options.insufficientScopeOnCall && validAccessToken !== "fixture-upscoped-secret") {
+          response.writeHead(403, {
+            "content-type": "application/json",
+            "www-authenticate": `Bearer error="insufficient_scope", scope="mcp:write", resource_metadata="${origin}/.well-known/oauth-protected-resource/mcp"`,
+          });
+          response.end('{"error":"insufficient_scope"}');
+          return;
+        }
         result = { content: [{ type: "text", text: `oauth:${message.params.arguments.message}` }] };
       } else {
         result = {};
@@ -141,14 +152,17 @@ async function startOAuthFixture(options = {}) {
       if (body.get("grant_type") === "authorization_code") {
         assert.equal(body.get("code"), "fixture-code");
         assert.match(body.get("code_verifier"), /^[A-Za-z0-9._~-]{43,128}$/);
-        validAccessToken = "fixture-access-secret";
+        validAccessToken = options.insufficientScopeOnCall
+          ? "fixture-upscoped-secret"
+          : "fixture-access-secret";
         validRefreshToken = "fixture-refresh-secret";
         response.writeHead(200, { "content-type": "application/json" });
         response.end(JSON.stringify({
-          access_token: "fixture-access-secret",
-          refresh_token: "fixture-refresh-secret",
+          access_token: validAccessToken,
+          ...(options.insufficientScopeOnCall ? {} : { refresh_token: "fixture-refresh-secret" }),
           token_type: "Bearer",
           expires_in: 60,
+          ...(options.insufficientScopeOnCall ? { scope: "mcp:read mcp:write" } : {}),
         }));
         return;
       }
@@ -195,6 +209,192 @@ async function startOAuthFixture(options = {}) {
       rejectRefresh = true;
     },
     close: async () => {
+      server.close();
+      await once(server, "close");
+    },
+  };
+}
+
+async function startSseOAuthFixture(options = {}) {
+  const events = [];
+  const sessions = new Map();
+  let origin;
+  let validAccessToken = options.initialAccessToken ?? "sse-access-secret";
+  let validRefreshToken = "sse-refresh-secret";
+  let refreshCount = 0;
+  let postFailure;
+
+  function authorizationKind(header) {
+    if (!header) return "none";
+    if (header === `Bearer ${validAccessToken}`) return "valid";
+    return "other";
+  }
+
+  function bearerHeader({ error = "invalid_token", scope } = {}) {
+    return `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource/sse", ` +
+      `error="${error}"${scope ? `, scope="${scope}"` : ""}`;
+  }
+
+  function writeUnauthorized(response, header = bearerHeader()) {
+    response.writeHead(401, {
+      "content-type": "application/json",
+      "www-authenticate": header,
+    });
+    response.end('{"error":"authorization_required"}');
+  }
+
+  const server = http.createServer(async (request, response) => {
+    const url = new URL(request.url ?? "/", origin);
+    const event = {
+      method: request.method,
+      path: url.pathname,
+      authorization: authorizationKind(request.headers.authorization),
+    };
+    events.push(event);
+
+    if (request.method === "GET" && url.pathname === "/sse") {
+      if (!options.allowAnonymous && request.headers.authorization !== `Bearer ${validAccessToken}`) {
+        writeUnauthorized(response);
+        return;
+      }
+      const transport = new SSEServerTransport("/messages", response);
+      const mcp = new McpServer({ name: "sse-oauth-fixture", version: "1.0.0" });
+      mcp.registerTool(
+        "echo",
+        {
+          description: "SSE OAuth echo",
+          inputSchema: { message: z.string() },
+        },
+        async ({ message }) => ({
+          content: [{ type: "text", text: `sse-oauth:${message}` }],
+        }),
+      );
+      sessions.set(transport.sessionId, { mcp, transport });
+      await mcp.connect(transport);
+      return;
+    }
+
+    if (request.method === "POST" && url.pathname === "/messages") {
+      const message = JSON.parse(await readRequestBody(request));
+      event.rpcMethod = message.method;
+      if (message.method === "tools/call" && postFailure) {
+        const failure = postFailure;
+        postFailure = undefined;
+        const headers = { "content-type": "application/json" };
+        if (failure.challenge === "bearer") {
+          headers["www-authenticate"] = bearerHeader({
+            error: failure.status === 403 ? "insufficient_scope" : "invalid_token",
+            ...(failure.status === 403 ? { scope: failure.scope ?? "mcp:write" } : {}),
+          });
+        } else if (failure.challenge === "basic") {
+          headers["www-authenticate"] = 'Basic realm="fixture"';
+        }
+        response.writeHead(failure.status, headers);
+        response.end('{"error":"post_rejected"}');
+        return;
+      }
+      if (!options.allowAnonymous && request.headers.authorization !== `Bearer ${validAccessToken}`) {
+        writeUnauthorized(response);
+        return;
+      }
+      const session = sessions.get(url.searchParams.get("sessionId"));
+      if (!session) {
+        response.writeHead(404).end("unknown SSE session");
+        return;
+      }
+      await session.transport.handlePostMessage(request, response, message);
+      return;
+    }
+
+    if (
+      request.method === "GET" &&
+      (url.pathname === "/.well-known/oauth-protected-resource/sse" ||
+        url.pathname === "/.well-known/oauth-protected-resource")
+    ) {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({
+        resource: `${origin}/sse`,
+        authorization_servers: [origin],
+        scopes_supported: ["mcp:read", "mcp:write"],
+      }));
+      return;
+    }
+    if (request.method === "GET" && url.pathname === "/.well-known/oauth-authorization-server") {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({
+        issuer: origin,
+        authorization_endpoint: `${origin}/authorize`,
+        token_endpoint: `${origin}/token`,
+        registration_endpoint: `${origin}/register`,
+        response_types_supported: ["code"],
+        grant_types_supported: ["authorization_code", "refresh_token"],
+        token_endpoint_auth_methods_supported: ["none"],
+        code_challenge_methods_supported: ["S256"],
+      }));
+      return;
+    }
+    if (request.method === "POST" && url.pathname === "/register") {
+      const metadata = JSON.parse(await readRequestBody(request));
+      response.writeHead(201, { "content-type": "application/json" });
+      response.end(JSON.stringify({ ...metadata, client_id: "sse-fixture-client" }));
+      return;
+    }
+    if (request.method === "POST" && url.pathname === "/token") {
+      const body = new URLSearchParams(await readRequestBody(request));
+      event.grantType = body.get("grant_type");
+      if (body.get("grant_type") === "refresh_token") {
+        assert.equal(body.get("refresh_token"), validRefreshToken);
+        refreshCount += 1;
+        validAccessToken = `sse-refreshed-secret-${refreshCount}`;
+        validRefreshToken = `sse-rotated-refresh-secret-${refreshCount}`;
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(JSON.stringify({
+          access_token: validAccessToken,
+          refresh_token: validRefreshToken,
+          token_type: "Bearer",
+          expires_in: 60,
+        }));
+        return;
+      }
+      if (body.get("grant_type") === "authorization_code") {
+        assert.equal(body.get("code"), "sse-fixture-code");
+        assert.match(body.get("code_verifier"), /^[A-Za-z0-9._~-]{43,128}$/);
+        validAccessToken = "sse-upscoped-secret";
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(JSON.stringify({
+          access_token: validAccessToken,
+          token_type: "Bearer",
+          expires_in: 60,
+          scope: "mcp:read mcp:write",
+        }));
+        return;
+      }
+      response.writeHead(400, { "content-type": "application/json" });
+      response.end('{"error":"unsupported_grant_type"}');
+      return;
+    }
+    response.writeHead(404, { "content-type": "application/json" });
+    response.end('{"error":"not_found"}');
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  assert(address && typeof address === "object");
+  origin = `http://127.0.0.1:${address.port}`;
+
+  return {
+    events,
+    serverUrl: `${origin}/sse`,
+    expireAccess() {
+      validAccessToken = "sse-no-longer-valid";
+    },
+    rejectNextTool(status, challenge = "none", scope) {
+      postFailure = { status, challenge, scope };
+    },
+    close: async () => {
+      await Promise.all(
+        [...sessions.values()].map(({ mcp }) => mcp.close().catch(() => undefined)),
+      );
       server.close();
       await once(server, "close");
     },
@@ -329,9 +529,12 @@ test("cancelling a new login clears pending state but preserves a working projec
       token_type: "Bearer",
     });
     await context.provider.saveCodeVerifier("fixture-pending-verifier");
+    context.provider.requireInteractiveScopeUpgrade();
     await context.cancel();
     const privateState = await context.provider.store.read();
     assert.equal(privateState.tokens.access_token, "fixture-working-secret");
+    assert.equal(privateState.tokens.refresh_token, "fixture-refresh-secret");
+    assert.equal((await context.provider.tokens()).refresh_token, "fixture-refresh-secret");
     assert.equal(privateState.codeVerifier, undefined);
     const projected = await store.readOAuth("cancel:fixture");
     assert.equal(projected.state.tokens.access_token, "fixture-working-secret");
@@ -417,6 +620,85 @@ test("registry exposes authorization URL, finishes callback, reconnects, and log
     const reconnected = await registry.reconnect("cloud:fixture");
     assert.equal(reconnected.status, "needs-auth");
     assert.equal(new URL(reconnected.oauth.authorizationUrl).pathname, "/authorize");
+  } finally {
+    await registry.close();
+    await fixture.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("registry delegates one insufficient-scope step-up to the SDK with prior-scope union", async () => {
+  const directory = await mkdtemp(path.join(repositoryRoot, "tests", ".cleanroom-oauth-"));
+  const configDir = path.join(directory, "config");
+  const fixture = await startOAuthFixture({
+    initialAccessToken: "fixture-read-secret",
+    insufficientScopeOnCall: true,
+  });
+  const provider = new PersistentOAuthClientProvider({
+    configDir,
+    serverUrl: fixture.serverUrl,
+    redirectUrl: "http://127.0.0.1/oauth/callback",
+  });
+  await provider.saveTokens({
+    access_token: "fixture-read-secret",
+    refresh_token: "fixture-refresh-secret",
+    token_type: "Bearer",
+    scope: "mcp:read",
+  });
+  const registry = new McpRegistry(new Map([["scope:fixture", {
+    type: "http",
+    url: fixture.serverUrl,
+    headers: {},
+    enabled: true,
+    requiresOAuth: true,
+  }]]), {
+    oauthProviderFactory: () => provider,
+  });
+  try {
+    const connected = await registry.connect("scope:fixture");
+    assert.equal(connected.status, "connected", connected.error);
+    assert.equal(connected.authentication, "authenticated");
+
+    await assert.rejects(
+      registry.callTool("scope:fixture", "echo", { message: "step-up" }),
+      { code: "mcp_auth_required" },
+    );
+    const [pending] = registry.status("scope:fixture");
+    assert.equal(pending.status, "needs-auth");
+    assert.equal(pending.authentication, "required");
+    const authorizationUrl = new URL(pending.oauth.authorizationUrl);
+    assert.equal(authorizationUrl.searchParams.get("scope"), "mcp:read mcp:write");
+    assert.equal(
+      (await provider.store.read()).tokens.refresh_token,
+      "fixture-refresh-secret",
+      "interactive upscope must not delete the working refresh token",
+    );
+    assert.deepEqual(
+      fixture.events.filter(({ path: requestPath }) => requestPath === "/token"),
+      [],
+      "SDK must not issue a scope-less refresh before interactive upscope",
+    );
+    assert.equal(
+      fixture.events.filter(({ rpcMethod }) => rpcMethod === "tools/call").length,
+      1,
+    );
+
+    const upgraded = await registry.finishAuth("scope:fixture", {
+      code: "fixture-code",
+      state: pending.oauth.state,
+    });
+    assert.equal(upgraded.status, "connected", upgraded.error);
+    assert.equal((await provider.tokens()).scope, "mcp:read mcp:write");
+    assert.deepEqual(
+      fixture.events
+        .filter(({ path: requestPath }) => requestPath === "/token")
+        .map(({ grantType }) => grantType),
+      ["authorization_code"],
+    );
+    assert.equal(
+      (await registry.callTool("scope:fixture", "echo", { message: "upgraded" })).content[0].text,
+      "oauth:upgraded",
+    );
   } finally {
     await registry.close();
     await fixture.close();
@@ -548,6 +830,228 @@ test("registry refreshes an expired projected access token before MCP discovery"
       assert.equal(reprojected.state.tokens.refresh_token, "fixture-rotated-refresh-secret-2");
     } finally {
       await restarted.close();
+    }
+  } finally {
+    await fixture.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("SSE registry hydrates, refreshes, reprojects, and resumes projected OAuth", async () => {
+  const directory = await mkdtemp(path.join(repositoryRoot, "tests", ".cleanroom-oauth-"));
+  const configDir = path.join(directory, "config");
+  const fixture = await startSseOAuthFixture();
+  const serverName = "sse:projected";
+  try {
+    const store = await UserMcpStateStore.open(configDir);
+    await store.writeOAuth(serverName, {
+      schema: "ink-cleanroom-mcp-oauth/v1",
+      serverUrl: fixture.serverUrl,
+      state: {
+        clientInformation: {
+          client_id: "sse-fixture-client",
+          redirect_uris: ["http://127.0.0.1/oauth/callback"],
+          token_endpoint_auth_method: "none",
+          grant_types: ["authorization_code", "refresh_token"],
+          response_types: ["code"],
+          client_name: "Ink Runtime SSE fixture",
+        },
+        tokens: {
+          access_token: "sse-expired-secret",
+          refresh_token: "sse-refresh-secret",
+          token_type: "Bearer",
+        },
+      },
+    });
+    const argv = [
+      "--mcp-config",
+      JSON.stringify({
+        mcpServers: {
+          [serverName]: { type: "sse", url: fixture.serverUrl },
+        },
+      }),
+    ];
+
+    const registry = await createMcpRegistryFromArgv(argv, {
+      projectedOAuthIdentity: {
+        configDir,
+        redirectUrl: "http://127.0.0.1/oauth/callback",
+      },
+    });
+    try {
+      const [connected] = await registry.connectAll();
+      assert.equal(connected.type, "sse");
+      assert.equal(connected.status, "connected", connected.error);
+      assert.equal(connected.authentication, "authenticated");
+      assert.equal(connected.tools[0].name, "echo");
+      assert.equal(
+        (await registry.callTool(serverName, "echo", { message: "projected" })).content[0].text,
+        "sse-oauth:projected",
+      );
+      assert.deepEqual(
+        fixture.events.filter(({ path: requestPath }) => requestPath === "/token")
+          .map(({ grantType }) => grantType),
+        ["refresh_token"],
+      );
+      const projected = await store.readOAuth(serverName);
+      assert.equal(projected.state.tokens.access_token, "sse-refreshed-secret-1");
+      assert.equal(projected.state.tokens.refresh_token, "sse-rotated-refresh-secret-1");
+    } finally {
+      await registry.close();
+    }
+
+    fixture.expireAccess();
+    const restarted = await createMcpRegistryFromArgv(argv, {
+      projectedOAuthIdentity: {
+        configDir,
+        redirectUrl: "http://127.0.0.1/oauth/callback",
+      },
+    });
+    try {
+      const [connected] = await restarted.connectAll();
+      assert.equal(connected.status, "connected", connected.error);
+      assert.deepEqual(
+        fixture.events.filter(({ path: requestPath }) => requestPath === "/token")
+          .map(({ grantType }) => grantType),
+        ["refresh_token", "refresh_token"],
+      );
+      const projected = await store.readOAuth(serverName);
+      assert.equal(projected.state.tokens.access_token, "sse-refreshed-secret-2");
+      assert.equal(projected.state.tokens.refresh_token, "sse-rotated-refresh-secret-2");
+    } finally {
+      await restarted.close();
+    }
+  } finally {
+    await fixture.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("SSE subsequent POST 401 and 403 failures keep safe auth classifications", async (t) => {
+  const scenarios = [
+    {
+      name: "validated Bearer 401",
+      status: 401,
+      challenge: "bearer",
+      expectedStatus: "needs-auth",
+      expectedAuthentication: "required",
+      expectedFailureCode: "mcp_auth_required",
+    },
+    {
+      name: "non-Bearer 401",
+      status: 401,
+      challenge: "basic",
+      expectedStatus: "failed",
+      expectedAuthentication: "unknown",
+      expectedFailureCode: "mcp_auth_not_advertised",
+    },
+    {
+      name: "plain 403",
+      status: 403,
+      challenge: "none",
+      expectedStatus: "failed",
+      expectedAuthentication: "unknown",
+      expectedFailureCode: "mcp_forbidden",
+    },
+  ];
+  for (const scenario of scenarios) {
+    await t.test(scenario.name, async () => {
+      const fixture = await startSseOAuthFixture({ allowAnonymous: true });
+      const registry = await createMcpRegistryFromArgv([
+        "--mcp-config",
+        JSON.stringify({
+          mcpServers: {
+            "sse:post-failure": { type: "sse", url: fixture.serverUrl },
+          },
+        }),
+      ]);
+      try {
+        const [connected] = await registry.connectAll();
+        assert.equal(connected.status, "connected", connected.error);
+        fixture.rejectNextTool(scenario.status, scenario.challenge);
+        await assert.rejects(
+          registry.callTool("sse:post-failure", "echo", { message: "rejected" }),
+        );
+        const [failed] = registry.status("sse:post-failure");
+        assert.equal(failed.status, scenario.expectedStatus);
+        assert.equal(failed.authentication, scenario.expectedAuthentication);
+        assert.equal(failed.failureCode, scenario.expectedFailureCode);
+        assert.equal(JSON.stringify(failed).includes(fixture.serverUrl), false);
+      } finally {
+        await registry.close();
+        await fixture.close();
+      }
+    });
+  }
+});
+
+test("SSE insufficient-scope POST delegates one prior-scope union to SDK OAuth", async () => {
+  const directory = await mkdtemp(path.join(repositoryRoot, "tests", ".cleanroom-oauth-"));
+  const configDir = path.join(directory, "config");
+  const fixture = await startSseOAuthFixture({ initialAccessToken: "sse-read-secret" });
+  const serverName = "sse:scope";
+  try {
+    const store = await UserMcpStateStore.open(configDir);
+    await store.writeOAuth(serverName, {
+      schema: "ink-cleanroom-mcp-oauth/v1",
+      serverUrl: fixture.serverUrl,
+      state: {
+        clientInformation: { client_id: "sse-fixture-client" },
+        tokens: {
+          access_token: "sse-read-secret",
+          refresh_token: "sse-refresh-secret",
+          token_type: "Bearer",
+          scope: "mcp:read",
+        },
+      },
+    });
+    const registry = await createMcpRegistryFromArgv([
+      "--mcp-config",
+      JSON.stringify({ mcpServers: { [serverName]: { type: "sse", url: fixture.serverUrl } } }),
+    ], {
+      projectedOAuthIdentity: {
+        configDir,
+        redirectUrl: "http://127.0.0.1/oauth/callback",
+      },
+    });
+    try {
+      const [connected] = await registry.connectAll();
+      assert.equal(connected.status, "connected", connected.error);
+      fixture.rejectNextTool(403, "bearer", "mcp:write");
+      await assert.rejects(
+        registry.callTool(serverName, "echo", { message: "step-up" }),
+        { code: "mcp_auth_required" },
+      );
+      const [pending] = registry.status(serverName);
+      assert.equal(pending.status, "needs-auth");
+      assert.equal(pending.authentication, "required");
+      assert.equal(new URL(pending.oauth.authorizationUrl).searchParams.get("scope"), "mcp:read mcp:write");
+      assert.equal(
+        (await store.readOAuth(serverName)).state.tokens.refresh_token,
+        "sse-refresh-secret",
+      );
+      assert.deepEqual(
+        fixture.events.filter(({ path: requestPath }) => requestPath === "/token"),
+        [],
+      );
+
+      const upgraded = await registry.finishAuth(serverName, {
+        code: "sse-fixture-code",
+        state: pending.oauth.state,
+      });
+      assert.equal(upgraded.status, "connected", upgraded.error);
+      assert.equal(
+        (await registry.callTool(serverName, "echo", { message: "upgraded" })).content[0].text,
+        "sse-oauth:upgraded",
+      );
+      assert.equal((await store.readOAuth(serverName)).state.tokens.scope, "mcp:read mcp:write");
+      assert.deepEqual(
+        fixture.events.filter(({ path: requestPath }) => requestPath === "/token")
+          .map(({ grantType }) => grantType),
+        ["authorization_code"],
+      );
+    } finally {
+      await registry.close();
     }
   } finally {
     await fixture.close();
