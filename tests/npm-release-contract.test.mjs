@@ -1,8 +1,9 @@
 // [Input] Checked legacy/clean-room npm policies, root lifecycle guards, tarball verifiers, and publication workflows.
-// [Output] Prove scoped layouts, closed legacy gates, receipt-bound clean-room publication, OIDC, and zero-map tarballs.
+// [Output] Prove scoped layouts, closed legacy gates, receipt-bound clean-room publication, OIDC/token auth, and zero-map tarballs.
 // [Pos] Provider-free npm publication contract tests; they never publish, authenticate, or copy a vendor core.
 // [Sync] 2026-08-24: recognize the private MIT repository orchestrator without opening the legacy publish gate.
 // [Sync] 2026-08-24: require exact acceptance-receipt hashing in the clean-room qualification/publication path.
+// [Sync] 2026-08-26: require the scoped token fallback to suppress unsupported private-repository provenance.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -256,7 +257,7 @@ test("authorized fixture executes native stage, real Bun smoke, and exact five-p
   }
 });
 
-test("clean-room CI and Trusted Publishing keep restored inputs out and OIDC only in publish", async () => {
+test("clean-room CI keeps restored inputs out and confines OIDC or token auth to publish", async () => {
   const workflow = await readFile(path.join(repositoryRoot, ".github/workflows/publish-npm.yml"), "utf8");
   const qualification = await readFile(path.join(repositoryRoot, ".github/workflows/qualify-npm-runtime.yml"), "utf8");
   const ci = await readFile(path.join(repositoryRoot, ".github/workflows/ci.yml"), "utf8");
@@ -264,7 +265,10 @@ test("clean-room CI and Trusted Publishing keep restored inputs out and OIDC onl
   assert.equal((workflow.match(/id-token: write/g) ?? []).length, 1);
   assert.doesNotMatch(qualification, /id-token: write/);
   assert.doesNotMatch(ci, /id-token: write/);
-  assert.match(workflow, /npm publish[\s\S]*--provenance/);
+  assert.match(workflow, /secrets\.NPM_TOKEN/);
+  assert.match(workflow, /npm whoami/);
+  assert.match(workflow, /NPM_CONFIG_PROVENANCE:[^\n]*npm_access_token_configured[^\n]*'false'/);
+  assert.doesNotMatch(workflow, /npm publish[^\n]*--provenance/);
   assert.match(workflow, /verify-cleanroom-npm\.mjs/);
   assert.match(workflow, /businessAcceptance/);
   assert.match(workflow, /createHash/);
