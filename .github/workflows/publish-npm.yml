@@ -1,7 +1,7 @@
 # [Input] One successful same-SHA clean-room qualification run plus checked publication gates and an approved npm authentication mode.
 # [Output] Four platform packages followed by the selector package through npm OIDC, with an explicit Environment-secret token fallback.
 # [Pos] Main-only manual publisher; checked acceptance and same-SHA qualification are mandatory.
-# [Sync] 2026-08-26: suppress unsupported private-repository provenance only for the scoped NPM_TOKEN fallback.
+# [Sync] 2026-08-26: remove GitHub OIDC request carriers only in explicit scoped-token mode so npm can use its documented auth fallback.
 
 name: Publish clean-room npm Runtime
 
@@ -112,10 +112,14 @@ jobs:
           github-token: ${{ github.token }}
       - name: Re-verify and publish platforms before selector
         env:
+          NPM_ACCESS_TOKEN_MODE: ${{ inputs.npm_access_token_configured }}
           NODE_AUTH_TOKEN: ${{ inputs.npm_access_token_configured && secrets.NPM_TOKEN || '' }}
           NPM_CONFIG_PROVENANCE: ${{ inputs.npm_access_token_configured && 'false' || '' }}
         shell: bash
         run: |
+          if [[ "$NPM_ACCESS_TOKEN_MODE" = true ]]; then
+            unset ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_ID_TOKEN_REQUEST_TOKEN
+          fi
           shopt -s nullglob
           archives=(dist/npm-publish/*.tgz)
           test "${#archives[@]}" -eq 5
