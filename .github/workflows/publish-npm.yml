@@ -1,7 +1,7 @@
-# [Input] One successful same-SHA clean-room qualification run plus checked publication gates and npm bootstrap confirmation.
-# [Output] Four platform packages followed by the selector package through npm OIDC Trusted Publishing.
+# [Input] One successful same-SHA clean-room qualification run plus checked publication gates and an approved npm authentication mode.
+# [Output] Four platform packages followed by the selector package through npm OIDC, with an explicit Environment-secret token fallback.
 # [Pos] Main-only manual publisher; checked acceptance and same-SHA qualification are mandatory.
-# [Sync] 2026-08-24: bind formal publication to the exact checked Dream acceptance receipt.
+# [Sync] 2026-08-26: allow a scoped, short-lived NPM_TOKEN fallback without storing credentials in source or artifacts.
 
 name: Publish clean-room npm Runtime
 
@@ -14,6 +14,11 @@ on:
         type: string
       trusted_publishers_configured:
         description: Confirm all five names were bootstrapped with 2FA and Trusted Publishers are configured
+        required: true
+        default: false
+        type: boolean
+      npm_access_token_configured:
+        description: Confirm the npm Environment contains a scoped, short-lived NPM_TOKEN fallback
         required: true
         default: false
         type: boolean
@@ -37,7 +42,11 @@ jobs:
         shell: bash
         run: |
           test "$GITHUB_REF_NAME" = main
-          test '${{ inputs.trusted_publishers_configured }}' = true
+          if [[ '${{ inputs.trusted_publishers_configured }}' != true && \
+                '${{ inputs.npm_access_token_configured }}' != true ]]; then
+            echo '::error::configure Trusted Publisher or the npm Environment NPM_TOKEN fallback'
+            exit 1
+          fi
           node --input-type=module <<'EOF'
           import { createHash } from "node:crypto";
           import { appendFileSync, readFileSync } from "node:fs";
@@ -86,6 +95,14 @@ jobs:
         with:
           node-version: 24.13.0
           registry-url: https://registry.npmjs.org
+      - name: Verify the explicit npm access-token fallback
+        if: inputs.npm_access_token_configured
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          npm whoami --registry=https://registry.npmjs.org/
       - run: npm install --ignore-scripts --no-audit --no-fund
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
@@ -94,6 +111,8 @@ jobs:
           run-id: ${{ inputs.qualification_run_id }}
           github-token: ${{ github.token }}
       - name: Re-verify and publish platforms before selector
+        env:
+          NODE_AUTH_TOKEN: ${{ inputs.npm_access_token_configured && secrets.NPM_TOKEN || '' }}
         shell: bash
         run: |
           shopt -s nullglob
