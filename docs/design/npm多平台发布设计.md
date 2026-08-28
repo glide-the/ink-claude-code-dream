@@ -129,8 +129,17 @@ OAuth 凭据、callback 或 transcript。首次名称 bootstrap 必须从通过 
 
 ## npm registry 发布结果
 
-`0.1.2` 当前是已验证、待同 SHA qualification/publish workflow 的候选；不得在 registry
-可见性、integrity 与 fresh install 完成前写成已发布。
+`0.1.2` 已由 main commit `c3e4d4e2f74960c75b42b1cd48adedf90345a10b` 完成同 SHA
+qualification 和正式发布：qualification run `33149053281`、publish run `33151128000` 均为
+`success`。publish job 从 qualification artifact 下载并复验精确五包，按四个平台包优先、selector
+最后的顺序发布，没有重新构建制品。
+
+公共 registry 已匿名回下载五个 `0.1.2` 包；Dream 的 provider-free registry acceptance 在空目录
+安装 selector 与当前 darwin-arm64 平台包，两个 SDK wheel/sdist 环境均得到
+`2.1.241 (Claude Code)`，manifest 配对 SDK `0.2.144`，无 official SDK 分发包、无模型调用、无
+provider 或 registry token 环境透传。Trusted Publisher 尚未配置，显式 token fallback 使用只包含
+五个 Runtime 包读写权、无 organization 权限的 granular token；GitHub `npm` Environment 的
+`NPM_TOKEN` 与 npm token 按用户要求保留，当前到期日为 2026-11-26。
 
 2026-08-24 的首次发布结果：
 

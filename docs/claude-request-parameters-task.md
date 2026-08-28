@@ -1,7 +1,7 @@
 <!-- [Input] 用户关于 Messages max_tokens/output_config.effort 缺失的原始要求、只读历史任务 ID、CLI 仓库状态与验证回执。 -->
 <!-- [Output] 一个限定在 clean-room CLI 内的 Codex 实现任务记录。 -->
-<!-- [Pos] 本地任务台账；不授权发布、部署、推送或修改 Dream/Admin/Gateway。 -->
-<!-- [Sync] 2026-08-28: 建立请求参数恢复任务并绑定设计、分支、文件所有权和验收命令。 -->
+<!-- [Pos] CLI 请求参数修复、发布和 Dream 验收任务台账；不授权修改 Dream/Admin/Gateway 业务语义。 -->
+<!-- [Sync] 2026-08-28: 记录 main 合并、0.1.2 五包发布、公共 registry 回验和 Dream 真实链路验收。 -->
 
 # Claude Messages 请求参数恢复任务
 
@@ -13,7 +13,8 @@
 
 - 负责人：Codex Goal `01a046e3-1ccf-7d42-840d-19ef033a91f2`
 - CLI 仓库绝对路径：`/Users/dmeck/project/ink-claude-code-dream`
-- 当前分支：`codex/claude-request-fields`（从 `main` 创建）
+- 实现分支：`codex/claude-request-fields`；已通过 PR #13 合并到 `main`
+- main 合并提交：`c3e4d4e2f74960c75b42b1cd48adedf90345a10b`
 - 当前 CLI 包版本：`ink-claude-code-dream@0.1.2`
 - 兼容版本标识：Claude Code `2.1.241`
 - 构建入口：`src/cleanroom/cli.ts`，由 Bun `1.4.0` 生成 `dist/cleanroom/claude` 和四平台 npm 候选产物
@@ -36,7 +37,7 @@
 
 ## 状态
 
-- 当前状态：实现、provider-free 自动化测试和 Dream 真实链路预验收完成；正在执行主分支合并与 0.1.2 发布
+- 当前状态：完成。实现已合并，`0.1.2` selector 与四个平台包已公开发布，公共 registry fresh install 和 Dream 真实链路验收均通过
 - 设计稿：`docs/design/claude-request-parameter-recovery.md`
 - 已确认根因：精简 CLI 的参数解析器识别但丢弃 `--effort`，settings 类型不读取 `effortLevel`，协议层没有 `output_config`；`max_tokens` 则使用错误的旧变量 `ANTHROPIC_MAX_TOKENS` 和固定 `4096` fallback，而不是模型能力加 `CLAUDE_CODE_MAX_OUTPUT_TOKENS` 的有界策略
 - 最新版对照：官方 `2.1.250` 的 provider-free 最终 HTTP 拦截确认未知模型 32,000、Opus 4.6 为 64,000/128,000、当前高输出模型族默认 64,000、`xhigh` 的模型降级、settings 持久化范围和 env 优先级。本地实现遵循用户要求，在没有显式 effort 时省略字段，不采用官方模型默认 effort 注入。
@@ -56,8 +57,11 @@
 | `npm run cleanroom:build:targets` | 四平台 production build | exit 0；4/4 target |
 | `npm run cleanroom:npm:package` | 最终五包构建/打包合同 | exit 0；0.1.2 的 5/5 package/tarball |
 | `npm run cleanroom:npm:verify` | 最终五包格式、digest 与 no-map 验证 | exit 0；0.1.2 的 5/5 verified |
+| GitHub `Qualify clean-room npm Runtime` | main 同 SHA 全量资格 | run `33149053281`，exit 0；job `98776545177` 通过 |
+| GitHub `Publish clean-room npm Runtime` | qualification 制品原样复验并按平台包优先发布 | run `33151128000`，exit 0；validate/publish 均通过 |
+| `python3 scripts/verify_claude_registry_release.py --sdk-version 0.2.144 --runtime-version 0.1.2 --expected-cli-version '2.1.241 (Claude Code)'`（Dream 仓库） | 公共 PyPI/npm fresh install，不调用模型 | exit 0；status `passed`、provider-free、5/5 npm 包、wheel/sdist 双路径 |
 | `git diff --check` | 无补丁格式错误 | exit 0 |
 
 ## 回滚
 
-本任务未发布、未部署、未推送、未重启服务。回滚边界是删除新增的请求策略/测试/文档文件并逐项撤销本分支对 `argv.ts`、`protocol.ts`、`settings.ts` 和对应目录说明的变更；不得使用会覆盖其他工作区改动的 destructive git 命令。
+`0.1.2` 已发布且 npm 版本不可覆盖。代码回滚应以新的前向版本恢复上一条已验证策略，或让 Dream 的显式绝对 `CLAUDE_CODE_CLI_PATH` 指回官方 CLI；不得 unpublish、不得覆盖 Git 历史，也不得改动 Dream 状态机。发布使用的 npm granular token 只拥有五个 Runtime 包的读写权限、无 organization 权限，保存在 GitHub `npm` Environment 的 `NPM_TOKEN`，按用户要求保留；本地明文中转副本已删除。

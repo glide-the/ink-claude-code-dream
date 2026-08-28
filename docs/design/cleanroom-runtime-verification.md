@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room policies, source/build manifests, provider-free tests, five npm tarballs, and host measurements. -->
-<!-- [Output] 给出版本/能力矩阵、真实业务回执边界、内存观测、正式制品摘要和发布前命令证据。 -->
+<!-- [Output] 给出版本/能力矩阵、真实业务回执边界、内存观测、正式制品摘要和 registry 发布证据。 -->
 <!-- [Pos] Clean-room Runtime 的 digest-bound 技术、发布资格与 registry 回下载记录。 -->
-<!-- [Sync] 2026-08-28：记录 0.1.2 请求参数修复、Dream 真实链路回执和五包发布候选摘要。 -->
+<!-- [Sync] 2026-08-28：记录 0.1.2 请求参数修复、Dream 真实链路回执、main qualification、五包发布与公共 registry 回验。 -->
 
 # Clean-room Runtime 技术验证
 
@@ -73,8 +73,10 @@ true 表示 cross-build native format、精确 inventory、verifier 与复现性
 | linux-arm64 | 83,478,520 / ELF arm64 | `54c1d1a606a9cef78e538e292e367c6a1f414f6ee0b4bba6f2dc07b28ac7cf04` | 36,878,319 | `2e24e323bdace7ecff5cdeb29f6f5b8e78ebeda56951bb94ea7a81b8d993c559` |
 | linux-x64 | 83,522,760 / ELF x64 | `4026dfa9092eeb6f808cc9357ea8ccb03b200a1d6656a4f97884abd689d3e2f7` | 36,883,730 | `f21ac90cc6ec3665300f843f50e3c330be99805d6ed809730937d864d20bac76` |
 
-表中的 tgz 是 `0.1.2` 发布候选，不含 fixture 字段；main qualification 与 registry
-回下载 run ID 在发布完成后补记。五个 generated prepack
+表中的 tgz 是发布前本机最终候选，不含 fixture 字段。main commit
+`c3e4d4e2f74960c75b42b1cd48adedf90345a10b` 的 qualification run `33149053281` 重新生成、验证并
+上传同 SHA 精确五包；publish run `33151128000` 下载 qualification artifact、再次验证并发布，两个
+workflow 均为 `success`。五个 generated prepack
 均要求三个 artifact gate、目标资格、回执 digest 和 npm 授权精确为 true。Dream 实际验收使用
 回执内固定的前一候选 tgz；其 source tree 与四个 executable digest 与正式候选一致，正式 tgz
 仅因加入开放门和回执 attestation 而改变摘要。两次完整四目标编译与该五包打包后，四个 executable SHA 文件和聚合
@@ -123,5 +125,14 @@ darwin-arm64 可选包；`claude --version` 和 `ink-claude-code-dream --version
 `2.1.241 (Claude Code)`，安装树零 `.map`，Dream 真实 Python resolver 成功解析 selector 的
 `release-manifest.json`。版本不可覆盖，后续版本需配置五包 Trusted Publisher。
 
-`0.1.2` 必须在同一 main SHA 的 qualification 成功后，使用 Trusted Publisher 或已配置的最小权限 token 回退按平台包优先、
-selector 最后的固定顺序发布；本节只有 registry 实际回下载后才改为发布完成。
+`0.1.2` 已在同一 main SHA 的 qualification 成功后，使用显式最小权限 token fallback 按平台包
+优先、selector 最后的固定顺序发布。公共 registry provider-free acceptance exit 0：五包版本均为
+`0.1.2`，当前平台 fresh install 的两个 CLI alias 均输出 `2.1.241 (Claude Code)`，manifest 配对
+SDK `0.2.144`；SDK wheel/sdist 两条隔离安装路径均通过，`modelInvoked=false`、
+`modelProviderCredentialEnvironmentForwarded=false`、`packageRegistryTokenEnvironmentForwarded=false`。
+
+公共 registry 下载摘要：selector `0d6ed5371614b478b57fe192ff5555537279d790ae552818cd4b0b307e24ddc3`；
+darwin-arm64 `2c39bf8146ebcc65f3f1ecb55d969b722ad9779473398d41c784cb88caa8eeb2`；
+darwin-x64 `7050576a5b809e6662bc791138efb28a04fa56d053d220cfb892034b4b36f8e9`；
+linux-arm64 `abc209eccd9ace4ad20050db9f04d587959560e48fc3373f5b478288c5f80da2`；
+linux-x64 `0af763146bf0f5656baa552445e8953de18cec7650938a5060d1d6cd62bdd53b`。
