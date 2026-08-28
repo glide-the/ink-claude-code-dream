@@ -5,7 +5,7 @@
 // [Sync] 2026-08-24: bind Dream's canonical CLI/manifest/capability contract into all five packages.
 // [Sync] 2026-08-24: make a deterministic CycloneDX SBOM part of every exact package inventory.
 // [Sync] 2026-08-24: require and embed the final Dream business-receipt digest for formal publication.
-// [Sync] 2026-08-26: package Runtime 0.1.1 with the authenticated/anonymous MCP acceptance digest.
+// [Sync] 2026-08-26: package Runtime 0.1.2 with the authenticated/anonymous MCP acceptance digest.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";

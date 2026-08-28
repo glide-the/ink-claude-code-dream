@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "ink-claude-code-dream-pruning/v1",
+  "runtime": "ink-claude-code-dream",
+  "baseline": {
+    "claudeCodeVersion": "2.1.241",
+    "officialNpmWrapper": {
+      "package": "@anthropic-ai/claude-code",
+      "fileCount": 7,
+      "unpackedBytes": 175849,
+      "integrity": "sha512-S7DWEmJJAsI5taAUjhKm6soXcFJYIVeTH6Lg9kmp3yntFllCP612hGwZ7thOGh8r7YaRUH9+1jCX5A9QGazsxg=="
+    },
+    "officialDarwinArm64": {
+      "package": "@anthropic-ai/claude-code-darwin-arm64",
+      "shape": "single native Mach-O executable plus package metadata",
+      "unpackedBytes": 325056209,
+      "integrity": "sha512-CLxxd2aTrhKWYp9SCoUpNsuk1QIpMRS5IfVpJ73VmkJ9ZdNGQ+ktxZmzda7mz/vl1CcSiOvqVtk2xrWGGhahzg=="
+    },
+    "currentSourceBuildGraphAvailable": false,
+    "historicalRestoredSource": {
+      "version": "2.1.88",
+      "countingMethod": "recursive regular files under restored-src/src; git ls-files pathspec src from restored-src",
+      "srcFileCountObserved": 1902,
+      "typescriptFileCountObserved": 1884,
+      "gitTrackedSrcFileCountObserved": 1902,
+      "use": "read-only-candidate-classification-only"
+    }
+  },
+  "decision": {
+    "corePruned": false,
+    "coreLoadingReductionBytes": 0,
+    "productionEligible": false,
+    "dropInReplacementClaimed": false,
+    "reasonCodes": [
+      "NO_CURRENT_OFFICIAL_SOURCE_BUILD_GRAPH",
+      "NO_WRITTEN_MODIFICATION_AUTHORIZATION",
+      "NO_WRITTEN_REDISTRIBUTION_AUTHORIZATION",
+      "REQUIRED_CAPABILITY_REACHABILITY_NOT_PROVABLE_ON_NATIVE_BINARY"
+    ]
+  },
+  "requiredCapabilities": [
+    "sdk.stream-json-jsonl",
+    "sdk.bidirectional-control",
+    "session.transcript-resume",
+    "tools.permissions",
+    "workspace.cwd",
+    "sandbox",
+    "tmpdir.CLAUDE_CODE_TMPDIR",
+    "mcp.stdio-http-oauth-resources",
+    "extensions.plugins-skills-hooks",
+    "authentication.gateway"
+  ],
+  "candidateDisposition": [
+    {
+      "candidate": "updater",
+      "historicalCodeEvidence": ["src/cli/update.ts", "src/components/AutoUpdater.tsx", "src/utils/autoUpdater.ts"],
+      "dreamBoundaryEvidence": "not requested by the observed Agent SDK headless launch",
+      "outerDistributionOmitted": true,
+      "coreDeleted": false
+    },
+    {
+      "candidate": "feedback-reporting",
+      "historicalCodeEvidence": ["src/components/Feedback.tsx", "src/commands/feedback/index.ts"],
+      "dreamBoundaryEvidence": "no feedback/report command in the observed Dream runtime options",
+      "outerDistributionOmitted": true,
+      "coreDeleted": false
+    },
+    {
+      "candidate": "interactive-ui-ide",
+      "historicalCodeEvidence": ["src/ink/", "src/components/IdeAutoConnectDialog.tsx", "src/hooks/useIDEIntegration.tsx"],
+      "dreamBoundaryEvidence": "Dream uses --input-format/--output-format stream-json, not the REPL",
+      "outerDistributionOmitted": true,
+      "coreDeleted": false
+    },
+    {
+      "candidate": "remote-session-bridge",
+      "historicalCodeEvidence": ["src/remote/", "src/bridge/", "src/hooks/useRemoteSession.ts"],
+      "dreamBoundaryEvidence": "Dream owns its public SSE and local SDK subprocess lifecycle",
+      "outerDistributionOmitted": true,
+      "coreDeleted": false
+    },
+    {
+      "candidate": "swarm-team",
+      "historicalCodeEvidence": ["src/hooks/useSwarmInitialization.ts", "src/components/TeammateViewHeader.tsx", "src/memdir/teamMemPaths.ts"],
+      "dreamBoundaryEvidence": "not enabled by the observed Dream AgentRunOptions",
+      "outerDistributionOmitted": true,
+      "coreDeleted": false
+    },
+    {
+      "candidate": "slash-command-subagent-telemetry",
+      "historicalCodeEvidence": ["src/commands.ts", "src/services/diagnosticTracking.ts", "src/utils/agentSwarmsEnabled.ts"],
+      "dreamBoundaryEvidence": "slash UI and telemetry are unobserved; foreground subagent hooks remain a required compatibility risk",
+      "outerDistributionOmitted": true,
+      "coreDeleted": false
+    }
+  ],
+  "authorizationAndInputsRequiredToProceed": [
+    "Anthropic written authorization to modify the 2.1.241 implementation",
+    "Anthropic written authorization to redistribute the resulting binaries and source-derived artifacts",
+    "the exact official 2.1.241 source tree and reproducible build instructions",
+    "the exact module/import graph with side-effect and registration boundaries",
+    "an approved authentication-preservation interpretation for the pruned build",
+    "differential fixtures for every required SDK, MCP, auth, sandbox, plugin, hook, transcript, and resume path"
+  ]
+}

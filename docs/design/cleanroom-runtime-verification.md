@@ -1,20 +1,20 @@
 <!-- [Input] Clean-room policies, source/build manifests, provider-free tests, five npm tarballs, and host measurements. -->
 <!-- [Output] 给出版本/能力矩阵、真实业务回执边界、内存观测、正式制品摘要和发布前命令证据。 -->
 <!-- [Pos] Clean-room Runtime 的 digest-bound 技术、发布资格与 registry 回下载记录。 -->
-<!-- [Sync] 2026-08-26：记录 0.1.1/SDK 0.2.144 配对、MCP 认证路由回执和五包发布候选摘要。 -->
+<!-- [Sync] 2026-08-28：记录 0.1.2 请求参数修复、Dream 真实链路回执和五包发布候选摘要。 -->
 
 # Clean-room Runtime 技术验证
 
 ## 结论边界
 
 仓库自有 `src/cleanroom/`、兼容许可证依赖和四个平台制品已通过 provider-free 技术合同。
-Dream 最终验收又使用既有真实账户和业务数据，经 Dream、Admin、Gateway、本机真实
-PostgreSQL 的公开生产入口完成两轮同 Thread 对话、refresh/resume、Comfy 浏览器 OAuth、
-两次 `get_server_info`、tool confirmation、`output-available`、logout/remove；回执经隐私删减后
-固定在 `runtime/attestations/dream-real-business-acceptance-0.1.1.json`，SHA-256 为
-`039dad83bb4f50db584bf502ebb32c94c0f52ab7096ec19a6abb9a5d0cc60c6e`。该回执同时记录
-匿名 HTTP、OAuth HTTP、legacy SSE、自动 callback、tools/resources/prompts、部分失败、cancel
-和同 Thread resume 的本轮证据边界。
+Dream 本轮验收使用既有真实账户和业务数据，经 Dream、Admin、Gateway、本机真实
+PostgreSQL 的公开生产入口完成同一普通 Thread 的两轮对话。Gateway 的正文无关投影记录两次
+成功请求均为 `max_tokens=32000`、配置的 `effort=low`、`stream=true` 且 Authorization 已脱敏；
+Admin 正常页面确认请求与账本可见。回执经隐私删减后固定在
+`runtime/attestations/dream-real-business-acceptance-0.1.2.json`，SHA-256 为
+`16a4782a8829c11a9cf899e2b021e40de8eb02f8aa23317f7b6bf492809051fc`。此前 `0.1.1`
+的 MCP/OAuth/Server 与 resume 回执继续作为未改变能力的历史证据。
 
 因此三个 artifact gate 和 `npmPublishAllowed` 均已显式置为 true，正式 package prepack 通过。
 darwin-arm64 是真实宿主业务与 native execution 资格；darwin-x64、linux-arm64、linux-x64 的
@@ -25,7 +25,7 @@ true 表示 cross-build native format、精确 inventory、verifier 与复现性
 
 | 层 | 固定版本/合同 | 权威来源 | 当前验证 |
 | --- | --- | --- | --- |
-| clean-room npm Runtime | `0.1.1`，MIT | `runtime/cleanroom-{artifact,npm}-policy.json` | 五包身份一致 |
+| clean-room npm Runtime | `0.1.2`，MIT | `runtime/cleanroom-{artifact,npm}-policy.json` | 五包身份一致 |
 | Claude Code 兼容输出 | `2.1.241 (Claude Code)` | `src/cleanroom/cli.ts`、package tests | host native 与两个 selector alias 通过 |
 | Dream Agent SDK | `ink-claude-dream-agent-sdk==0.2.144` | release manifest integration | `ClaudeAgentOptions.cli_path` resolver 通过 |
 | SDK 进程协议 | `claude-code-stream-json/v1` | release manifest、`protocol.ts` | initialize/control/SSE/tool/result/interrupt 通过 |
@@ -61,19 +61,19 @@ true 表示 cross-build native format、精确 inventory、verifier 与复现性
 ## 源与制品证据
 
 干净构建从空的 `dist/cleanroom-targets` 与 `dist/cleanroom-npm` 开始。四份 build manifest
-记录同一份 source inventory：47 个文件、282,090 字节，source-tree SHA-256
-`b231362f22e588d4963420c85471a07baf6943767e25d3a1d3afddbfcae4d4a6`，lockfile SHA-256
+记录同一份 source inventory：48 个文件、290,209 字节，source-tree SHA-256
+`6e36ce5c67f05d7e752a117bfb3ed097dc9611c4a0aa0b3c5f675f9ea984a090`，lockfile SHA-256
 `a934ea1ebc506af2edead95cee392717f1560983ea55fc7c97894deb90db3b55`。
 
 | target/package | executable bytes / format | executable SHA-256 | tgz bytes | tgz SHA-256 |
 | --- | ---: | --- | ---: | --- |
-| selector | Node launcher | `df77ddf569a7f035e868716360d8ee94874c73fbf67a84a60f681224a1aa7d30` | 18,362 | `494b82e51918bf6ccdca9d31f0669298c7a0d41bfbf80a4e9d08e2bf8252bb1b` |
-| darwin-arm64 | 64,901,234 / Mach-O arm64 | `a4da19cf6b5153d722f7203ec8968698495608e9a74404233df3466f55ad3e2d` | 26,195,748 | `e057a79116915121c5fb10148e967836234df5bd9e9f572eb3524936f99a179d` |
-| darwin-x64 | 71,687,584 / Mach-O x64 | `8e86bb36f9d0ebf0911a9ce91d32544347b0d6b36986517b7cfb9dc2b32759e9` | 28,754,839 | `64b41dfeb2dfa986bcbe500fd9e667edec8e5a100ed515678b6cba3a744d1259` |
-| linux-arm64 | 83,478,520 / ELF arm64 | `db0452bf57701cd89f712684e34f060d43c96f04673a5e40fd8306d6bd30fd91` | 36,877,574 | `ab0671d6b2421563ce66fc8d2cbd6e5cef041edb3a33c19921a3606d33ea52e9` |
-| linux-x64 | 83,518,664 / ELF x64 | `bbb82a11411fee89ef62efa994d465cf8546e57463deeedb41afb2c902ea0951` | 36,882,891 | `4188b1760e9a5bbf0e3482466d76b1e65a3ce329bdf6252e982f751ea1343075` |
+| selector | Node launcher | `df77ddf569a7f035e868716360d8ee94874c73fbf67a84a60f681224a1aa7d30` | 18,357 | `a8301b7202ddfb9c6a2d0bee7bdfd9574092cf036ff472f7d9f005807fd4ed17` |
+| darwin-arm64 | 64,901,234 / Mach-O arm64 | `44eb30d48c27641092a23aeaa96e9bba706cf39cf5fd50cef93729df3d3fef54` | 26,196,496 | `fc8b751f6b15fd22b400d83c1c060fce8aa033ad3a81ced17c6b35950d5543f4` |
+| darwin-x64 | 71,687,584 / Mach-O x64 | `7cca5a5d6a5eb46d42556a33666b19287e8790136c6d5bd6e060640e1c109104` | 28,755,509 | `6709605d041f9623fc88d1a13ee450c153b9d13b7c03efdfa0bc415a75257769` |
+| linux-arm64 | 83,478,520 / ELF arm64 | `54c1d1a606a9cef78e538e292e367c6a1f414f6ee0b4bba6f2dc07b28ac7cf04` | 36,878,319 | `2e24e323bdace7ecff5cdeb29f6f5b8e78ebeda56951bb94ea7a81b8d993c559` |
+| linux-x64 | 83,522,760 / ELF x64 | `4026dfa9092eeb6f808cc9357ea8ccb03b200a1d6656a4f97884abd689d3e2f7` | 36,883,730 | `f21ac90cc6ec3665300f843f50e3c330be99805d6ed809730937d864d20bac76` |
 
-表中的 tgz 是 `0.1.1` 发布候选，不含 fixture 字段；main qualification 与 registry
+表中的 tgz 是 `0.1.2` 发布候选，不含 fixture 字段；main qualification 与 registry
 回下载 run ID 在发布完成后补记。五个 generated prepack
 均要求三个 artifact gate、目标资格、回执 digest 和 npm 授权精确为 true。Dream 实际验收使用
 回执内固定的前一候选 tgz；其 source tree 与四个 executable digest 与正式候选一致，正式 tgz
@@ -123,5 +123,5 @@ darwin-arm64 可选包；`claude --version` 和 `ink-claude-code-dream --version
 `2.1.241 (Claude Code)`，安装树零 `.map`，Dream 真实 Python resolver 成功解析 selector 的
 `release-manifest.json`。版本不可覆盖，后续版本需配置五包 Trusted Publisher。
 
-`0.1.1` 必须在同一 main SHA 的 qualification 成功后，使用 Trusted Publisher 按平台包优先、
+`0.1.2` 必须在同一 main SHA 的 qualification 成功后，使用 Trusted Publisher 或已配置的最小权限 token 回退按平台包优先、
 selector 最后的固定顺序发布；本节只有 registry 实际回下载后才改为发布完成。

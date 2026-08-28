@@ -2,7 +2,7 @@
 // [Output] Validate the pinned core/TMPDIR boundary, then transparently supervise the official CLI process group.
 // [Pos] Lazy-loaded execution boundary; no Claude protocol, MCP payload, transcript, setting, or secret is parsed here.
 // [Sync] 2026-08-24: align the SDK probe comment with Dream's locked 0.2.144 distribution.
-// [Sync] 2026-08-26: move the immutable release path to Runtime 0.1.1.
+// [Sync] 2026-08-26: move the immutable release path to Runtime 0.1.2.
 
 import { constants as fsConstants } from "node:fs";
 import { access, lstat, realpath } from "node:fs/promises";

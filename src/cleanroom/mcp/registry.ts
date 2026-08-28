@@ -2,7 +2,7 @@
 // [Output] Lifecycle registry, discovery inventory, calls, reads, and model tool bindings.
 // [Pos] Stateful connection owner for the clean-room MCP client slice.
 // [Sync] 2026-08-25: add SDK SSE while preserving verified auth and scope-upgrade semantics.
-// [Sync] 2026-08-26: publish anonymous/OAuth/SSE discovery under Runtime 0.1.1.
+// [Sync] 2026-08-26: publish anonymous/OAuth/SSE discovery under Runtime 0.1.2.
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
@@ -563,7 +563,7 @@ export class McpRegistry {
 
   constructor(configs: ReadonlyMap<string, McpServerConfig>, options: McpRegistryOptions = {}) {
     this.clientName = options.clientName ?? "ink-claude-code-dream";
-    this.clientVersion = options.clientVersion ?? "0.1.1";
+    this.clientVersion = options.clientVersion ?? "0.1.2";
     this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
     this.httpFetch = options.httpFetch;
     this.oauthProviderFactory = options.oauthProviderFactory;

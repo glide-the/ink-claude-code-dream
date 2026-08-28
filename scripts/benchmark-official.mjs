@@ -14,7 +14,7 @@ const core = process.env.INK_ACCEPTANCE_REAL_CLAUDE
   : null;
 if (!core) throw new Error("INK_ACCEPTANCE_REAL_CLAUDE is required");
 await access(core, fsConstants.X_OK);
-const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.1");
+const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.2");
 const wrapper = join(releaseRoot, "bin", "ink-claude-code-dream.mjs");
 await access(wrapper, fsConstants.X_OK);
 

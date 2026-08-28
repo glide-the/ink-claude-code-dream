@@ -18,7 +18,7 @@ import { join, resolve } from "node:path";
 import { test } from "node:test";
 
 const envelope = resolve(
-  "dist/release/ink-claude-code-dream-0.1.1/bin/ink-claude-code-dream",
+  "dist/release/ink-claude-code-dream-0.1.2/bin/ink-claude-code-dream",
 );
 const fakeCore = resolve("tests/fixtures/fake-claude.mjs");
 await chmod(fakeCore, 0o755);

@@ -2,11 +2,17 @@
 // [Output] Python-SDK-compatible lifecycle frames with durable resume, bounded tool turns, and MCP/OAuth management.
 // [Pos] Single clean-room protocol state machine; feature modules are injected through narrow public APIs.
 // [Sync] 2026-08-24: expose bounded initialization-stage diagnostics without leaking underlying errors.
-// [Sync] 2026-08-26: identify MCP client/session frames as Runtime 0.1.1.
+// [Sync] 2026-08-28: route every provider turn through the authoritative Messages request builder.
 
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import type { MessageCreateParamsStreaming } from "@anthropic-ai/sdk/resources/messages";
 import type { RuntimeOptions } from "./argv.ts";
+import {
+  buildMessageRequest,
+  resolveMessageRequestParameters,
+  type MessageRequestParameters,
+} from "./request.ts";
 import {
   loadSkillCatalog,
   normalizeHookConfiguration,
@@ -107,20 +113,10 @@ interface MessageAccumulator {
   usage: JsonObject;
 }
 
-const DEFAULT_MAX_TOKENS = 4096;
 const EMPTY_SKILL_CATALOG: SkillCatalog = Object.freeze({
   content: Object.freeze({}),
   definitions: Object.freeze([]),
 });
-
-function positiveInteger(raw: string | undefined, fallback: number): number {
-  if (raw === undefined || raw === "") return fallback;
-  const parsed = Number(raw);
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
-    throw new Error("ANTHROPIC_MAX_TOKENS must be a positive integer");
-  }
-  return parsed;
-}
 
 function isObject(value: unknown): value is JsonObject {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -356,6 +352,7 @@ export class CleanroomProtocol {
   private readonly permissionPolicy: ToolPermissionPolicy;
   private readonly protocolDependencies: CleanroomProtocolDependencies;
   private readonly providerAuthentication: ProviderAuthentication;
+  private readonly requestParameters: MessageRequestParameters;
   private skillCatalog: SkillCatalog = EMPTY_SKILL_CATALOG;
   private readonly tmpdirValidated: boolean;
   private readonly transcript: SessionTranscript | undefined;
@@ -368,6 +365,7 @@ export class CleanroomProtocol {
       history: Array<{ role: "user" | "assistant"; content: unknown }>;
       mcpRegistry: McpRegistry;
       providerAuthentication: ProviderAuthentication;
+      requestParameters: MessageRequestParameters;
       sessionId: string;
       tmpdirValidated: boolean;
       transcript?: SessionTranscript;
@@ -379,6 +377,7 @@ export class CleanroomProtocol {
     this.history = dependencies.history;
     this.mcpRegistry = dependencies.mcpRegistry;
     this.providerAuthentication = dependencies.providerAuthentication;
+    this.requestParameters = dependencies.requestParameters;
     this.tmpdirValidated = dependencies.tmpdirValidated;
     this.transcript = dependencies.transcript;
     this.workspace = dependencies.workspace;
@@ -405,12 +404,19 @@ export class CleanroomProtocol {
     }
 
     const cwd = process.cwd();
-    const providerAuthentication = await initializeStage("provider-auth", async () => {
-      const authentication = new ProviderAuthentication(
-        await loadRuntimeSettings(options.settings, cwd),
-      );
+    const providerRuntime = await initializeStage("provider-auth", async () => {
+      const settings = await loadRuntimeSettings(options.settings, cwd);
+      const authentication = new ProviderAuthentication(settings);
       await authentication.prepare();
-      return authentication;
+      return {
+        authentication,
+        requestParameters: resolveMessageRequestParameters({
+          cliEffort: options.effort,
+          environment: process.env,
+          model: options.model,
+          settingsEffort: settings.effortLevel,
+        }),
+      };
     });
     let tmpdirValidated = false;
     if (process.env.CLAUDE_CODE_TMPDIR) {
@@ -452,7 +458,7 @@ export class CleanroomProtocol {
     const mcpRegistry = await initializeStage("mcp", async () => {
       const registry = await createMcpRegistryFromArgv(argv, {
         clientName: "ink-claude-code-dream",
-        clientVersion: "0.1.1",
+        clientVersion: "0.1.2",
         cwd,
         ...(oauthConfigDir
           ? {
@@ -486,7 +492,8 @@ export class CleanroomProtocol {
     return new CleanroomProtocol(options, {
       history,
       mcpRegistry,
-      providerAuthentication,
+      providerAuthentication: providerRuntime.authentication,
+      requestParameters: providerRuntime.requestParameters,
       sessionId,
       tmpdirValidated,
       workspace,
@@ -1078,17 +1085,13 @@ export class CleanroomProtocol {
           const apiStartedAt = performance.now();
           const providerClient = await this.providerAuthentication.client();
           const stream = await providerClient.messages.create(
-            {
+            buildMessageRequest({
               model: this.options.model,
-              max_tokens: positiveInteger(
-                process.env.ANTHROPIC_MAX_TOKENS,
-                DEFAULT_MAX_TOKENS,
-              ),
-              messages: requestMessages as never,
-              stream: true,
-              tools: this.modelToolDefinitions() as never,
-              ...(system ? { system } : {}),
-            },
+              messages: requestMessages,
+              parameters: this.requestParameters,
+              system,
+              tools: this.modelToolDefinitions(),
+            }) as unknown as MessageCreateParamsStreaming,
             { signal: controller.signal },
           );
           const abortProviderStream = (): void => stream.controller.abort();

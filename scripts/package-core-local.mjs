@@ -151,7 +151,7 @@ function validatePolicy(policy) {
   if (policy.schemaVersion !== "ink-core-local-artifact-policy/v1") fail("unsupported local artifact policy");
   if (
     policy.artifact?.name !== "ink-claude-code-dream" ||
-    policy.artifact?.version !== "0.1.1" ||
+    policy.artifact?.version !== "0.1.2" ||
     policy.artifact?.entrypoint !== "bin/ink-claude-code-dream" ||
     policy.artifact?.coreEntrypoint !== "lib/core/cli.js" ||
     policy.artifact?.bunVersion !== "1.4.0" ||
