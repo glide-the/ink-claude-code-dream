@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room npm/artifact policies, five-package build/verifier, GitHub workflows, and npm registry checks. -->
 <!-- [Output] 定义 restored-source-free 五包拓扑、正式资格、首次 2FA bootstrap 与后续 Trusted Publishing。 -->
 <!-- [Pos] 当前公共 npm 发布设计；授权由 checked Dream 回执固定，历史恢复源码永不成为公共输入。 -->
-<!-- [Sync] 2026-08-28：准备 0.1.2 请求参数修复的同 SHA qualification 与五包发布。 -->
+<!-- [Sync] 2026-08-28：记录 0.1.3 opaque 模型能力修复的同 SHA qualification、五包发布和公共 registry 回验。 -->
 
 # Clean-room Runtime 的 npm 多平台发布设计
 
@@ -18,7 +18,7 @@
 - `productionEligible=true`；
 - `publicationAllowed=true`；
 - `redistributionAllowed=true`；
-- Dream 真实业务回执 SHA-256 为 `16a4782a8829c11a9cf899e2b021e40de8eb02f8aa23317f7b6bf492809051fc`；
+- Dream v2 真实业务回执 SHA-256 为 `2e7da1f41a41af3b229b79080085e587cdae39e664d7630ed209592ec8c73d4b`；
 - 四个 target qualification 均为 true，且每个资格基础单独记录；
 - `runtime/cleanroom-npm-policy.json#publication.npmPublishAllowed=true`。
 
@@ -128,6 +128,16 @@ OAuth 凭据、callback 或 transcript。首次名称 bootstrap 必须从通过 
 为后续版本配置 Trusted Publisher，再使用同 SHA 的 `publish-npm.yml` OIDC 路径。
 
 ## npm registry 发布结果
+
+`0.1.3` 已由 main commit `9339c9a0ff60e1b2cd6d5a23c8e795aeffff91f9` 完成同 SHA
+qualification 和正式发布：qualification run `33157330350`、publish run `33157476036` 均为
+`success`。发布复用了 qualification artifact，先发布四个平台包再发布 selector；GitHub `npm`
+Environment 的最小五包权限 `NPM_TOKEN` fallback 验证成功并按用户要求继续保留。
+
+公共 registry provider-free acceptance exit 0：五包均为 `0.1.3`，空目录只安装 selector 与
+darwin-arm64 平台包，两个 alias 输出 `2.1.241 (Claude Code)`；SDK wheel/sdist 两路均通过，
+`modelInvoked=false`、模型凭证和 registry token 均未透传。Dream 默认 resolver 与启动日志确认
+production manifest 为 `0.1.3`，平台包 source tree/native executable 与真实业务 v2 回执一致。
 
 `0.1.2` 已由 main commit `c3e4d4e2f74960c75b42b1cd48adedf90345a10b` 完成同 SHA
 qualification 和正式发布：qualification run `33149053281`、publish run `33151128000` 均为
