@@ -14,7 +14,7 @@
 - 负责人：Codex Goal `01a046e3-1ccf-7d42-840d-19ef033a91f2`
 - CLI 仓库绝对路径：`/Users/dmeck/project/ink-claude-code-dream`
 - 基础实现分支：`codex/claude-request-fields`；已通过 PR #13 合并到 `main`
-- opaque capability 跟进分支：`codex/opaque-model-max-output`；Draft PR #15
+- opaque capability 跟进分支：`codex/opaque-model-max-output`；PR #15 已合并到 `main`
 - 基础 main 合并提交：`c3e4d4e2f74960c75b42b1cd48adedf90345a10b`
 - 当前候选 CLI 包版本：`ink-claude-code-dream@0.1.3`
 - 兼容版本标识：Claude Code `2.1.241`
@@ -38,7 +38,7 @@
 
 ## 状态
 
-- 当前状态：完成。实现已合并，`0.1.2` selector 与四个平台包已公开发布，公共 registry fresh install 和 Dream 真实链路验收均通过
+- 当前状态：完成。基础修复已随 `0.1.2` 发布；opaque alias 跟进修复已随 `0.1.3` 发布，公共 registry fresh install、Dream 真实链路和默认 resolver 均通过
 - 设计稿：`docs/design/claude-request-parameter-recovery.md`
 - 已确认根因：精简 CLI 的参数解析器识别但丢弃 `--effort`，settings 类型不读取 `effortLevel`，协议层没有 `output_config`；`max_tokens` 则使用错误的旧变量 `ANTHROPIC_MAX_TOKENS` 和固定 `4096` fallback，而不是模型能力加 `CLAUDE_CODE_MAX_OUTPUT_TOKENS` 的有界策略
 - 最新版对照：官方 `2.1.250` 的 provider-free 最终 HTTP 拦截确认未知模型 32,000、Opus 4.6 为 64,000/128,000、当前高输出模型族默认 64,000、`xhigh` 的模型降级、settings 持久化范围和 env 优先级。本地实现遵循用户要求，在没有显式 effort 时省略字段，不采用官方模型默认 effort 注入。
@@ -72,8 +72,8 @@
 - 触发证据：当前已安装 Runtime 为 `0.1.2`；只读业务记录显示已选 Gateway alias 的 Admin `max_output_tokens` 与最终请求 `max_tokens=32000` 不一致，同时 `effort=low`、`stream=true` 正常。
 - 直接原因：Dream 选模已保留完整 `GatewayModel`，但 `claude_code_runtime_env()` 只投影 compact/context；CLI 对无法按名称识别的 alias 按上游 unknown 规则使用 32,000/64,000。
 - 最小边界：CLI 新增通用、vendor-scoped、server-owned 模型 max-output capability；Dream 仅负责把 Admin 已有目录字段投影到该 CLI capability 并阻断 ambient/user 覆盖。Admin、Gateway、schema、状态机和 SSE 不变。
-- 实现分支/提交：`codex/opaque-model-max-output` / `1175b4e`；Draft PR `#15`。Dream 配对提交为 `glide-the/im@2d803ac`，Draft PR `#35`。
-- 当前状态：`0.1.3` 的 exact source/native candidate 已通过正常 Dream/Admin/Gateway/PostgreSQL 两轮真实业务验收，digest-bound v2 回执、四平台构建和五包验证均已通过；等待 main 合并、同 SHA GitHub qualification、npm 发布与公共 registry fresh-install 回验。
+- 实现分支/提交：`codex/opaque-model-max-output` / `1175b4e`；PR `#15` 已合并为 `main@9339c9a0ff60e1b2cd6d5a23c8e795aeffff91f9`。Dream 配对 PR `#35` 已合并为 `develop@cd3786fc71ccd5e54704f16fc640da736b0a6d3c`。
+- 当前状态：完成。`0.1.3` 的 exact source/native candidate 已通过正常 Dream/Admin/Gateway/PostgreSQL 两轮真实业务验收；同一 main SHA 的 qualification/publish、公共 registry fresh install、Dream 默认 production manifest resolver 和健康启动均通过。
 - 设计稿：`docs/design/claude-request-parameter-recovery.md` 第 12 节。
 - 验证结果：
   - `node --test --test-concurrency=1 tests/cleanroom-request-parameters.test.mjs tests/cleanroom-runtime-integration.test.mjs tests/cleanroom-tool-loop.test.mjs`：exit 0；11/11 passed。
@@ -82,5 +82,11 @@
   - `npm test`：exit 0；118 tests，114 passed、4 个外部条件 fixture skipped、0 failed。
   - `INK_REAL_CLAUDE_REQUEST_FIELDS_QA=1 ... playwright test e2e/claude-runtime-request-fields-real.spec.ts`（Dream 仓库）：exit 0；1/1 passed；两条 settled `deepseek-v4-pro` 请求均为 `max_tokens=384000`、`effort=low`、`stream=true`、Authorization=`[REDACTED]`。
   - `runtime/attestations/dream-real-business-acceptance-0.1.3.json`：v2 receipt SHA-256 `2e7da1f41a41af3b229b79080085e587cdae39e664d7630ed209592ec8c73d4b`；绑定 source tree `c8d0a7ec…c87cb9` 与已执行 darwin-arm64 executable `9b109064…9d1d4`。
-  - `npm run cleanroom:build:targets && npm run cleanroom:npm:package && npm run cleanroom:npm:verify`：exit 0；4/4 targets、5/5 `0.1.3` packages verified；发布前不得覆盖 registry `0.1.2`。
-  - Dream `uv run --with pytest ...`：exit 0；67 passed、17 subtests passed；README 英/中 25 个 heading level 与关键 Runtime 规则一致。
+  - `npm run cleanroom:build:targets && npm run cleanroom:npm:package && npm run cleanroom:npm:verify`：exit 0；4/4 targets、5/5 `0.1.3` packages verified；未覆盖 registry `0.1.2`。
+  - GitHub qualification run `33157330350`：exit 0；`main@9339c9a` 全量测试并从 clean outputs 重建五包。
+  - GitHub publish run `33157476036`：exit 0；下载同 SHA qualification artifact、复验后按四平台包优先、selector 最后发布。使用 GitHub `npm` Environment 的 `NPM_TOKEN` fallback，Secret 保留且未导出到本地。
+  - `python3 scripts/verify_claude_registry_release.py --sdk-version 0.2.144 --runtime-version 0.1.3 --expected-cli-version '2.1.241 (Claude Code)'`（Dream 仓库）：exit 0；provider-free、5/5 npm、wheel/sdist 两路、`modelInvoked=false`、零 provider/registry token 环境透传。
+  - Dream 默认 resolver：解析公开 selector `0.1.3` 且 `productionEligible=true`；启动日志为 `cli_mode=dream_runtime`、`cli_runtime_release=0.1.3`，`/api/health` exit 0。
+  - Dream `uv run --with pytest ...`：exit 0；首轮 capability 聚焦 67 passed、17 subtests；版本/Docker/server 聚焦 101 passed、16 subtests；README 英/中 25 个 heading level 与关键 Runtime 规则一致。
+
+`0.1.3` 已发布且不可覆盖。回滚使用前向版本恢复 `0.1.2` 策略，或通过 Dream 的显式绝对 `CLAUDE_CODE_CLI_PATH` 选择已验证官方 CLI；不得 unpublish 或删除 GitHub `npm` Environment Secret。
