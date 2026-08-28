@@ -71,6 +71,7 @@
 - 触发证据：当前已安装 Runtime 为 `0.1.2`；只读业务记录显示已选 Gateway alias 的 Admin `max_output_tokens` 与最终请求 `max_tokens=32000` 不一致，同时 `effort=low`、`stream=true` 正常。
 - 直接原因：Dream 选模已保留完整 `GatewayModel`，但 `claude_code_runtime_env()` 只投影 compact/context；CLI 对无法按名称识别的 alias 按上游 unknown 规则使用 32,000/64,000。
 - 最小边界：CLI 新增通用、vendor-scoped、server-owned 模型 max-output capability；Dream 仅负责把 Admin 已有目录字段投影到该 CLI capability 并阻断 ambient/user 覆盖。Admin、Gateway、schema、状态机和 SSE 不变。
+- 实现分支/提交：`codex/opaque-model-max-output` / `1175b4e`；Draft PR `#15`。Dream 配对提交为 `glide-the/im@2d803ac`，Draft PR `#35`。
 - 当前状态：实现、provider-free 最终 HTTP、Dream focused tests、strict typecheck、CLI lint/full tests 和四平台 package verify 已通过。修复尚未发布：`0.1.2` 不可覆盖，新 `0.1.3` 的正式打包门要求该版本先取得正常 Dream/Admin/Gateway/PostgreSQL 真实业务回执；当前 Dream 为用户通过 VS Code debugpy 启动的无热重载进程，未获单独重启授权，因此没有伪造回执、合并、发布或热切换服务。
 - 设计稿：`docs/design/claude-request-parameter-recovery.md` 第 12 节。
 - 验证结果：
