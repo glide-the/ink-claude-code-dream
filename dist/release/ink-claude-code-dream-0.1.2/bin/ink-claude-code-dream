@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+// CLAUDE_SECURESTORAGE_CONFIG_DIR: capability marker; behavior stays in official core.
+await import('./ink-claude-code-dream.mjs');

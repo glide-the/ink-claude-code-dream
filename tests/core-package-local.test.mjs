@@ -16,7 +16,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const packageScript = path.join(repositoryRoot, "scripts", "package-core-local.mjs");
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-core-package-local.mjs");
 const installScript = path.join(repositoryRoot, "scripts", "install-core-local.mjs");
-const artifactId = "ink-claude-code-dream-0.1.1";
+const artifactId = "ink-claude-code-dream-0.1.2";
 const sourceDigest = "4".repeat(64);
 const runtimeTarget = `${process.platform}-${process.arch}`;
 
@@ -184,7 +184,7 @@ async function writeQualification(context, id, evidenceType, overrides = {}) {
     evidenceType,
     subject: {
       runtime: "ink-claude-code-dream",
-      version: "0.1.1",
+      version: "0.1.2",
       coreBundleSha256: context.coreDigest,
       sourceDigest,
       runtimeTarget,
@@ -332,7 +332,7 @@ test("qualification evidence bound to another bundle is rejected", async () => {
     const sdk = await writeQualification(context, "sdk", "real-process-sdk-differential", {
       subject: {
         runtime: "ink-claude-code-dream",
-        version: "0.1.1",
+        version: "0.1.2",
         coreBundleSha256: "9".repeat(64),
         sourceDigest,
         runtimeTarget,

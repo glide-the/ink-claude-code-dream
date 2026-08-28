@@ -8,7 +8,7 @@ import { constants as fsConstants } from "node:fs";
 import { access, readFile, readdir, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
-const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.1");
+const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.2");
 const checksumPath = join(releaseRoot, "manifest", "checksums.sha256");
 const checksumLines = (await readFile(checksumPath, "utf8")).trim().split("\n");
 const checksummedPaths = new Set();
@@ -40,7 +40,7 @@ if (
 const manifest = JSON.parse(await readFile(releaseManifestPath, "utf8"));
 if (
   manifest.schemaVersion !== "ink-claude-cli-envelope/v1" ||
-  manifest.runtime?.version !== "0.1.1" ||
+  manifest.runtime?.version !== "0.1.2" ||
   manifest.runtime?.integration?.environment !== "CLAUDE_CODE_CLI_PATH" ||
   manifest.runtime?.integration?.sdkOption !== "ClaudeAgentOptions.cli_path" ||
   manifest.runtime?.integration?.sdkDistribution !== "ink-claude-dream-agent-sdk" ||

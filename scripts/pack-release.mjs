@@ -10,9 +10,9 @@ import { pipeline } from "node:stream/promises";
 import { createGzip } from "node:zlib";
 import { pack as createTarPack } from "tar-stream";
 
-const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.1");
+const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.2");
 const releaseId = basename(releaseRoot);
-const archive = resolve("dist/ink-claude-code-dream-0.1.1.tar.gz");
+const archive = resolve("dist/ink-claude-code-dream-0.1.2.tar.gz");
 const packageJson = JSON.parse(await readFile(resolve("package.json"), "utf8"));
 const requiredNode = packageJson.inkBuild?.archiveNode;
 if (!requiredNode || process.versions.node !== requiredNode) {

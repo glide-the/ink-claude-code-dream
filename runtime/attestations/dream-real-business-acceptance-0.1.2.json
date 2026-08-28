@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "ink-dream-real-business-acceptance/v1",
+  "subject": {
+    "runtime": "ink-claude-code-dream",
+    "version": "0.1.2",
+    "sourceTreeSha256": "6e36ce5c67f05d7e752a117bfb3ed097dc9611c4a0aa0b3c5f675f9ea984a090",
+    "acceptedSelectorTarballSha256": "d1da738bc67e3a24b44bdc6ab62972ca48eae6749accea86f2cb4ee71d2c3a42",
+    "acceptedDarwinArm64TarballSha256": "9900cad8b0d5479f88a69428efb4f4bded22b479842a8b8798f9da8edccb83b6",
+    "acceptedDarwinArm64ExecutableSha256": "44eb30d48c27641092a23aeaa96e9bba706cf39cf5fd50cef93729df3d3fef54"
+  },
+  "acceptance": {
+    "date": "2026-08-28",
+    "status": "passed",
+    "mode": "existing-real-account-and-business-data",
+    "publicProductionEntrypoints": true,
+    "services": [
+      "Dream",
+      "Admin",
+      "Gateway",
+      "PostgreSQL"
+    ],
+    "modelTurns": 2,
+    "sameThreadRefreshAndResume": false,
+    "sameThreadResume": true,
+    "adminVisibilityConfirmed": true,
+    "gatewayPersistenceConfirmed": true,
+    "requestContract": {
+      "capturedRequests": 2,
+      "modelCapabilityFallback": "unknown-compatible-model",
+      "maxTokens": 32000,
+      "effort": "low",
+      "stream": true,
+      "authorizationRedacted": true,
+      "requestBodyIncluded": false
+    },
+    "testReceipt": {
+      "dreamPlaywrightPassed": 1,
+      "adminPlaywrightPassed": 1,
+      "gatewayRequestsSettled": 2,
+      "gatewayRequestsSucceeded": 2,
+      "failed": 0
+    }
+  },
+  "targetQualification": {
+    "darwin-arm64": "real-host Dream Chat, same-thread resume, Gateway request capture, Admin visibility, package, and resolver execution",
+    "darwin-x64": "Bun 1.4.0 native cross-build, Mach-O identity, exact inventory, verifier, and reproducibility",
+    "linux-arm64": "Bun 1.4.0 native cross-build, ELF identity, exact inventory, verifier, and reproducibility",
+    "linux-x64": "Bun 1.4.0 native cross-build, ELF identity, exact inventory, verifier, and reproducibility"
+  },
+  "privacy": {
+    "accountIdentifierIncluded": false,
+    "rawBusinessLogsIncluded": false,
+    "databaseRowsIncluded": false,
+    "oauthCredentialsIncluded": false,
+    "callbacksIncluded": false,
+    "transcriptsIncluded": false
+  },
+  "authorization": {
+    "explicitPublicNpmReleaseApproved": true,
+    "platformPackagesBeforeSelectorRequired": true,
+    "pypiPublicationApproved": false
+  }
+}

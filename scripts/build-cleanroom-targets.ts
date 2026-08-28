@@ -2,7 +2,7 @@
 // [Output] Four target-specific standalone executables plus deterministic build manifests under dist/cleanroom-targets.
 // [Pos] Restored-source-free multi-platform compiler; source maps and runtime config autoloading are always disabled.
 // [Sync] 2026-08-24: add the clean-room darwin/linux arm64/x64 standalone build matrix.
-// [Sync] 2026-08-26: build the immutable Runtime 0.1.1 four-target set.
+// [Sync] 2026-08-26: build the immutable Runtime 0.1.2 four-target set.
 
 import { createHash } from "node:crypto";
 import { chmod, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
@@ -106,7 +106,7 @@ function parseTargets(argv: string[]): string[] {
 
 if (
   policy.schemaVersion !== "ink-cleanroom-npm-policy/v1" ||
-  policy.version !== "0.1.1" ||
+  policy.version !== "0.1.2" ||
   policy.license !== "MIT" ||
   policy.bunVersion !== "1.4.0" ||
   policy.entrypoint !== "src/cleanroom/cli.ts" ||

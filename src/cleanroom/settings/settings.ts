@@ -1,13 +1,15 @@
 // [Input] Optional SDK --settings value as inline JSON or a cwd-relative/absolute file path.
 // [Output] One bounded, validated settings object for clean-room Runtime adapters.
 // [Pos] Settings trust boundary; settings content is never emitted or persisted by the Runtime.
-// [Sync] 2026-08-24: add fail-closed inline/file loading for Dream apiKeyHelper.
+// [Sync] 2026-08-28: validate the optional session effort setting without inventing a default.
 
 import { lstat, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
+import { parsePersistedEffortLevel, type EffortLevel } from "../request.ts";
 
 export interface RuntimeSettings {
   apiKeyHelper?: string;
+  effortLevel?: EffortLevel;
 }
 
 const MAX_SETTINGS_BYTES = 1024 * 1024;
@@ -27,16 +29,20 @@ function parseSettingsObject(raw: string): RuntimeSettings {
   if (!decoded || Array.isArray(decoded) || typeof decoded !== "object") fail();
   const source = decoded as Record<string, unknown>;
   const helper = source.apiKeyHelper;
-  if (helper === undefined) return {};
-  if (
+  if (helper !== undefined && (
     typeof helper !== "string" ||
     helper.length === 0 ||
     Buffer.byteLength(helper, "utf8") > MAX_HELPER_COMMAND_BYTES ||
     /[\0\r\n]/.test(helper)
-  ) {
+  )) {
     fail();
   }
-  return { apiKeyHelper: helper };
+  const apiKeyHelper = helper === undefined ? undefined : helper as string;
+  const effortLevel = parsePersistedEffortLevel(source.effortLevel);
+  return {
+    ...(apiKeyHelper !== undefined ? { apiKeyHelper } : {}),
+    ...(effortLevel !== undefined ? { effortLevel } : {}),
+  };
 }
 
 async function settingsFile(value: string, cwd: string): Promise<string> {

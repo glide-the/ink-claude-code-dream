@@ -2,7 +2,7 @@
 // [Input] Compiled clean-room Runtime plus disposable Anthropic SSE, stdio MCP, workspace, and config fixtures.
 // [Output] Provider-free process evidence for persistent sessions, MCP controls/resources, tmpdir, and Skills/plugins.
 // [Pos] Cross-module JSONL integration gate; it exercises the public executable without restored/vendor source.
-// [Sync] 2026-08-24: cover fresh multi-turn, resume, fork, MCP lifecycle, and safe initialization failures.
+// [Sync] 2026-08-28: prove fresh, multi-turn, resume, and fork share the final request-parameter policy.
 
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -152,6 +152,8 @@ function startRuntime(fixture, baseURL, sessionArgs) {
         ANTHROPIC_API_KEY: "",
         ANTHROPIC_AUTH_TOKEN: "provider-free-token",
         ANTHROPIC_BASE_URL: baseURL,
+        CLAUDE_CODE_EFFORT_LEVEL: "high",
+        CLAUDE_CODE_MAX_OUTPUT_TOKENS: "24000",
         CLAUDE_CODE_TMPDIR: fixture.tmpdir,
         CLAUDE_CONFIG_DIR: fixture.configDir,
       },
@@ -328,6 +330,11 @@ test("public executable integrates fresh/resume/fork, MCP management/resources, 
     (await transcript(fixture.configDir, forkedSystem.session_id)).trimEnd().split("\n").length,
     8,
   );
+  for (const payload of anthropic.requests) {
+    assert.equal(payload.max_tokens, 24_000);
+    assert.deepEqual(payload.output_config, { effort: "high" });
+    assert.equal(payload.stream, true);
+  }
 });
 
 test("invalid tmpdir fails before provider/MCP use without leaking token or local path", async (t) => {

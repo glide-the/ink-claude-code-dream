@@ -114,8 +114,8 @@ test("four target builds produce five verified npm tarballs and the installed me
   const tarballRoot = path.join(repositoryRoot, policy.tarballRoot);
   const tarballs = await readdir(tarballRoot);
   assert.equal(tarballs.filter(name => name.endsWith(".tgz")).length, 5);
-  const metaTarball = path.join(tarballRoot, "glide-the-ink-claude-code-dream-0.1.1.tgz");
-  const hostTarball = path.join(tarballRoot, `glide-the-ink-claude-code-dream-${hostTarget}-0.1.1.tgz`);
+  const metaTarball = path.join(tarballRoot, "glide-the-ink-claude-code-dream-0.1.2.tgz");
+  const hostTarball = path.join(tarballRoot, `glide-the-ink-claude-code-dream-${hostTarget}-0.1.2.tgz`);
 
   // Dream passes canonical real Workspace paths. Canonicalize macOS' /var ->
   // /private/var temp alias before deriving CLAUDE_CODE_TMPDIR as well.

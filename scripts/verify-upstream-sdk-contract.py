@@ -19,7 +19,7 @@ DREAM_REPOSITORY = Path(
     os.environ.get("INK_DREAM_REPO", REPOSITORY.parent / "ink-dream-memory")
 ).resolve()
 DREAM_BACKEND = DREAM_REPOSITORY / "backend"
-WRAPPER = REPOSITORY / "dist/release/ink-claude-code-dream-0.1.1/bin/ink-claude-code-dream"
+WRAPPER = REPOSITORY / "dist/release/ink-claude-code-dream-0.1.2/bin/ink-claude-code-dream"
 FAKE_CORE = REPOSITORY / "tests/fixtures/fake-claude.mjs"
 EXPECTED_SDK_DISTRIBUTION = "ink-claude-dream-agent-sdk"
 EXPECTED_SDK_VERSION = "0.2.144"

@@ -3,7 +3,7 @@
 // [Output] Process evidence for tool loops, permissions/hooks, cancellation, max turns, result privacy, and OAuth controls.
 // [Pos] Cross-module provider/tool control-plane gate; it uses no restored source, browser, or real credential.
 // [Sync] 2026-08-24: cover built-in/MCP/Resource/Skill turns plus headless OAuth management DTOs.
-// [Sync] 2026-08-24: prove PreToolUse allow/none/deny has one model tool_use_id and no duplicate permission invocation.
+// [Sync] 2026-08-28: prove every bounded tool follow-up retains the same final request parameters.
 
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -419,6 +419,8 @@ function startRuntime(fixture, baseURL, extraEnv = {}) {
         ANTHROPIC_API_KEY: "",
         ANTHROPIC_AUTH_TOKEN: "provider-free-token",
         ANTHROPIC_BASE_URL: baseURL,
+        CLAUDE_CODE_EFFORT_LEVEL: "high",
+        CLAUDE_CODE_MAX_OUTPUT_TOKENS: "20000",
         CLAUDE_CODE_TMPDIR: fixture.tmpdir,
         CLAUDE_CONFIG_DIR: fixture.configDir,
         ...extraEnv,
@@ -673,6 +675,11 @@ test("provider tool loop emits SDK tool_result frames without leaking their body
   assert.equal(terminalAndLogs.includes(MCP_SECRET), false);
   assert.equal(terminalAndLogs.includes(SKILL_SECRET), false);
   assert.equal(terminalAndLogs.includes("resource-body-private"), false);
+  for (const payload of messages.requests) {
+    assert.equal(payload.max_tokens, 20_000);
+    assert.deepEqual(payload.output_config, { effort: "high" });
+    assert.equal(payload.stream, true);
+  }
 
   runtime.child.stdin.end();
   const [exitCode, signal] = await once(runtime.child, "exit");
