@@ -1,7 +1,7 @@
 <!-- [Input] Clean-room Runtime tooling, authorized external restored source, capability profile, compatibility policies, and verification evidence. -->
 <!-- [Output] Explain the qualified local minimal-core workflow, remaining business gate, legacy envelope, and safe Git/release boundary. -->
 <!-- [Pos] Operator-facing entry point for ink-claude-code-dream. -->
-<!-- [Sync] 2026-08-28: prepare clean-room Runtime 0.1.2 with model-bounded max_tokens and conditional effort projection. -->
+<!-- [Sync] 2026-08-28: prepare clean-room Runtime 0.1.3 with model-bounded max_tokens and conditional effort projection. -->
 
 # ink-claude-code-dream
 
@@ -88,7 +88,7 @@ See the [canonical design](docs/design/claude-code-runtime-minimalization.md), [
 
 仓库根 `package.json` 是私有构建编排器和历史 envelope，不是发布包；根级 `npm pack`/`npm publish` 会被 lifecycle 拒绝。可审查的目标布局是 `@glide-the/ink-claude-code-dream` 顶层选择包，加 Darwin/Linux 的 arm64/x64 四个平台包。每个平台必须使用同平台 qualification、ripgrep 和 `bun@1.4.0`，Windows 暂无完整证据并 fail-closed。
 
-clean-room `0.1.2` 的 `publicationAllowed=true`、`redistributionAllowed=true` 与 Dream 回执摘要已绑定；
+clean-room `0.1.3` 的 `publicationAllowed=true`、`redistributionAllowed=true` 与 Dream 回执摘要已绑定；
 发布仍必须通过 main 同 SHA qualification 与 npm Trusted Publisher，四个平台包先于 selector。
 所有 npm 包清单和 tgz 强制不包含 `*.map`。历史 restored-source/local-core 路径仍禁止发布。
 详见 [npm 多平台发布设计](docs/design/npm多平台发布设计.md)。

@@ -1,7 +1,7 @@
 <!-- [Input] 用户关于 Messages max_tokens/output_config.effort 缺失的原始要求、只读历史任务 ID、CLI 仓库状态与验证回执。 -->
 <!-- [Output] 一个限定在 clean-room CLI 内的 Codex 实现任务记录。 -->
 <!-- [Pos] CLI 请求参数修复、发布和 Dream 验收任务台账；不授权修改 Dream/Admin/Gateway 业务语义。 -->
-<!-- [Sync] 2026-08-28: 记录 main 合并、0.1.2 五包发布、公共 registry 回验和 Dream 真实链路验收。 -->
+<!-- [Sync] 2026-08-28: 重新打开任务，修复认证目录 max_output_tokens 未到达 opaque Gateway alias 请求的问题。 -->
 
 # Claude Messages 请求参数恢复任务
 
@@ -13,9 +13,10 @@
 
 - 负责人：Codex Goal `01a046e3-1ccf-7d42-840d-19ef033a91f2`
 - CLI 仓库绝对路径：`/Users/dmeck/project/ink-claude-code-dream`
-- 实现分支：`codex/claude-request-fields`；已通过 PR #13 合并到 `main`
-- main 合并提交：`c3e4d4e2f74960c75b42b1cd48adedf90345a10b`
-- 当前 CLI 包版本：`ink-claude-code-dream@0.1.2`
+- 基础实现分支：`codex/claude-request-fields`；已通过 PR #13 合并到 `main`
+- opaque capability 跟进分支：`codex/opaque-model-max-output`；Draft PR #15
+- 基础 main 合并提交：`c3e4d4e2f74960c75b42b1cd48adedf90345a10b`
+- 当前候选 CLI 包版本：`ink-claude-code-dream@0.1.3`
 - 兼容版本标识：Claude Code `2.1.241`
 - 构建入口：`src/cleanroom/cli.ts`，由 Bun `1.4.0` 生成 `dist/cleanroom/claude` 和四平台 npm 候选产物
 - 文件所有权：`src/cleanroom/request.ts`、`src/cleanroom/argv.ts`、`src/cleanroom/protocol.ts`、`src/cleanroom/settings/settings.ts`、对应 `.folder.md`、`tests/cleanroom-request-parameters.test.mjs`、`tests/.folder.md`、本任务记录与设计稿
@@ -65,3 +66,21 @@
 ## 回滚
 
 `0.1.2` 已发布且 npm 版本不可覆盖。代码回滚应以新的前向版本恢复上一条已验证策略，或让 Dream 的显式绝对 `CLAUDE_CODE_CLI_PATH` 指回官方 CLI；不得 unpublish、不得覆盖 Git 历史，也不得改动 Dream 状态机。发布使用的 npm granular token 只拥有五个 Runtime 包的读写权限、无 organization 权限，保存在 GitHub `npm` Environment 的 `NPM_TOKEN`，按用户要求保留；本地明文中转副本已删除。
+
+## 2026-08-28 opaque Gateway alias 跟进
+
+- 触发证据：当前已安装 Runtime 为 `0.1.2`；只读业务记录显示已选 Gateway alias 的 Admin `max_output_tokens` 与最终请求 `max_tokens=32000` 不一致，同时 `effort=low`、`stream=true` 正常。
+- 直接原因：Dream 选模已保留完整 `GatewayModel`，但 `claude_code_runtime_env()` 只投影 compact/context；CLI 对无法按名称识别的 alias 按上游 unknown 规则使用 32,000/64,000。
+- 最小边界：CLI 新增通用、vendor-scoped、server-owned 模型 max-output capability；Dream 仅负责把 Admin 已有目录字段投影到该 CLI capability 并阻断 ambient/user 覆盖。Admin、Gateway、schema、状态机和 SSE 不变。
+- 实现分支/提交：`codex/opaque-model-max-output` / `1175b4e`；Draft PR `#15`。Dream 配对提交为 `glide-the/im@2d803ac`，Draft PR `#35`。
+- 当前状态：`0.1.3` 的 exact source/native candidate 已通过正常 Dream/Admin/Gateway/PostgreSQL 两轮真实业务验收，digest-bound v2 回执、四平台构建和五包验证均已通过；等待 main 合并、同 SHA GitHub qualification、npm 发布与公共 registry fresh-install 回验。
+- 设计稿：`docs/design/claude-request-parameter-recovery.md` 第 12 节。
+- 验证结果：
+  - `node --test --test-concurrency=1 tests/cleanroom-request-parameters.test.mjs tests/cleanroom-runtime-integration.test.mjs tests/cleanroom-tool-loop.test.mjs`：exit 0；11/11 passed。
+  - strict TypeScript 5.9.2 typecheck（request/argv/settings）：exit 0。
+  - `npm run lint`：exit 0；258 files / 15 JSON（包含生成并纳入版本管理的 `0.1.3` release envelope）。
+  - `npm test`：exit 0；118 tests，114 passed、4 个外部条件 fixture skipped、0 failed。
+  - `INK_REAL_CLAUDE_REQUEST_FIELDS_QA=1 ... playwright test e2e/claude-runtime-request-fields-real.spec.ts`（Dream 仓库）：exit 0；1/1 passed；两条 settled `deepseek-v4-pro` 请求均为 `max_tokens=384000`、`effort=low`、`stream=true`、Authorization=`[REDACTED]`。
+  - `runtime/attestations/dream-real-business-acceptance-0.1.3.json`：v2 receipt SHA-256 `2e7da1f41a41af3b229b79080085e587cdae39e664d7630ed209592ec8c73d4b`；绑定 source tree `c8d0a7ec…c87cb9` 与已执行 darwin-arm64 executable `9b109064…9d1d4`。
+  - `npm run cleanroom:build:targets && npm run cleanroom:npm:package && npm run cleanroom:npm:verify`：exit 0；4/4 targets、5/5 `0.1.3` packages verified；发布前不得覆盖 registry `0.1.2`。
+  - Dream `uv run --with pytest ...`：exit 0；67 passed、17 subtests passed；README 英/中 25 个 heading level 与关键 Runtime 规则一致。

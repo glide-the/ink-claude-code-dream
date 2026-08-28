@@ -5,7 +5,7 @@
 // [Sync] 2026-08-24: bind Dream's canonical CLI/manifest/capability contract into all five packages.
 // [Sync] 2026-08-24: make a deterministic CycloneDX SBOM part of every exact package inventory.
 // [Sync] 2026-08-24: require and embed the final Dream business-receipt digest for formal publication.
-// [Sync] 2026-08-26: package Runtime 0.1.2 with the authenticated/anonymous MCP acceptance digest.
+// [Sync] 2026-08-28: bind Runtime 0.1.3 packages to the exact real-business-tested source tree and native executable.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -73,9 +73,12 @@ async function loadBusinessAcceptance() {
     acceptance.required !== true ||
     acceptance.passed !== true ||
     acceptance.receiptSha256 !== sha256(body) ||
-    receipt.schemaVersion !== "ink-dream-real-business-acceptance/v1" ||
+    receipt.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
     receipt.subject?.runtime !== cleanroomPolicy.artifact?.name ||
     receipt.subject?.version !== policy.version ||
+    receipt.subject?.acceptedTarget !== "darwin-arm64" ||
+    !/^[a-f0-9]{64}$/.test(receipt.subject?.sourceTreeSha256 ?? "") ||
+    !/^[a-f0-9]{64}$/.test(receipt.subject?.acceptedExecutableSha256 ?? "") ||
     receipt.acceptance?.status !== "passed" ||
     receipt.privacy?.accountIdentifierIncluded !== false ||
     receipt.privacy?.oauthCredentialsIncluded !== false ||
@@ -398,6 +401,15 @@ async function stagePackages() {
       buildManifest.executable?.format !== platform.binaryFormat
     ) {
       fail(`unqualified or stale clean-room target build: ${target}`);
+    }
+    if (
+      target === businessAcceptance.receipt.subject.acceptedTarget &&
+      (
+        buildManifest.build.sourceTreeSha256 !== businessAcceptance.receipt.subject.sourceTreeSha256 ||
+        sha256(executableBody) !== businessAcceptance.receipt.subject.acceptedExecutableSha256
+      )
+    ) {
+      fail(`real-business acceptance subject drift: ${target}`);
     }
 
     const root = path.join(stageRoot, stageName(platform.package));

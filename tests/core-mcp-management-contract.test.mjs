@@ -155,7 +155,7 @@ test("provider-free candidate fixture passes colon lifecycle, isolation, and pro
     assert.equal(receipt.status, "passed");
     assert.equal(receipt.calibrationOnly, false);
     assert.equal(receipt.subject.runtime, "ink-claude-code-dream");
-    assert.equal(receipt.subject.version, "0.1.2");
+    assert.equal(receipt.subject.version, "0.1.3");
     assert.match(receipt.subject.coreBundleSha256, /^[a-f0-9]{64}$/);
     assert.equal(receipt.subject.sourceDigest, "4".repeat(64));
     assert.equal(receipt.subject.runtimeTarget, `${process.platform}-${process.arch}`);

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "ink-dream-real-business-acceptance/v2",
+  "subject": {
+    "runtime": "ink-claude-code-dream",
+    "version": "0.1.3",
+    "acceptedTarget": "darwin-arm64",
+    "sourceTreeSha256": "c8d0a7ecff51833f82d5c4c9fd1cffd7cb4a8bf8f0a8227ce85e701779c87cb9",
+    "acceptedExecutableSha256": "9b1090643050dca561a8fdc3c6ba3bd97e5ed9f542d78bb38fd89b788af9d1d4"
+  },
+  "acceptance": {
+    "date": "2026-08-28",
+    "status": "passed",
+    "mode": "existing-real-account-and-business-data",
+    "publicProductionEntrypoints": true,
+    "services": [
+      "Dream",
+      "Admin",
+      "Gateway",
+      "PostgreSQL"
+    ],
+    "modelTurns": 2,
+    "sameThreadResume": true,
+    "adminCatalogCapabilityConfirmed": true,
+    "gatewayPersistenceConfirmed": true,
+    "requestContract": {
+      "capturedRequests": 2,
+      "modelCapabilitySource": "authenticated-admin-model-catalog",
+      "maxTokens": 384000,
+      "effort": "low",
+      "stream": true,
+      "authorizationRedacted": true,
+      "requestBodyIncluded": false
+    },
+    "testReceipt": {
+      "dreamPlaywrightPassed": 1,
+      "gatewayRequestsSettled": 2,
+      "gatewayRequestsSucceeded": 2,
+      "failed": 0
+    }
+  },
+  "targetQualification": {
+    "darwin-arm64": "real-host Dream Chat, same-thread resume, Admin catalog capability, Gateway request capture, and exact native executable"
+  },
+  "privacy": {
+    "accountIdentifierIncluded": false,
+    "requestIdentifiersIncluded": false,
+    "rawBusinessLogsIncluded": false,
+    "databaseRowsIncluded": false,
+    "oauthCredentialsIncluded": false,
+    "callbacksIncluded": false,
+    "transcriptsIncluded": false
+  },
+  "authorization": {
+    "explicitPublicNpmReleaseApproved": true,
+    "platformPackagesBeforeSelectorRequired": true,
+    "pypiPublicationApproved": false
+  }
+}

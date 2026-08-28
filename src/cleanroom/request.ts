@@ -1,7 +1,7 @@
-// [Input] Runtime model, explicitly owned CLI/settings/environment effort, model output-token environment, and Messages payload parts.
+// [Input] Runtime model, explicitly owned effort/output overrides, optional server-owned model capability, and Messages payload parts.
 // [Output] One validated immutable request-parameter snapshot and the final Anthropic Messages wire object.
 // [Pos] Authoritative clean-room Messages request boundary shared by every provider turn.
-// [Sync] 2026-08-28: restore model-bounded max_tokens and conditional output_config.effort projection.
+// [Sync] 2026-08-28: let authenticated opaque-model capability replace the unknown 32k fallback without model-ID hardcoding.
 
 export const EFFORT_LEVELS = [
   "low",
@@ -43,6 +43,8 @@ interface BuildMessageRequestInput {
 
 const DEFAULT_OUTPUT_TOKENS = 32_000;
 const DEFAULT_OUTPUT_TOKENS_UPPER_LIMIT = 64_000;
+export const MODEL_MAX_OUTPUT_TOKENS_ENV_NAME =
+  "INK_CLAUDE_CODE_MODEL_MAX_OUTPUT_TOKENS";
 
 function isEffortLevel(value: string): value is EffortLevel {
   return (EFFORT_LEVELS as readonly string[]).includes(value);
@@ -130,6 +132,20 @@ export function getModelOutputTokenCapability(
   };
 }
 
+function modelOutputTokenCapabilityFromEnvironment(
+  raw: string | undefined,
+): ModelOutputTokenCapability | undefined {
+  if (raw === undefined || raw === "") return undefined;
+  if (!/^[0-9]+$/.test(raw)) {
+    throw new Error(`${MODEL_MAX_OUTPUT_TOKENS_ENV_NAME} must be a positive integer`);
+  }
+  const parsed = Number(raw);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new Error(`${MODEL_MAX_OUTPUT_TOKENS_ENV_NAME} must be a positive integer`);
+  }
+  return { default: parsed, upperLimit: parsed };
+}
+
 function projectEffortForModel(
   model: string,
   effort: EffortLevel | undefined,
@@ -189,7 +205,9 @@ export function resolveMessageRequestParameters(
   const configuredEffort = environmentEffort === null
     ? undefined
     : environmentEffort ?? input.cliEffort ?? input.settingsEffort;
-  const capability = getModelOutputTokenCapability(input.model);
+  const capability = modelOutputTokenCapabilityFromEnvironment(
+    input.environment[MODEL_MAX_OUTPUT_TOKENS_ENV_NAME],
+  ) ?? getModelOutputTokenCapability(input.model);
   return Object.freeze({
     effort: projectEffortForModel(input.model, configuredEffort),
     maxTokens: boundedMaxTokens(

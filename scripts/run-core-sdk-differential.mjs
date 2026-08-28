@@ -88,7 +88,7 @@ async function qualificationSubject() {
   const bundle = await readFile(path.resolve(coreBundlePath));
   return {
     runtime: "ink-claude-code-dream",
-    version: "0.1.2",
+    version: "0.1.3",
     coreBundleSha256: createHash("sha256").update(bundle).digest("hex"),
     sourceDigest: coreReceipt.sourceDigest.digest,
     runtimeTarget: coreReceipt.runtimeTarget,

@@ -2,7 +2,7 @@
 // [Output] Fail on clean-room/legacy contract drift, missing headers, restricted material, secrets, or unsafe package scripts.
 // [Pos] Read-only clean-room lint gate; it never reads user configuration or external Runtime data.
 // [Sync] 2026-08-24: verify the final Dream receipt digest and authorized clean-room publication gate.
-// [Sync] 2026-08-26: validate Runtime 0.1.2, SDK 0.2.144, and the new receipt path.
+// [Sync] 2026-08-28: validate Runtime 0.1.3, SDK 0.2.144, and the exact accepted source/executable receipt binding.
 
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
@@ -14,7 +14,7 @@ const packageJson = JSON.parse(await readFile(resolve(root, "package.json"), "ut
 if (packageJson.name !== "ink-claude-code-dream") {
   throw new Error("package name must be the unscoped Runtime distribution identity");
 }
-if (packageJson.bin?.["ink-claude-code-dream"] !== "dist/release/ink-claude-code-dream-0.1.2/bin/ink-claude-code-dream") {
+if (packageJson.bin?.["ink-claude-code-dream"] !== "dist/release/ink-claude-code-dream-0.1.3/bin/ink-claude-code-dream") {
   throw new Error("console bin must expose the extensionless Runtime entrypoint");
 }
 if (packageJson.private !== true || packageJson.license !== "MIT") {
@@ -42,7 +42,7 @@ const jsonFiles = [
   "runtime/cleanroom-npm-policy.json",
   "runtime/cleanroom-sandbox-policy.json",
   "runtime/cleanroom-dependency-licenses.json",
-  "runtime/attestations/dream-real-business-acceptance-0.1.2.json",
+  "runtime/attestations/dream-real-business-acceptance-0.1.3.json",
 ];
 const parsed = new Map();
 for (const path of jsonFiles) {
@@ -89,7 +89,7 @@ if (
   throw new Error("pruning decision must fail closed until authorization and build inputs exist");
 }
 const cleanroom = parsed.get("runtime/cleanroom-artifact-policy.json");
-const businessReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.2.json";
+const businessReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.3.json";
 const businessReceiptBody = await readFile(resolve(root, businessReceiptPath));
 const businessReceipt = parsed.get(businessReceiptPath);
 const businessReceiptSha256 = createHash("sha256").update(businessReceiptBody).digest("hex");
@@ -111,9 +111,12 @@ if (
   Object.keys(targetQualification ?? {}).sort().join(",") !==
     "darwin-arm64,darwin-x64,linux-arm64,linux-x64" ||
   Object.values(targetQualification ?? {}).some(value => value !== true) ||
-  businessReceipt?.schemaVersion !== "ink-dream-real-business-acceptance/v1" ||
+  businessReceipt?.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
   businessReceipt?.subject?.runtime !== "ink-claude-code-dream" ||
   businessReceipt?.subject?.version !== cleanroom.artifact?.version ||
+  businessReceipt?.subject?.acceptedTarget !== "darwin-arm64" ||
+  !/^[a-f0-9]{64}$/.test(businessReceipt?.subject?.sourceTreeSha256 ?? "") ||
+  !/^[a-f0-9]{64}$/.test(businessReceipt?.subject?.acceptedExecutableSha256 ?? "") ||
   businessReceipt?.acceptance?.status !== "passed" ||
   businessReceipt?.acceptance?.publicProductionEntrypoints !== true ||
   businessReceipt?.privacy?.accountIdentifierIncluded !== false ||
