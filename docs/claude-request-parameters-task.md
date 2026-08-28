@@ -1,7 +1,7 @@
 <!-- [Input] 用户关于 Messages max_tokens/output_config.effort 缺失的原始要求、只读历史任务 ID、CLI 仓库状态与验证回执。 -->
 <!-- [Output] 一个限定在 clean-room CLI 内的 Codex 实现任务记录。 -->
 <!-- [Pos] CLI 请求参数修复、发布和 Dream 验收任务台账；不授权修改 Dream/Admin/Gateway 业务语义。 -->
-<!-- [Sync] 2026-08-28: 记录 main 合并、0.1.2 五包发布、公共 registry 回验和 Dream 真实链路验收。 -->
+<!-- [Sync] 2026-08-28: 重新打开任务，修复认证目录 max_output_tokens 未到达 opaque Gateway alias 请求的问题。 -->
 
 # Claude Messages 请求参数恢复任务
 
@@ -65,3 +65,18 @@
 ## 回滚
 
 `0.1.2` 已发布且 npm 版本不可覆盖。代码回滚应以新的前向版本恢复上一条已验证策略，或让 Dream 的显式绝对 `CLAUDE_CODE_CLI_PATH` 指回官方 CLI；不得 unpublish、不得覆盖 Git 历史，也不得改动 Dream 状态机。发布使用的 npm granular token 只拥有五个 Runtime 包的读写权限、无 organization 权限，保存在 GitHub `npm` Environment 的 `NPM_TOKEN`，按用户要求保留；本地明文中转副本已删除。
+
+## 2026-08-28 opaque Gateway alias 跟进
+
+- 触发证据：当前已安装 Runtime 为 `0.1.2`；只读业务记录显示已选 Gateway alias 的 Admin `max_output_tokens` 与最终请求 `max_tokens=32000` 不一致，同时 `effort=low`、`stream=true` 正常。
+- 直接原因：Dream 选模已保留完整 `GatewayModel`，但 `claude_code_runtime_env()` 只投影 compact/context；CLI 对无法按名称识别的 alias 按上游 unknown 规则使用 32,000/64,000。
+- 最小边界：CLI 新增通用、vendor-scoped、server-owned 模型 max-output capability；Dream 仅负责把 Admin 已有目录字段投影到该 CLI capability 并阻断 ambient/user 覆盖。Admin、Gateway、schema、状态机和 SSE 不变。
+- 当前状态：实现、provider-free 最终 HTTP、Dream focused tests、strict typecheck、CLI lint/full tests 和四平台 package verify 已通过。修复尚未发布：`0.1.2` 不可覆盖，新 `0.1.3` 的正式打包门要求该版本先取得正常 Dream/Admin/Gateway/PostgreSQL 真实业务回执；当前 Dream 为用户通过 VS Code debugpy 启动的无热重载进程，未获单独重启授权，因此没有伪造回执、合并、发布或热切换服务。
+- 设计稿：`docs/design/claude-request-parameter-recovery.md` 第 12 节。
+- 验证结果：
+  - `node --test --test-concurrency=1 tests/cleanroom-request-parameters.test.mjs tests/cleanroom-runtime-integration.test.mjs tests/cleanroom-tool-loop.test.mjs`：exit 0；11/11 passed。
+  - strict TypeScript 5.9.2 typecheck（request/argv/settings）：exit 0。
+  - `npm run lint`：exit 0；238 files / 15 JSON。
+  - `npm test`：exit 0；118 tests，114 passed、4 个外部条件 fixture skipped、0 failed。
+  - `npm run cleanroom:build:targets && npm run cleanroom:npm:package && npm run cleanroom:npm:verify`：exit 0；4/4 targets、5/5 packages verified；仅为本地未发布候选，不得覆盖 registry `0.1.2`。
+  - Dream `uv run --with pytest ...`：exit 0；67 passed、17 subtests passed；README 英/中 25 个 heading level 与关键 Runtime 规则一致。

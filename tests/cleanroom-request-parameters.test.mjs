@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // [Input] Compiled clean-room CLI and a provider-free local Anthropic Messages SSE transport.
-// [Output] Golden final-HTTP-body evidence for effort/max_tokens parsing, bounds, omission, streaming, and tool follow-ups.
+// [Output] Golden final-HTTP-body evidence for effort/max_tokens parsing, opaque-model capability, bounds, omission, streaming, and tool follow-ups.
 // [Pos] Focused request-serialization regression gate; it never calls a real model or records credentials.
-// [Sync] 2026-08-28: cover restored request parameters at the compiled transport boundary.
+// [Sync] 2026-08-28: prove a server-owned opaque-model capability reaches every compiled transport request.
 
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -145,6 +145,7 @@ function isolatedEnvironment(baseURL, overrides = {}) {
     "ANTHROPIC_MAX_TOKENS",
     "CLAUDE_CODE_EFFORT_LEVEL",
     "CLAUDE_CODE_MAX_OUTPUT_TOKENS",
+    "INK_CLAUDE_CODE_MODEL_MAX_OUTPUT_TOKENS",
     "CLAUDE_CONFIG_DIR",
     "CLAUDE_CODE_TMPDIR",
   ]) {
@@ -225,13 +226,13 @@ async function runTurn(fixture, options = {}) {
   }
 }
 
-function runInvalid(fixture, args) {
+function runInvalid(fixture, args, environment = {}) {
   const result = spawnSync(
     executable,
     ["--output-format", "stream-json", "--input-format", "stream-json", ...args],
     {
       cwd: repositoryRoot,
-      env: isolatedEnvironment(fixture.baseURL),
+      env: isolatedEnvironment(fixture.baseURL, environment),
       encoding: "utf8",
       input: "",
       timeout: 7_500,
@@ -368,17 +369,66 @@ test("compiled transport computes and bounds max_tokens by model capability", as
   assert.equal(legacyAmbientIgnored.max_tokens, 32_000);
 });
 
+test("compiled transport uses explicit opaque-model capability and bounds overrides", async (t) => {
+  const fixture = await startTransportFixture();
+  t.after(() => fixture.close());
+
+  const capabilityEnvironment = {
+    INK_CLAUDE_CODE_MODEL_MAX_OUTPUT_TOKENS: "384000",
+  };
+  const [configured] = await runTurn(fixture, {
+    model: "gateway-private-alias",
+    environment: capabilityEnvironment,
+  });
+  assert.equal(configured.max_tokens, 384_000);
+  assert.equal(configured.stream, true);
+
+  const [lowerOverride] = await runTurn(fixture, {
+    model: "gateway-private-alias",
+    environment: {
+      ...capabilityEnvironment,
+      CLAUDE_CODE_MAX_OUTPUT_TOKENS: "120000",
+    },
+  });
+  assert.equal(lowerOverride.max_tokens, 120_000);
+
+  const [boundedOverride] = await runTurn(fixture, {
+    model: "gateway-private-alias",
+    environment: {
+      ...capabilityEnvironment,
+      CLAUDE_CODE_MAX_OUTPUT_TOKENS: "999999",
+    },
+  });
+  assert.equal(boundedOverride.max_tokens, 384_000);
+
+  const before = fixture.requests.length;
+  for (const invalidCapability of [
+    "0",
+    "-1",
+    "384000.5",
+    "not-a-number",
+    "9007199254740992",
+  ]) {
+    const result = runInvalid(fixture, [], {
+      INK_CLAUDE_CODE_MODEL_MAX_OUTPUT_TOKENS: invalidCapability,
+    });
+    assert.match(result.stderr, /Runtime initialization or execution failed/);
+    assert.equal(result.stderr.includes(invalidCapability), false);
+  }
+  assert.equal(fixture.requests.length, before);
+});
+
 test("tool follow-up reuses the same final request policy", async (t) => {
   const fixture = await startTransportFixture();
   t.after(() => fixture.close());
   const requests = await runTurn(fixture, {
     args: ["--effort", "high"],
-    environment: { CLAUDE_CODE_MAX_OUTPUT_TOKENS: "12000" },
+    environment: { INK_CLAUDE_CODE_MODEL_MAX_OUTPUT_TOKENS: "384000" },
     prompt: "TOOL_FOLLOW_UP",
   });
   assert.equal(requests.length, 2);
   for (const payload of requests) {
-    assert.equal(payload.max_tokens, 12_000);
+    assert.equal(payload.max_tokens, 384_000);
     assert.deepEqual(payload.output_config, { effort: "high" });
     assert.equal(payload.stream, true);
   }
