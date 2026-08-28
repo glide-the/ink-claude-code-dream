@@ -1,38 +1,26 @@
-// [Input] Consume opaque Claude CLI argv/stdio plus the server-owned runtime environment and release manifest.
-// [Output] Validate the pinned core/TMPDIR boundary, then transparently supervise the official CLI process group.
-// [Pos] Lazy-loaded execution boundary; no Claude protocol, MCP payload, transcript, setting, or secret is parsed here.
-// [Sync] 2026-08-24: align the SDK probe comment with Dream's locked 0.2.144 distribution.
-// [Sync] 2026-08-26: move the immutable release path to Runtime 0.1.3.
-
+// src/launcher.ts
 import { constants as fsConstants } from "node:fs";
 import { access, lstat, realpath } from "node:fs/promises";
 import { basename, delimiter, isAbsolute, join, resolve } from "node:path";
 import { spawn } from "node:child_process";
-import type { LaunchResult, ReleaseManifest } from "./contracts.js";
-
-const CONTROL_ENV_KEYS = [
+var CONTROL_ENV_KEYS = [
   "INK_CLAUDE_CODE_EXECUTABLE",
   "INK_CLAUDE_RUNTIME_MANIFEST_PATH",
   "INK_CLAUDE_RUNTIME_WORKSPACE_ROOT",
   "INK_CLAUDE_RUNTIME_TIMEOUT_MS",
   "INK_CLAUDE_RUNTIME_KILL_GRACE_MS",
   "INK_CLAUDE_BARE_PROFILE",
-  "CLAUDE_CODE_CLI_PATH",
-] as const;
-const BARE_PROFILE = "dream-explicit-v1";
-const MAX_VERSION_OUTPUT_BYTES = 4096;
-const SIGNAL_NUMBERS: Partial<Record<NodeJS.Signals, number>> = {
+  "CLAUDE_CODE_CLI_PATH"
+];
+var BARE_PROFILE = "dream-explicit-v1";
+var MAX_VERSION_OUTPUT_BYTES = 4096;
+var SIGNAL_NUMBERS = {
   SIGHUP: 1,
   SIGINT: 2,
   SIGQUIT: 3,
-  SIGTERM: 15,
+  SIGTERM: 15
 };
-
-function parseMilliseconds(
-  value: string | undefined,
-  fallback: number,
-  maximum: number,
-): number {
+function parseMilliseconds(value, fallback, maximum) {
   if (!value) return fallback;
   if (!/^\d+$/.test(value)) throw new Error("runtime timeout value is invalid");
   const parsed = Number(value);
@@ -41,14 +29,8 @@ function parseMilliseconds(
   }
   return parsed;
 }
-
-async function executableFromPath(command: string): Promise<string | null> {
-  const candidates = command.includes("/")
-    ? [resolve(command)]
-    : (process.env.PATH ?? "")
-        .split(delimiter)
-        .filter(Boolean)
-        .map((directory) => join(directory, command));
+async function executableFromPath(command) {
+  const candidates = command.includes("/") ? [resolve(command)] : (process.env.PATH ?? "").split(delimiter).filter(Boolean).map((directory) => join(directory, command));
   const launcherPath = await realpath(process.argv[1]);
   for (const candidate of candidates) {
     try {
@@ -56,13 +38,11 @@ async function executableFromPath(command: string): Promise<string | null> {
       const resolved = await realpath(candidate);
       if (resolved !== launcherPath) return resolved;
     } catch {
-      // Continue searching PATH; missing and non-executable candidates are normal.
     }
   }
   return null;
 }
-
-export async function resolveCoreExecutable(): Promise<string> {
+async function resolveCoreExecutable() {
   const configured = process.env.INK_CLAUDE_CODE_EXECUTABLE?.trim();
   if (configured && !isAbsolute(configured)) {
     throw new Error("INK_CLAUDE_CODE_EXECUTABLE must be an absolute path");
@@ -73,15 +53,13 @@ export async function resolveCoreExecutable(): Promise<string> {
   }
   return executable;
 }
-
-function hasFlag(args: string[], names: string[]): boolean {
-  return args.some((argument) =>
-    names.some((name) => argument === name || argument.startsWith(`${name}=`)),
+function hasFlag(args, names) {
+  return args.some(
+    (argument) => names.some((name) => argument === name || argument.startsWith(`${name}=`))
   );
 }
-
-function flagValues(args: string[], name: string): string[] {
-  const values: string[] = [];
+function flagValues(args, name) {
+  const values = [];
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === name) {
@@ -99,12 +77,7 @@ function flagValues(args: string[], name: string): string[] {
   }
   return values;
 }
-
-async function validateExplicitCarrier(
-  raw: string,
-  label: string,
-  allowDirectory: boolean,
-): Promise<void> {
+async function validateExplicitCarrier(raw, label, allowDirectory) {
   if (!isAbsolute(raw)) throw new Error(`${label} must use an absolute path`);
   const info = await lstat(raw);
   if (info.isSymbolicLink()) throw new Error(`${label} must not be a symlink`);
@@ -113,8 +86,7 @@ async function validateExplicitCarrier(
   }
   await access(raw, fsConstants.R_OK);
 }
-
-async function validateBareProfile(args: string[]): Promise<void> {
+async function validateBareProfile(args) {
   const requested = hasFlag(args, ["--bare"]);
   const profile = process.env.INK_CLAUDE_BARE_PROFILE?.trim();
   if (!requested && !profile) return;
@@ -151,15 +123,14 @@ async function validateBareProfile(args: string[]): Promise<void> {
   if (!workspace || !isAbsolute(workspace)) {
     throw new Error("explicit bare profile requires an absolute workspace root");
   }
-  if ((await realpath(workspace)) !== (await realpath(process.cwd()))) {
+  if (await realpath(workspace) !== await realpath(process.cwd())) {
     throw new Error("explicit bare profile requires cwd to equal the declared workspace");
   }
   for (const resumeFlag of ["--resume", "--session-id"]) {
     if (hasFlag(args, [resumeFlag])) flagValues(args, resumeFlag);
   }
 }
-
-async function validateTmpdir(): Promise<string> {
+async function validateTmpdir() {
   const raw = process.env.CLAUDE_CODE_TMPDIR?.trim();
   if (!raw || !isAbsolute(raw)) {
     throw new Error("CLAUDE_CODE_TMPDIR must be an absolute server-owned path");
@@ -171,7 +142,7 @@ async function validateTmpdir(): Promise<string> {
   if (info.isSymbolicLink() || !info.isDirectory()) {
     throw new Error("CLAUDE_CODE_TMPDIR must be a real directory, not a symlink");
   }
-  if ((info.mode & 0o077) !== 0) {
+  if ((info.mode & 63) !== 0) {
     throw new Error("CLAUDE_CODE_TMPDIR permissions must be 0700 or stricter");
   }
   const resolvedTmpdir = await realpath(raw);
@@ -187,23 +158,21 @@ async function validateTmpdir(): Promise<string> {
   }
   return resolvedTmpdir;
 }
-
-function childEnvironment(): NodeJS.ProcessEnv {
+function childEnvironment() {
   const environment = { ...process.env };
   for (const key of CONTROL_ENV_KEYS) delete environment[key];
   return environment;
 }
-
-async function inspectCoreVersion(executable: string): Promise<string> {
-  return await new Promise<string>((resolveVersion, reject) => {
+async function inspectCoreVersion(executable) {
+  return await new Promise((resolveVersion, reject) => {
     const child = spawn(executable, ["--version"], {
       env: childEnvironment(),
       stdio: ["ignore", "pipe", "pipe"],
-      windowsHide: true,
+      windowsHide: true
     });
-    const chunks: Buffer[] = [];
+    const chunks = [];
     let total = 0;
-    const collect = (chunk: Buffer | string) => {
+    const collect = (chunk) => {
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       total += buffer.length;
       if (total <= MAX_VERSION_OUTPUT_BYTES) chunks.push(buffer);
@@ -216,9 +185,7 @@ async function inspectCoreVersion(executable: string): Promise<string> {
         reject(new Error("Claude Code version probe failed"));
         return;
       }
-      const match = Buffer.concat(chunks)
-        .toString("utf8")
-        .match(/\b(\d+\.\d+\.\d+)\b/);
+      const match = Buffer.concat(chunks).toString("utf8").match(/\b(\d+\.\d+\.\d+)\b/);
       if (!match) {
         reject(new Error("Claude Code version probe returned no semantic version"));
         return;
@@ -227,83 +194,62 @@ async function inspectCoreVersion(executable: string): Promise<string> {
     });
   });
 }
-
-async function probeAndVerifyCoreVersion(
-  executable: string,
-  manifest: ReleaseManifest,
-): Promise<string> {
+async function probeAndVerifyCoreVersion(executable, manifest) {
   const version = await inspectCoreVersion(executable);
   if (version !== manifest.core.version) {
     throw new Error(
-      `Claude Code ${version} is incompatible; expected ${manifest.core.version}`,
+      `Claude Code ${version} is incompatible; expected ${manifest.core.version}`
     );
   }
   return version;
 }
-
-function signalProcessGroup(pid: number | undefined, signal: NodeJS.Signals): void {
+function signalProcessGroup(pid, signal) {
   if (!pid) return;
   try {
     if (process.platform === "win32") process.kill(pid, signal);
     else process.kill(-pid, signal);
   } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
+    const code = error.code;
     if (code !== "ESRCH") throw error;
   }
 }
-
-export async function launchOfficialCli(args: string[]): Promise<LaunchResult> {
+async function launchOfficialCli(args) {
   const executable = await resolveCoreExecutable();
-  // Dream's locked ink-claude-dream-agent-sdk 0.2.144 probes cli_path with
-  // `-v` before its stream-json launch. Do not add another large-core probe here. Deployment must run
-  // --runtime-doctor. Dream's `mcp ...` management calls and help are not
-  // thread launches and therefore do not require a thread-local TMPDIR.
-  const managementOrHelp =
-    args[0] === "mcp" ||
-    args[0] === "auth" ||
-    args[0] === "setup-token" ||
-    (args.length === 1 &&
-      (args[0] === "--help" ||
-        args[0] === "-h" ||
-        args[0] === "--version" ||
-        args[0] === "-v"));
+  const managementOrHelp = args[0] === "mcp" || args[0] === "auth" || args[0] === "setup-token" || args.length === 1 && (args[0] === "--help" || args[0] === "-h" || args[0] === "--version" || args[0] === "-v");
   if (!managementOrHelp) {
     if (process.env.CLAUDE_AGENT_SDK_SKIP_VERSION_CHECK) {
       throw new Error(
-        "CLAUDE_AGENT_SDK_SKIP_VERSION_CHECK is forbidden for supervised launches",
+        "CLAUDE_AGENT_SDK_SKIP_VERSION_CHECK is forbidden for supervised launches"
       );
     }
     await validateBareProfile(args);
     await validateTmpdir();
   }
-
   const timeoutMs = parseMilliseconds(
     process.env.INK_CLAUDE_RUNTIME_TIMEOUT_MS,
     0,
-    24 * 60 * 60 * 1000,
+    24 * 60 * 60 * 1e3
   );
   const killGraceMs = parseMilliseconds(
     process.env.INK_CLAUDE_RUNTIME_KILL_GRACE_MS,
-    1000,
-    30_000,
+    1e3,
+    3e4
   );
   const child = spawn(executable, args, {
     cwd: process.cwd(),
     env: childEnvironment(),
     stdio: "inherit",
     detached: process.platform !== "win32",
-    windowsHide: true,
+    windowsHide: true
   });
-
-  return await new Promise<LaunchResult>((resolveLaunch, reject) => {
+  return await new Promise((resolveLaunch, reject) => {
     let timedOut = false;
-    let terminationSignal: NodeJS.Signals | null = null;
-    let forceTimer: NodeJS.Timeout | undefined;
-    let timeoutTimer: NodeJS.Timeout | undefined;
-    let closed: { code: number | null; signal: NodeJS.Signals | null } | null = null;
-
+    let terminationSignal = null;
+    let forceTimer;
+    let timeoutTimer;
+    let closed = null;
     const cleanupHandlers = () => {
-      for (const signal of Object.keys(SIGNAL_NUMBERS) as NodeJS.Signals[]) {
+      for (const signal of Object.keys(SIGNAL_NUMBERS)) {
         process.removeListener(signal, signalHandlers[signal]);
       }
       if (timeoutTimer) clearTimeout(timeoutTimer);
@@ -315,10 +261,10 @@ export async function launchOfficialCli(args: string[]): Promise<LaunchResult> {
       resolveLaunch({
         exitCode: timedOut ? 124 : closed.code,
         signal: timedOut ? null : terminationSignal ?? closed.signal,
-        timedOut,
+        timedOut
       });
     };
-    const beginTermination = (signal: NodeJS.Signals, timeout: boolean) => {
+    const beginTermination = (signal, timeout) => {
       if (terminationSignal) return;
       terminationSignal = signal;
       timedOut = timeout;
@@ -330,13 +276,12 @@ export async function launchOfficialCli(args: string[]): Promise<LaunchResult> {
       forceTimer.unref();
     };
     const signalHandlers = Object.fromEntries(
-      (Object.keys(SIGNAL_NUMBERS) as NodeJS.Signals[]).map((signal) => [
+      Object.keys(SIGNAL_NUMBERS).map((signal) => [
         signal,
-        () => beginTermination(signal, false),
-      ]),
-    ) as Record<NodeJS.Signals, () => void>;
-
-    for (const signal of Object.keys(SIGNAL_NUMBERS) as NodeJS.Signals[]) {
+        () => beginTermination(signal, false)
+      ])
+    );
+    for (const signal of Object.keys(SIGNAL_NUMBERS)) {
       process.once(signal, signalHandlers[signal]);
     }
     if (timeoutMs > 0) {
@@ -351,20 +296,17 @@ export async function launchOfficialCli(args: string[]): Promise<LaunchResult> {
       closed = { code, signal };
       if (!terminationSignal) finish();
       else {
-        // The leader exited before grace elapsed. Kill any remaining process-
-        // group descendants immediately, clear the grace timer, and finish.
         signalProcessGroup(child.pid, "SIGKILL");
         finish();
       }
     });
   });
 }
-
-export async function doctor(): Promise<Record<string, unknown>> {
-  const { readManifestEnvelope } = await import("./manifest.js");
+async function doctor() {
+  const { readManifestEnvelope } = await import("./manifest-UGVFJI63.mjs");
   const [{ manifest, sha256 }, executable] = await Promise.all([
     readManifestEnvelope(),
-    resolveCoreExecutable(),
+    resolveCoreExecutable()
   ]);
   const version = await probeAndVerifyCoreVersion(executable, manifest);
   const tmpdir = process.env.CLAUDE_CODE_TMPDIR ? await validateTmpdir() : null;
@@ -374,19 +316,24 @@ export async function doctor(): Promise<Record<string, unknown>> {
       name: manifest.runtime.name,
       version: manifest.runtime.version,
       cliVersion: manifest.core.version,
-      integration: manifest.runtime.integration,
+      integration: manifest.runtime.integration
     },
     manifestSha256: sha256,
     node: process.versions.node,
     platform: `${process.platform}-${process.arch}`,
     claudeCode: {
       executable,
-      version,
+      version
     },
-    tmpdir: tmpdir ? { configured: true, valid: true } : { configured: false },
+    tmpdir: tmpdir ? { configured: true, valid: true } : { configured: false }
   };
 }
-
-export function conventionalSignalExitCode(signal: NodeJS.Signals): number {
+function conventionalSignalExitCode(signal) {
   return 128 + (SIGNAL_NUMBERS[signal] ?? 0);
 }
+export {
+  conventionalSignalExitCode,
+  doctor,
+  launchOfficialCli,
+  resolveCoreExecutable
+};

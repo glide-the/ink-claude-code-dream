@@ -4,7 +4,7 @@
 // [Pos] Immutable five-package verifier; it does not publish, execute foreign binaries, or inspect restored source.
 // [Sync] 2026-08-24: verify Dream's canonical CLI, release manifest, capabilities, and digest bindings.
 // [Sync] 2026-08-24: verify a deterministic dependency-complete CycloneDX SBOM in every tarball.
-// [Sync] 2026-08-24: require the checked Dream receipt digest in every formal publication attestation.
+// [Sync] 2026-08-28: require the checked Dream receipt digest and exact accepted native executable in every formal release set.
 
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
@@ -51,9 +51,12 @@ const businessReceiptSha256 = sha256(businessReceiptBody);
 if (
   cleanroomPolicy.publicationGate?.businessAcceptance?.passed !== true ||
   cleanroomPolicy.publicationGate?.businessAcceptance?.receiptSha256 !== businessReceiptSha256 ||
-  businessReceipt.schemaVersion !== "ink-dream-real-business-acceptance/v1" ||
+  businessReceipt.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
   businessReceipt.subject?.runtime !== cleanroomPolicy.artifact?.name ||
   businessReceipt.subject?.version !== policy.version ||
+  businessReceipt.subject?.acceptedTarget !== "darwin-arm64" ||
+  !/^[a-f0-9]{64}$/.test(businessReceipt.subject?.sourceTreeSha256 ?? "") ||
+  !/^[a-f0-9]{64}$/.test(businessReceipt.subject?.acceptedExecutableSha256 ?? "") ||
   businessReceipt.acceptance?.status !== "passed" ||
   businessReceipt.privacy?.accountIdentifierIncluded !== false ||
   businessReceipt.privacy?.rawBusinessLogsIncluded !== false ||
@@ -415,6 +418,9 @@ for (const tarball of tarballs) {
     manifest.runtime?.binaryFormat !== platform.binaryFormat ||
     manifest.runtime?.bytes !== executable.byteLength ||
     manifest.runtime?.sha256 !== digest ||
+    (target === businessReceipt.subject.acceptedTarget &&
+      (manifest.runtime?.sourceTreeSha256 !== businessReceipt.subject.sourceTreeSha256 ||
+        digest !== businessReceipt.subject.acceptedExecutableSha256)) ||
     manifest.runtime?.executable !== executablePath ||
     manifest.runtime?.sourcemap !== "none" ||
     format !== platform.binaryFormat ||

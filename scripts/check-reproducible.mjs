@@ -8,9 +8,9 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 
 const environment = { ...process.env, SOURCE_DATE_EPOCH: "1787443200" };
-const archive = resolve("dist/ink-claude-code-dream-0.1.2.tar.gz");
+const archive = resolve("dist/ink-claude-code-dream-0.1.3.tar.gz");
 const checksums = resolve(
-  "dist/release/ink-claude-code-dream-0.1.2/manifest/checksums.sha256",
+  "dist/release/ink-claude-code-dream-0.1.3/manifest/checksums.sha256",
 );
 
 function command(executable, args) {

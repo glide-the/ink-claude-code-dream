@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "claudeCodeVersion": "2.1.241",
+  "targets": {
+    "linux-x64-gnu": {
+      "package": "@anthropic-ai/claude-code-linux-x64",
+      "version": "2.1.241",
+      "integrity": "sha512-yHcPvq6iSblC7Mj05yjWBJOfSC3scyyEYazdX/QRUmXmqYXc1hh8LGZaaZPGv+UFXOJZhpPnNCbyVLdMLFCr4Q==",
+      "shasum": "7bbe10bf190a3a3fdc8463c253af2a7dd2ce936e",
+      "unpackedSize": 342637434,
+      "libc": "glibc"
+    },
+    "linux-arm64-gnu": {
+      "package": "@anthropic-ai/claude-code-linux-arm64",
+      "version": "2.1.241",
+      "integrity": "sha512-tHsJhjwcoFyKTCQfYCclKjLtbnbbGKvcrzxUhMb6NDlPw9RrawmjSWUAdla7PtEVPaJsGkjGo4O2MQTlYIT+PA==",
+      "shasum": "5ae8ad90176cfb17383dc8efe3c74fb1c6a3743c",
+      "unpackedSize": 339794746,
+      "libc": "glibc"
+    }
+  },
+  "unsupported": [
+    {
+      "target": "linux-*-musl",
+      "reason": "Dream production uses Debian/glibc; musl is intentionally fail-closed until separately verified."
+    }
+  ]
+}

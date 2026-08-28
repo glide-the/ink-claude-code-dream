@@ -458,7 +458,7 @@ export class CleanroomProtocol {
     const mcpRegistry = await initializeStage("mcp", async () => {
       const registry = await createMcpRegistryFromArgv(argv, {
         clientName: "ink-claude-code-dream",
-        clientVersion: "0.1.2",
+        clientVersion: "0.1.3",
         cwd,
         ...(oauthConfigDir
           ? {

@@ -224,3 +224,16 @@ sequenceDiagram
 | 是否复用统一请求构造器？ | 是，最终 HTTP body 仍只有一个 builder。 |
 | 是否修改 Admin/Gateway/schema/状态机/SSE？ | 否。 |
 | 是否能自动化证明？ | 是，compiled HTTP fixture 断言 opaque alias 的 capability/default/bounds/invalid；Dream focused tests 断言目录投影、所有权和 parent scrub。 |
+
+### 12.7 真实验收与发布绑定
+
+2026-08-28 使用既有真实账户、正常 Dream/Admin/Gateway/PostgreSQL 和精确
+darwin-arm64 `0.1.3` 候选完成两轮可见 Chat/resume。Admin 模型目录中的
+`deepseek-v4-pro.max_output_tokens=384000` 经 Dream composition 投影后，两条 Gateway
+请求均以 `max_tokens=384000`、`output_config.effort=low`、`stream=true` settled；
+Authorization 保持 `[REDACTED]`，回执不包含账户、正文、数据库行或 transcript。
+
+发布回执升级为 `ink-dream-real-business-acceptance/v2`，直接绑定真实执行的 clean-room
+source-tree digest 与 native executable digest。五包 materializer 必须证明 darwin-arm64
+package 中的 source/executable 与回执完全一致，正式 package 再绑定回执 digest。这样既防止
+验收后二进制漂移，也避免用尚未生成的最终 tarball 反向定义验收对象。

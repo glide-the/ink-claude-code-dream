@@ -21,12 +21,12 @@ from claude_agent_sdk._internal.sdk_mcp_bridge import SdkMcpBridge
 INITIALIZE = {
     "protocolVersion": "2025-06-18",
     "capabilities": {},
-    "clientInfo": {"name": "ink-runtime-matrix", "version": "0.1.2"},
+    "clientInfo": {"name": "ink-runtime-matrix", "version": "0.1.3"},
 }
 
 
 def server() -> Server:
-    instance = Server("ink-matrix", version="0.1.2")
+    instance = Server("ink-matrix", version="0.1.3")
     tools = [
         mcp.types.Tool.model_validate(
             {

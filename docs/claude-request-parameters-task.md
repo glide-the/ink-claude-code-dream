@@ -13,9 +13,10 @@
 
 - 负责人：Codex Goal `01a046e3-1ccf-7d42-840d-19ef033a91f2`
 - CLI 仓库绝对路径：`/Users/dmeck/project/ink-claude-code-dream`
-- 实现分支：`codex/claude-request-fields`；已通过 PR #13 合并到 `main`
-- main 合并提交：`c3e4d4e2f74960c75b42b1cd48adedf90345a10b`
-- 当前 CLI 包版本：`ink-claude-code-dream@0.1.2`
+- 基础实现分支：`codex/claude-request-fields`；已通过 PR #13 合并到 `main`
+- opaque capability 跟进分支：`codex/opaque-model-max-output`；Draft PR #15
+- 基础 main 合并提交：`c3e4d4e2f74960c75b42b1cd48adedf90345a10b`
+- 当前候选 CLI 包版本：`ink-claude-code-dream@0.1.3`
 - 兼容版本标识：Claude Code `2.1.241`
 - 构建入口：`src/cleanroom/cli.ts`，由 Bun `1.4.0` 生成 `dist/cleanroom/claude` 和四平台 npm 候选产物
 - 文件所有权：`src/cleanroom/request.ts`、`src/cleanroom/argv.ts`、`src/cleanroom/protocol.ts`、`src/cleanroom/settings/settings.ts`、对应 `.folder.md`、`tests/cleanroom-request-parameters.test.mjs`、`tests/.folder.md`、本任务记录与设计稿
@@ -72,12 +73,14 @@
 - 直接原因：Dream 选模已保留完整 `GatewayModel`，但 `claude_code_runtime_env()` 只投影 compact/context；CLI 对无法按名称识别的 alias 按上游 unknown 规则使用 32,000/64,000。
 - 最小边界：CLI 新增通用、vendor-scoped、server-owned 模型 max-output capability；Dream 仅负责把 Admin 已有目录字段投影到该 CLI capability 并阻断 ambient/user 覆盖。Admin、Gateway、schema、状态机和 SSE 不变。
 - 实现分支/提交：`codex/opaque-model-max-output` / `1175b4e`；Draft PR `#15`。Dream 配对提交为 `glide-the/im@2d803ac`，Draft PR `#35`。
-- 当前状态：实现、provider-free 最终 HTTP、Dream focused tests、strict typecheck、CLI lint/full tests 和四平台 package verify 已通过。修复尚未发布：`0.1.2` 不可覆盖，新 `0.1.3` 的正式打包门要求该版本先取得正常 Dream/Admin/Gateway/PostgreSQL 真实业务回执；当前 Dream 为用户通过 VS Code debugpy 启动的无热重载进程，未获单独重启授权，因此没有伪造回执、合并、发布或热切换服务。
+- 当前状态：`0.1.3` 的 exact source/native candidate 已通过正常 Dream/Admin/Gateway/PostgreSQL 两轮真实业务验收，digest-bound v2 回执、四平台构建和五包验证均已通过；等待 main 合并、同 SHA GitHub qualification、npm 发布与公共 registry fresh-install 回验。
 - 设计稿：`docs/design/claude-request-parameter-recovery.md` 第 12 节。
 - 验证结果：
   - `node --test --test-concurrency=1 tests/cleanroom-request-parameters.test.mjs tests/cleanroom-runtime-integration.test.mjs tests/cleanroom-tool-loop.test.mjs`：exit 0；11/11 passed。
   - strict TypeScript 5.9.2 typecheck（request/argv/settings）：exit 0。
-  - `npm run lint`：exit 0；238 files / 15 JSON。
+  - `npm run lint`：exit 0；258 files / 15 JSON（包含生成并纳入版本管理的 `0.1.3` release envelope）。
   - `npm test`：exit 0；118 tests，114 passed、4 个外部条件 fixture skipped、0 failed。
-  - `npm run cleanroom:build:targets && npm run cleanroom:npm:package && npm run cleanroom:npm:verify`：exit 0；4/4 targets、5/5 packages verified；仅为本地未发布候选，不得覆盖 registry `0.1.2`。
+  - `INK_REAL_CLAUDE_REQUEST_FIELDS_QA=1 ... playwright test e2e/claude-runtime-request-fields-real.spec.ts`（Dream 仓库）：exit 0；1/1 passed；两条 settled `deepseek-v4-pro` 请求均为 `max_tokens=384000`、`effort=low`、`stream=true`、Authorization=`[REDACTED]`。
+  - `runtime/attestations/dream-real-business-acceptance-0.1.3.json`：v2 receipt SHA-256 `2e7da1f41a41af3b229b79080085e587cdae39e664d7630ed209592ec8c73d4b`；绑定 source tree `c8d0a7ec…c87cb9` 与已执行 darwin-arm64 executable `9b109064…9d1d4`。
+  - `npm run cleanroom:build:targets && npm run cleanroom:npm:package && npm run cleanroom:npm:verify`：exit 0；4/4 targets、5/5 `0.1.3` packages verified；发布前不得覆盖 registry `0.1.2`。
   - Dream `uv run --with pytest ...`：exit 0；67 passed、17 subtests passed；README 英/中 25 个 heading level 与关键 Runtime 规则一致。
