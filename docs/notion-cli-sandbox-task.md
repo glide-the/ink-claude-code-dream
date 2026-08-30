@@ -2,6 +2,7 @@
 <!-- [Output] Record the Runtime 0.1.4 Notion CLI production-Bash design, evidence, real Dream receipt, capability chain, and publication boundary. -->
 <!-- [Pos] Auditable task record for stable capability sandbox.notion-cli. -->
 <!-- [Sync] 2026-08-30: complete and authorize the Runtime 0.1.4 Notion CLI clean-room release. -->
+<!-- [Sync] 2026-08-30: record Runtime 0.1.4 same-SHA publication and public-registry acceptance. -->
 
 # Notion CLI production Bash sandbox
 
@@ -66,7 +67,7 @@ The release version is `0.1.4`. The checked clean-room policies require:
 - main-branch same-SHA CI qualification before npm publication;
 - four platform packages published before the selector.
 
-The historical `0.1.3` acceptance receipt remains unchanged. Provider-free stage artifacts carry an explicit fixture marker and cannot satisfy the formal prepack contract. The real acceptance ran the exact native candidate through Dream's reviewed absolute-path candidate lane; it did not install the provider-free stage globally. This task does not publish npm or modify the global installation. Dream was explicitly restarted for acceptance and remains running on the bound candidate; restored source remains unchanged.
+The historical `0.1.3` acceptance receipt remains unchanged. Provider-free stage artifacts carry an explicit fixture marker and cannot satisfy the formal prepack contract. The real acceptance ran the exact native candidate through Dream's reviewed absolute-path candidate lane; it did not install the provider-free stage globally. Main commit `0ebafe95db22101cf77db2c27e73b561d3af37a6` passed qualification run `33306855166`; publish run `33306940462` then published the four platform packages before the selector, and the public-registry fresh install passed on Node `24.13.0`. Dream was explicitly restarted for acceptance and remains running on the bound candidate; restored source remains unchanged and was not published.
 
 ## Evidence lanes
 

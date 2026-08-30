@@ -5,6 +5,7 @@
 <!-- [Sync] 2026-08-30: add the Runtime 0.1.4 Notion sandbox, generated-capability, and real Dream acceptance lanes. -->
 <!-- [Sync] 2026-08-30: run the authorized Runtime 0.1.4 formal five-package qualification lane. -->
 <!-- [Sync] 2026-08-30: add 2.1.88 Linux seccomp asset and BPF-first passthrough evidence. -->
+<!-- [Sync] 2026-08-30: record the successful Runtime 0.1.4 publication and public-registry fresh install. -->
 
 # Test guide
 
@@ -25,7 +26,7 @@ node --test --test-concurrency=1 tests/cleanroom-npm-packaging.test.mjs
 
 They cover source-level exact/foreign/missing/symlink cases, native-file validation, installed `ntn 0.15.1` under the real OS sandbox, a compiled Runtime and fake Messages SSE, new and resumed Runtime startup recomputation, MCP/provider-helper exclusion, and five generated capability manifests. Assertions and fixtures print only `set`/`unset` or success states; token bytes are forbidden in captured requests, frames, and stderr.
 
-The npm lane now runs the formal five-package test. It binds the authorized version-specific Dream receipt, verifies all four native formats, reproduces and inspects the five tarballs, clean-installs the selector and host package, exercises both aliases, and enforces zero source maps. The checked policies require `productionEligible=true`, `publicationAllowed=true`, `redistributionAllowed=true`, and `npmPublishAllowed=true`; the public workflow still requires a successful main-branch qualification run for the exact publishing SHA.
+The npm lane runs the formal five-package test. It binds the authorized version-specific Dream receipt, verifies all four native formats, reproduces and inspects the five tarballs, clean-installs the selector and host package, exercises both aliases, and enforces zero source maps. The checked policies require `productionEligible=true`, `publicationAllowed=true`, `redistributionAllowed=true`, and `npmPublishAllowed=true`. Main qualification run `33306855166`, publish run `33306940462`, and a Node `24.13.0` public-registry fresh install all passed for Runtime `0.1.4`.
 
 ## Layer 1: static and build evidence
 

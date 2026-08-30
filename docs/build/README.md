@@ -4,6 +4,7 @@
 <!-- [Sync] 2026-08-24: add fail-closed @glide-the four-platform npm staging, tarball, OIDC publication flow, and zero-source-map rule for every release form. -->
 <!-- [Sync] 2026-08-30: document the authorized Runtime 0.1.4 clean-room qualification and publication flow. -->
 <!-- [Sync] 2026-08-30: document the restored 2.1.88 Linux path with the Docker-style passthrough and locked BPF. -->
+<!-- [Sync] 2026-08-30: record the completed Runtime 0.1.4 qualification and npm publication workflows. -->
 
 # Build and package
 
@@ -14,7 +15,7 @@ There are two distinct build products. Do not combine their claims:
 
 Both products forbid `*.map`. The legacy envelope build disables esbuild source-map generation, while the minimal core, npm stage, npm dry-run inventory, and final tgz verifier independently reject source maps.
 
-The separate repository-authored clean-room Runtime is prepared as `0.1.4`. Its checked policy generates `sandbox.notion-cli` into the platform and selector capability manifests. The exact darwin-arm64 executable has a version-bound real Dream acceptance receipt, the four targets have native-format/package/reproducibility qualification, and public npm publication is explicitly authorized. The checked clean-room production, redistribution, and publication flags are open only for the main-branch same-SHA workflows.
+The separate repository-authored clean-room Runtime is published as `0.1.4`. Its checked policy generates `sandbox.notion-cli` into the platform and selector capability manifests. The exact darwin-arm64 executable has a version-bound real Dream acceptance receipt, the four targets have native-format/package/reproducibility qualification, and public npm publication is explicitly authorized. Main commit `0ebafe95db22101cf77db2c27e73b561d3af37a6` passed qualification run `33306855166`; publish run `33306940462` reverified that exact artifact and published the four platform packages before the selector.
 
 ## Clean-room Runtime 0.1.4 release
 
@@ -28,7 +29,7 @@ node scripts/verify-cleanroom-npm.mjs
 
 The source-of-truth is `runtime/cleanroom-artifact-policy.json#requiredCapabilities`. The packager emits it verbatim as entries in each platform package's `runtime/manifest/capabilities.json` and the selector's `manifest/capabilities.json`; Dream should require stable ID `sandbox.notion-cli` and reject a missing ID. `runtime/local-capabilities.json` and `runtime/capabilities.json` belong to the distinct local-core and official-envelope products, so they intentionally do not claim this clean-room-only capability.
 
-Local tarballs remain pre-publication evidence. Public release must use `.github/workflows/qualify-npm-runtime.yml` on main, then pass that exact successful run ID to `.github/workflows/publish-npm.yml`; the publisher re-verifies all five archives and publishes four platform packages before the selector. Never publish the restored-source local core.
+Local tarballs remain qualification evidence rather than registry evidence. Public release uses `.github/workflows/qualify-npm-runtime.yml` on main, then passes that exact successful run ID to `.github/workflows/publish-npm.yml`; the publisher re-verifies all five archives and publishes four platform packages before the selector. Runtime `0.1.4` completed that flow in runs `33306855166` and `33306940462`. Never publish the restored-source local core.
 
 ## Requirements
 
