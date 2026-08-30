@@ -2,7 +2,7 @@
   "schemaVersion": "ink-cleanroom-runtime-policy/v1",
   "artifact": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "license": "MIT",
     "entrypoint": "bin/ink-claude-code-dream",
     "supportedTargets": [
@@ -29,6 +29,7 @@
     "protocol.control.bidirectional",
     "protocol.streaming",
     "sandbox",
+    "sandbox.notion-cli",
     "session.resume",
     "tmpdir.thread-local",
     "transcript.jsonl",
@@ -38,12 +39,12 @@
     "productionEligible": true,
     "publicationAllowed": true,
     "redistributionAllowed": true,
-    "reason": "The final digest-bound Dream real-business acceptance and explicit public npm release authorization passed",
+    "reason": "The digest-bound Runtime 0.1.4 Dream acceptance, four-target native-format package qualification, and explicit public npm release authorization passed",
     "businessAcceptance": {
       "required": true,
       "passed": true,
-      "receiptPath": "runtime/attestations/dream-real-business-acceptance-0.1.3.json",
-      "receiptSha256": "2e7da1f41a41af3b229b79080085e587cdae39e664d7630ed209592ec8c73d4b",
+      "receiptPath": "runtime/attestations/dream-real-business-acceptance-0.1.4.json",
+      "receiptSha256": "87f3d1c6040e5462d85e6259a5cb16509a5d26838d5299d1ba350a4ba463dbea",
       "boundary": "Dream, Admin, Gateway, and the normal local PostgreSQL through public production entrypoints"
     },
     "targetHostQualification": {

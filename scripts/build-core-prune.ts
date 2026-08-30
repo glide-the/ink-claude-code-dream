@@ -1,7 +1,7 @@
 // [Input] Explicit authorized restored-source/package roots, reviewed prune profile/resolution map, and Bun 1.4.0.
 // [Output] Write only local ignored bundle/assets, source digest, sanitized metafile, resolution gaps, and DCE receipt under dist/core-local.
 // [Pos] Fail-closed, read-only external-source core-prune builder; never copies source into the repository or release.
-// [Sync] 2026-08-24: select one native darwin/linux target and its checksum-pinned ripgrep asset.
+// [Sync] 2026-08-30: restore the 2.1.88 Linux sandbox-runtime seccomp assets from an exact locked Apache dependency.
 
 import { createHash } from "node:crypto";
 import { builtinModules } from "node:module";
@@ -46,6 +46,8 @@ type CorePruneProfile = {
   outputDirectory: string;
   entrypoints: string[];
   runtimeAssets: Array<{
+    sourceRoot?: "authorized-package" | "repository";
+    sourceIdentity?: string;
     source: string;
     output: string;
     sha256: string;
@@ -53,6 +55,8 @@ type CorePruneProfile = {
     license: string;
   }>;
   runtimeAssetTargets: Record<string, Array<{
+    sourceRoot?: "authorized-package" | "repository";
+    sourceIdentity?: string;
     source: string;
     output: string;
     sha256: string;
@@ -380,18 +384,27 @@ const packageRoot = await realpath(packageRootRaw);
 if (packageRoot !== packageRootRaw || !(await stat(packageRoot)).isDirectory()) {
   fail(`${profile.packageRootEnvironment} must be a real directory without symlink traversal`);
 }
+const runtimeAssetSourcePaths = new Map<(typeof selectedRuntimeAssets)[number], string>();
 for (const asset of selectedRuntimeAssets) {
   assertRelativeRepositoryPath(asset.source, `runtime asset source ${asset.source}`);
   assertRelativeRepositoryPath(asset.output, `runtime asset output ${asset.output}`);
-  if (!/^[a-f0-9]{64}$/.test(asset.sha256) || !asset.license || ![0o644, 0o755].includes(asset.mode)) {
+  const sourceRoot = asset.sourceRoot ?? "authorized-package";
+  if (
+    !["authorized-package", "repository"].includes(sourceRoot) ||
+    (sourceRoot === "repository" && !asset.sourceIdentity) ||
+    !/^[a-f0-9]{64}$/.test(asset.sha256) ||
+    !asset.license ||
+    ![0o644, 0o755].includes(asset.mode)
+  ) {
     fail(`invalid runtime asset metadata: ${asset.output}`);
   }
-  const source = join(packageRoot, asset.source);
+  const source = join(sourceRoot === "repository" ? repositoryRoot : packageRoot, asset.source);
   if ((await realpath(source)) !== source || !(await stat(source)).isFile()) {
     fail(`runtime asset must be a real regular file: ${asset.source}`);
   }
   const digest = createHash("sha256").update(await readFile(source)).digest("hex");
   if (digest !== asset.sha256) fail(`runtime asset digest drift: ${asset.source}`);
+  runtimeAssetSourcePaths.set(asset, source);
 }
 if (!(await stat(sourceRoot)).isDirectory()) fail("source root is not a directory");
 for (const requiredDirectory of ["src", "node_modules"]) {
@@ -3848,7 +3861,9 @@ if (buildResult?.success) {
   for (const asset of selectedRuntimeAssets) {
     const target = join(outputRoot, "bundle", asset.output);
     await mkdir(dirname(target), { recursive: true });
-    await copyFile(join(packageRoot, asset.source), target);
+    const source = runtimeAssetSourcePaths.get(asset);
+    if (!source) fail(`validated runtime asset path is missing: ${asset.output}`);
+    await copyFile(source, target);
     await chmod(target, asset.mode);
     const digest = createHash("sha256").update(await readFile(target)).digest("hex");
     if (digest !== asset.sha256) fail(`copied runtime asset digest drift: ${asset.output}`);
@@ -4025,7 +4040,9 @@ const receipt = {
   },
   entrypoints: profile.entrypoints,
   outputDirectory: profile.outputDirectory,
-  runtimeAssets: selectedRuntimeAssets.map(({ output, sha256, mode, license }) => ({
+  runtimeAssets: selectedRuntimeAssets.map(({ sourceRoot, sourceIdentity, output, sha256, mode, license }) => ({
+    sourceRoot: sourceRoot ?? "authorized-package",
+    sourceIdentity: sourceIdentity ?? `@anthropic-ai/claude-code@${profile.sourceVersionEvidence}`,
     output,
     sha256,
     mode,

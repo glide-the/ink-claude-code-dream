@@ -1,7 +1,7 @@
 // [Input] Checked-in core-prune profile, deterministic resolution map, builder/verifier sources, and git ignore policy.
 // [Output] Prove local-only ownership, Bun 1.4.0 pin, capability retention, feature separation, resolver rules, and DCE assertions.
 // [Pos] Provider-free static contract test; it does not read, copy, modify, or build restored source.
-// [Sync] 2026-08-24: require native four-target assets without cross-platform ripgrep mixing.
+// [Sync] 2026-08-30: require exact 2.1.88-compatible Linux seccomp helper/BPF assets beside the emitted chunks.
 
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -23,7 +23,19 @@ const oauthRunner = await readFile(
   resolve(repositoryRoot, "scripts/run-core-oauth-cli-contract.mjs"),
   "utf8",
 );
+const sdkContract = await readFile(
+  resolve(repositoryRoot, "scripts/run-core-sdk-contract.py"),
+  "utf8",
+);
+const sdkDifferential = await readFile(
+  resolve(repositoryRoot, "scripts/run-core-sdk-differential.mjs"),
+  "utf8",
+);
 const packageJson = JSON.parse(await readFile(resolve(repositoryRoot, "package.json"), "utf8"));
+const seccompPassthrough = resolve(
+  repositoryRoot,
+  "runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh",
+);
 
 test("core-prune build is pinned, local-only, and requires an explicit source root", () => {
   assert.equal(profile.builder.version, "1.4.0");
@@ -48,7 +60,7 @@ test("core-prune build is pinned, local-only, and requires an explicit source ro
   assert.equal(ignored.status, 0, "dist/core-local must be ignored by git");
 });
 
-test("runtime asset matrix covers four native targets with distinct pinned ripgrep", () => {
+test("runtime asset matrix covers four native targets and restores Linux seccomp vendor assets", () => {
   assert.deepEqual(Object.keys(profile.runtimeAssetTargets).sort(), [
     "darwin-arm64",
     "darwin-x64",
@@ -57,17 +69,59 @@ test("runtime asset matrix covers four native targets with distinct pinned ripgr
   ]);
   const seen = new Set();
   for (const [target, assets] of Object.entries(profile.runtimeAssetTargets)) {
-    assert.equal(assets.length, 1, `${target} must carry exactly one target-specific asset`);
-    const asset = assets[0];
-    assert.match(asset.output, new RegExp(`${target.split("-").reverse().join("-")}/rg$`));
-    assert.match(asset.sha256, /^[a-f0-9]{64}$/);
-    assert.equal(seen.has(asset.sha256), false, `${target} reused another platform binary`);
-    seen.add(asset.sha256);
+    const ripgrep = assets.find(asset => asset.output.endsWith("/rg"));
+    assert.ok(ripgrep, `${target} must carry one target-specific ripgrep`);
+    assert.match(ripgrep.output, new RegExp(`${target.split("-").reverse().join("-")}/rg$`));
+    assert.match(ripgrep.sha256, /^[a-f0-9]{64}$/);
+    assert.equal(seen.has(ripgrep.sha256), false, `${target} reused another platform binary`);
+    seen.add(ripgrep.sha256);
+    const seccomp = assets.filter(asset => asset.output.includes("/vendor/seccomp/"));
+    if (target.startsWith("linux-")) {
+      assert.deepEqual(seccomp.map(asset => asset.output.split("/").at(-1)).sort(), [
+        "apply-seccomp",
+        "unix-block.bpf",
+      ]);
+      for (const asset of seccomp) {
+        assert.equal(asset.sourceRoot, "repository");
+        assert.match(asset.sha256, /^[a-f0-9]{64}$/);
+        if (asset.output.endsWith("/apply-seccomp")) {
+          assert.equal(asset.sourceIdentity, "ink-claude-code-dream:2.1.88-seccomp-passthrough");
+          assert.equal(asset.source, "runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh");
+          assert.equal(asset.license, "MIT");
+        } else {
+          assert.equal(asset.sourceIdentity, "@anthropic-ai/sandbox-runtime@0.0.45");
+          assert.match(asset.source, /sandbox-runtime-legacy\/vendor\/seccomp/);
+          assert.equal(asset.license, "Apache-2.0");
+        }
+      }
+    } else {
+      assert.deepEqual(seccomp, []);
+    }
   }
   assert.deepEqual(profile.runtimeAssets.map(asset => asset.output), [
     "chunks/vendor/ripgrep/COPYING",
   ]);
   assert.match(verifier, /core receipt target does not match the verifying host/);
+  assert.equal(
+    packageJson.devDependencies["@anthropic-ai/sandbox-runtime-legacy"],
+    "npm:@anthropic-ai/sandbox-runtime@0.0.45",
+  );
+  assert.match(builder, /sourceRoot === "repository" \? repositoryRoot : packageRoot/);
+});
+
+test("2.1.88 seccomp passthrough removes only the leading BPF argument", () => {
+  const result = spawnSync(
+    "/bin/sh",
+    [seccompPassthrough, "/synthetic/unix-block.bpf", "/bin/sh", "-c", "printf seccomp-passthrough"],
+    { encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, "seccomp-passthrough");
+  const missingCommand = spawnSync("/bin/sh", [seccompPassthrough, "/synthetic/unix-block.bpf"], {
+    encoding: "utf8",
+  });
+  assert.equal(missingCommand.status, 64);
+  assert.match(missingCommand.stderr, /requires a BPF path and command/);
 });
 
 test("required Dream capability roots remain explicit", () => {
@@ -443,6 +497,10 @@ test("full qualification requires the exact official MCP SDK OAuth process contr
   assert.match(qualifier, /scripts\/run-core-oauth-cli-contract\.mjs/);
   assert.match(oauthRunner, /INK_MCP_OAUTH_FIXTURE_PYTHON: fixturePython/);
   assert.match(oauthRunner, /INK_MCP_OAUTH_FIXTURE_ROOT: fixtureRoot/);
+  assert.match(sdkContract, /INK_CORE_REFERENCE_ALLOW_ALL_UNIX_SOCKETS/);
+  assert.match(sdkContract, /allowAllUnixSockets/);
+  assert.match(sdkDifferential, /delete laneEnvironment\.INK_CORE_REFERENCE_ALLOW_ALL_UNIX_SOCKETS/);
+  assert.match(sdkDifferential, /label === "reference"/);
   assert.match(oauthRunner, /must be an explicit absolute path/);
   assert.match(oauthRunner, /sdkVersion !== "2\.0\.0"/);
   assert.match(oauthRunner, /fixtureTag !== "v2\.0\.0"/);

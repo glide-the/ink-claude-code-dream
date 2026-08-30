@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "ink-dream-real-business-acceptance/v2",
+  "subject": {
+    "runtime": "ink-claude-code-dream",
+    "version": "0.1.4",
+    "acceptedTarget": "darwin-arm64",
+    "sourceTreeSha256": "266362ac3543ca6d5dc7a400e2a23ac718e231abb761eab8f824726ab595de81",
+    "acceptedExecutableSha256": "969f9193be8750e2573e4c4ea9c3556d48687925d9f57b8ea676669d753980dd"
+  },
+  "acceptance": {
+    "date": "2026-08-30",
+    "status": "passed",
+    "mode": "existing-real-account-and-business-data",
+    "publicProductionEntrypoints": true,
+    "services": [
+      "Dream",
+      "Gateway",
+      "PostgreSQL"
+    ],
+    "modelTurns": 3,
+    "agentBashTurns": 2,
+    "sameThreadResume": true,
+    "settingsCapabilityVisible": true,
+    "notionCliContract": {
+      "apiTokenSetTurns": 2,
+      "keyringSetTurns": 2,
+      "workersConfigUnsetTurns": 2,
+      "versionReadTurns": 2,
+      "doctorSucceededTurns": 2,
+      "identityReadSucceededTurns": 2,
+      "notionMutationPerformed": false,
+      "responseBodyRetained": false
+    },
+    "ordinaryChatSucceeded": true,
+    "testReceipt": {
+      "dreamPlaywrightPassed": 1,
+      "persistedThreadTurns": 3,
+      "bashParts": 6,
+      "bashPartsOutputAvailable": 6,
+      "failed": 0
+    }
+  },
+  "targetQualification": {
+    "darwin-arm64": "real-host candidate Dream Chat, fresh Agent Bash, same-thread resume, read-only ntn doctor/identity, ordinary Chat, and exact native executable; formal release qualification not claimed"
+  },
+  "privacy": {
+    "accountIdentifierIncluded": false,
+    "requestIdentifiersIncluded": false,
+    "rawBusinessLogsIncluded": false,
+    "databaseRowsIncluded": false,
+    "oauthCredentialsIncluded": false,
+    "callbacksIncluded": false,
+    "transcriptsIncluded": false,
+    "environmentValuesIncluded": false,
+    "notionApiBodiesIncluded": false
+  },
+  "authorization": {
+    "explicitPublicNpmReleaseApproved": true,
+    "platformPackagesBeforeSelectorRequired": true,
+    "pypiPublicationApproved": false
+  }
+}

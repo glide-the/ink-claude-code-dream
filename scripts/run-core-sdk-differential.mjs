@@ -2,7 +2,7 @@
 // [Input] Explicit official/candidate CLI paths and a Python with the Ink SDK installed.
 // [Output] A fail-closed protocol-differential receipt for two real Runtime processes.
 // [Pos] Process-boundary release gate; it never substitutes an envelope or fake CLI.
-// [Sync] 2026-08-24: bind SDK differential evidence to the exact native Runtime target.
+// [Sync] 2026-08-30: isolate the official nested-Docker Unix-socket exemption to the reference lane.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -37,13 +37,18 @@ const tempRoot = await mkdtemp(path.join(os.tmpdir(), "ink-core-sdk-differential
 
 function runLane(label, cli) {
   const receiptPath = path.join(tempRoot, `${label}.json`);
+  const laneEnvironment = { ...process.env };
+  delete laneEnvironment.INK_CORE_REFERENCE_ALLOW_ALL_UNIX_SOCKETS;
+  if (label === "reference") {
+    laneEnvironment.INK_CORE_REFERENCE_ALLOW_ALL_UNIX_SOCKETS = "1";
+  }
   const result = spawnSync(
     python,
     [contractScript, "--cli", cli, "--output", receiptPath],
     {
       cwd: repoRoot,
       encoding: "utf8",
-      env: process.env,
+      env: laneEnvironment,
       timeout: 120_000,
     },
   );
@@ -88,7 +93,7 @@ async function qualificationSubject() {
   const bundle = await readFile(path.resolve(coreBundlePath));
   return {
     runtime: "ink-claude-code-dream",
-    version: "0.1.3",
+    version: "0.1.4",
     coreBundleSha256: createHash("sha256").update(bundle).digest("hex"),
     sourceDigest: coreReceipt.sourceDigest.digest,
     runtimeTarget: coreReceipt.runtimeTarget,
@@ -115,11 +120,13 @@ try {
     ...(subject ? { subject } : { calibrationOnly: true }),
     reference: {
       cliVersion: reference.cliVersion,
+      sandboxSetup: reference.sandboxSetup,
       interruptTerminalReason: reference.interrupt?.terminalReason ?? null,
       requestCount: reference.provider?.requestCount ?? null,
     },
     candidate: {
       cliVersion: candidate.cliVersion,
+      sandboxSetup: candidate.sandboxSetup,
       interruptTerminalReason: candidate.interrupt?.terminalReason ?? null,
       requestCount: candidate.provider?.requestCount ?? null,
     },
@@ -128,6 +135,7 @@ try {
       "CLI version string",
       "provider request count",
       "optional terminalReason introduced after the restored baseline",
+      "official Docker comparator disables only its embedded Unix-socket filter while candidate exercises the restored on-disk helper",
       "timestamps, UUID values, and temporary absolute paths",
     ],
   };

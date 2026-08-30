@@ -1,14 +1,16 @@
-// [Input] Canonical Dream Workspace/tmpdir, bounded Bash request, and official SandboxManager 0.0.73.
-// [Output] OS-sandboxed process-tree completion with network deny, environment allowlist, and bounded output.
+// [Input] Canonical Dream Workspace/tmpdir, server-bound Notion CLI environment, bounded Bash request, and official SandboxManager 0.0.73.
+// [Output] OS-sandboxed process-tree completion with default-deny network, actor/thread-bound Notion access, a narrow environment allowlist, and bounded output.
 // [Pos] Production SandboxAdapter; unsupported or missing platform isolation always fails closed.
 // [Sync] 2026-08-24: integrate Apache-2.0 Anthropic Sandbox Runtime without a raw-process fallback.
+// [Sync] 2026-08-30: pass Dream-bound NOTION_* values into Bash and allow only the production Notion hosts needed by ntn.
 
 import { SandboxManager, type SandboxRuntimeConfig } from "@anthropic-ai/sandbox-runtime";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { lstat, realpath } from "node:fs/promises";
+import { lstat, open, realpath } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { NOTION_BASH_ENV_NAMES } from "../environment.ts";
 import type {
   SandboxAdapter,
   SandboxCommandRequest,
@@ -18,16 +20,127 @@ import type {
 const OUTPUT_LIMIT_BYTES = 1_048_576;
 const MAX_TIMEOUT_MS = 120_000;
 const ENV_ALLOWLIST = ["LANG", "LC_ALL", "LC_CTYPE", "PATH", "TERM"] as const;
+const NOTION_HOME_DIRECTORY = ".notion-home";
+const NOTION_CLI_EXECUTABLE = "ntn";
+const NOTION_WORKERS_CONFIG_FILENAME = "workers.json";
+export const NOTION_SANDBOX_ALLOWED_DOMAINS = [
+  "api.notion.com:443",
+  "developers.notion.com:443",
+  "ntn.dev:443",
+] as const;
+
+export interface NtnExecutableContract {
+  format: "elf" | "mach-o";
+  path: string;
+}
 
 export interface AnthropicSandboxOptions {
   tmpdir: string;
   workspaceRoot: string;
 }
 
-function cleanEnvironment(tmpdir: string, wrapped: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+export async function resolveNtnExecutable(
+  source: NodeJS.ProcessEnv = process.env,
+): Promise<NtnExecutableContract | undefined> {
+  for (const directory of String(source.PATH ?? "").split(path.delimiter)) {
+    if (!directory) continue;
+    const candidate = path.join(directory, NOTION_CLI_EXECUTABLE);
+    try {
+      const resolved = await realpath(candidate);
+      const info = await lstat(resolved);
+      if (
+        path.basename(resolved) !== NOTION_CLI_EXECUTABLE ||
+        !info.isFile() ||
+        info.isSymbolicLink() ||
+        (info.mode & 0o111) === 0 ||
+        (info.mode & 0o022) !== 0 ||
+        (typeof process.getuid === "function" && info.uid !== process.getuid() && info.uid !== 0)
+      ) continue;
+      const header = Buffer.alloc(4);
+      const handle = await open(resolved, "r");
+      try {
+        const { bytesRead } = await handle.read(header, 0, header.byteLength, 0);
+        if (bytesRead !== header.byteLength) continue;
+      } finally {
+        await handle.close();
+      }
+      if (header.equals(Buffer.from([0x7f, 0x45, 0x4c, 0x46]))) {
+        return { format: "elf", path: resolved };
+      }
+      const magic = header.readUInt32BE(0);
+      if (
+        magic === 0xfeedface || magic === 0xcefaedfe ||
+        magic === 0xfeedfacf || magic === 0xcffaedfe ||
+        magic === 0xcafebabe || magic === 0xbebafeca ||
+        magic === 0xcafebabf || magic === 0xbfbafeca
+      ) {
+        return { format: "mach-o", path: resolved };
+      }
+    } catch {
+      // Continue through the server-owned PATH without surfacing local paths.
+    }
+  }
+  return undefined;
+}
+
+export async function resolveNotionBashEnvironment(
+  workspaceRoot: string,
+  source: NodeJS.ProcessEnv = process.env,
+): Promise<NodeJS.ProcessEnv> {
+  const expectedHome = path.join(path.resolve(workspaceRoot), NOTION_HOME_DIRECTORY);
+  if (source.NOTION_HOME !== expectedHome) return {};
+  try {
+    const homeStatus = await lstat(expectedHome);
+    if (
+      !homeStatus.isDirectory() ||
+      homeStatus.isSymbolicLink() ||
+      (homeStatus.mode & 0o077) !== 0 ||
+      await realpath(expectedHome) !== expectedHome
+    ) return {};
+  } catch {
+    return {};
+  }
+
+  const environment: NodeJS.ProcessEnv = {
+    NOTION_HOME: expectedHome,
+    NOTION_KEYRING: "0",
+  };
+  const token = source.NOTION_API_TOKEN;
+  if (token && token === token.trim() && !/[\0\r\n]/.test(token)) {
+    environment.NOTION_API_TOKEN = token;
+  }
+
+  const expectedWorkersFile = path.join(expectedHome, NOTION_WORKERS_CONFIG_FILENAME);
+  if (source.NOTION_WORKERS_CONFIG_FILE === expectedWorkersFile) {
+    try {
+      const workersStatus = await lstat(expectedWorkersFile);
+      if (
+        workersStatus.isFile() &&
+        !workersStatus.isSymbolicLink() &&
+        (workersStatus.mode & 0o022) === 0 &&
+        await realpath(expectedWorkersFile) === expectedWorkersFile
+      ) {
+        environment.NOTION_WORKERS_CONFIG_FILE = expectedWorkersFile;
+      }
+    } catch {
+      // A missing or non-canonical workers projection is omitted fail-closed.
+    }
+  }
+  return environment;
+}
+
+export function cleanEnvironment(
+  tmpdir: string,
+  wrapped: NodeJS.ProcessEnv,
+  notionEnvironment: NodeJS.ProcessEnv = {},
+): NodeJS.ProcessEnv {
   const environment: NodeJS.ProcessEnv = { TMPDIR: tmpdir };
   for (const name of ENV_ALLOWLIST) {
     const value = wrapped[name] ?? process.env[name];
+    if (value) environment[name] = value;
+  }
+  for (const name of NOTION_BASH_ENV_NAMES) {
+    const value = notionEnvironment[name];
     if (value) environment[name] = value;
   }
   return environment;
@@ -43,7 +156,12 @@ function terminateProcessGroup(child: ReturnType<typeof spawn>, signal: NodeJS.S
   }
 }
 
-function baseConfig(workspaceRoot: string, tmpdir: string): SandboxRuntimeConfig {
+function baseConfig(
+  workspaceRoot: string,
+  tmpdir: string,
+  notionEnvironment: NodeJS.ProcessEnv,
+  notionExecutable: NtnExecutableContract | undefined,
+): SandboxRuntimeConfig {
   const home = os.homedir();
   const denyRead = [os.homedir()];
   const canonicalSystemTmp = path.resolve(os.tmpdir());
@@ -52,15 +170,22 @@ function baseConfig(workspaceRoot: string, tmpdir: string): SandboxRuntimeConfig
   }
   return {
     network: {
-      allowedDomains: [],
-      deniedDomains: ["*"],
+      allowedDomains: notionEnvironment.NOTION_HOME
+        ? [...NOTION_SANDBOX_ALLOWED_DOMAINS]
+        : [],
+      deniedDomains: notionEnvironment.NOTION_HOME ? [] : ["*"],
+      strictAllowlist: true,
       allowLocalBinding: false,
       allowUnixSockets: [],
       allowAllUnixSockets: false,
     },
     filesystem: {
       denyRead,
-      allowRead: [workspaceRoot, tmpdir],
+      allowRead: [
+        workspaceRoot,
+        tmpdir,
+        ...(notionExecutable ? [notionExecutable.path] : []),
+      ],
       allowWrite: [workspaceRoot, tmpdir],
       denyWrite: [
         "/tmp/claude",
@@ -81,10 +206,16 @@ export class AnthropicSandboxAdapter implements SandboxAdapter {
   private closed = false;
   private readonly tmpdir: string;
   private readonly workspaceRoot: string;
+  private readonly notionEnvironment: NodeJS.ProcessEnv;
 
-  private constructor(workspaceRoot: string, tmpdir: string) {
+  private constructor(
+    workspaceRoot: string,
+    tmpdir: string,
+    notionEnvironment: NodeJS.ProcessEnv,
+  ) {
     this.workspaceRoot = workspaceRoot;
     this.tmpdir = tmpdir;
+    this.notionEnvironment = notionEnvironment;
   }
 
   static async create(options: AnthropicSandboxOptions): Promise<AnthropicSandboxAdapter> {
@@ -110,12 +241,19 @@ export class AnthropicSandboxAdapter implements SandboxAdapter {
     if (dependencies.errors.length > 0) {
       throw new Error("production sandbox dependencies are unavailable");
     }
-    await SandboxManager.initialize(baseConfig(workspaceRoot, tmpdir));
+    const candidateNotionEnvironment = await resolveNotionBashEnvironment(workspaceRoot);
+    const notionExecutable = candidateNotionEnvironment.NOTION_HOME
+      ? await resolveNtnExecutable()
+      : undefined;
+    const notionEnvironment = notionExecutable ? candidateNotionEnvironment : {};
+    await SandboxManager.initialize(
+      baseConfig(workspaceRoot, tmpdir, notionEnvironment, notionExecutable),
+    );
     if (!SandboxManager.isSandboxingEnabled()) {
       await SandboxManager.reset().catch(() => undefined);
       throw new Error("production sandbox did not enable OS isolation");
     }
-    return new AnthropicSandboxAdapter(workspaceRoot, tmpdir);
+    return new AnthropicSandboxAdapter(workspaceRoot, tmpdir, notionEnvironment);
   }
 
   async close(): Promise<void> {
@@ -153,7 +291,11 @@ export class AnthropicSandboxAdapter implements SandboxAdapter {
       const child = spawn(wrapped.argv[0], wrapped.argv.slice(1), {
         cwd: this.workspaceRoot,
         detached: process.platform !== "win32",
-        env: cleanEnvironment(this.tmpdir, wrapped.env),
+        env: cleanEnvironment(
+          this.tmpdir,
+          wrapped.env,
+          this.notionEnvironment,
+        ),
         stdio: ["ignore", "pipe", "pipe"],
       });
       let stdout = Buffer.alloc(0);

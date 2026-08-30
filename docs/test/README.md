@@ -2,10 +2,30 @@
 <!-- [Output] Define three ordered test layers, commands, interpretation, and non-claims. -->
 <!-- [Pos] Test execution and compatibility-claim guide. -->
 <!-- [Sync] 2026-08-24: record passing real Comfy OAuth/inventory acceptance and final exact-Node verification. -->
+<!-- [Sync] 2026-08-30: add the Runtime 0.1.4 Notion sandbox, generated-capability, and real Dream acceptance lanes. -->
+<!-- [Sync] 2026-08-30: run the authorized Runtime 0.1.4 formal five-package qualification lane. -->
+<!-- [Sync] 2026-08-30: add 2.1.88 Linux seccomp asset and BPF-first passthrough evidence. -->
 
 # Test guide
 
 Runtime compatibility is an interface contract. A Dream business test is the third layer, not a substitute for exhaustive protocol comparison.
+
+## Runtime 0.1.4 Notion sandbox evidence
+
+The focused provider-free lanes are:
+
+```sh
+node --test --test-concurrency=1 \
+  tests/cleanroom-notion-sandbox.test.mjs \
+  tests/cleanroom-production-sandbox.test.mjs \
+  tests/cleanroom-dream-bootstrap.test.mjs
+
+node --test --test-concurrency=1 tests/cleanroom-npm-packaging.test.mjs
+```
+
+They cover source-level exact/foreign/missing/symlink cases, native-file validation, installed `ntn 0.15.1` under the real OS sandbox, a compiled Runtime and fake Messages SSE, new and resumed Runtime startup recomputation, MCP/provider-helper exclusion, and five generated capability manifests. Assertions and fixtures print only `set`/`unset` or success states; token bytes are forbidden in captured requests, frames, and stderr.
+
+The npm lane now runs the formal five-package test. It binds the authorized version-specific Dream receipt, verifies all four native formats, reproduces and inspects the five tarballs, clean-installs the selector and host package, exercises both aliases, and enforces zero source maps. The checked policies require `productionEligible=true`, `publicationAllowed=true`, `redistributionAllowed=true`, and `npmPublishAllowed=true`; the public workflow still requires a successful main-branch qualification run for the exact publishing SHA.
 
 ## Layer 1: static and build evidence
 
@@ -23,11 +43,15 @@ Required result before moving on:
 - `resolution-gaps.json` has zero edge and unique gaps;
 - selected CCR/daemon/background/template/BYOC/self-hosted inputs are absent;
 - streaming/control/resume/tools/permissions/Workspace/sandbox/TMPDIR/MCP/extensions/auth inputs are present;
+- Linux targets contain the checksum-bound Docker-style `apply-seccomp` passthrough and architecture-matched `unix-block.bpf`, while Darwin contains neither;
+- the deployment passthrough drops only the 2.1.88 leading BPF argument and rejects a missing command;
 - deterministic bundle/checksum succeeds.
 
-Current result: passed for source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5`. The graph has 1,989 inputs, 48 outputs, zero gaps, and passing DCE assertions. The receipt independently binds source provenance `2.1.88` and CLI compatibility `2.1.241`.
+Current Linux x64 result: passed for source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `a5827e0e6a1f5c3f09f5c4ceca66122893e531d3f31a644811273bae89487e9a`. The verifier binds asset source identity, digest, mode, and chunk-adjacent path; the packaged passthrough digest is `bd2923ee44c624e03bac9efb57c84d72419726783ac7557acb708e431c16d74d`. Source provenance remains `2.1.88` and CLI compatibility remains `2.1.241` as separate fields.
 
 ## Layer 2: interface-level differential
+
+The Linux x64 SDK/Bash differential runs in a Docker container with bubblewrap namespace privileges. Official `2.1.241` is only the protocol comparator; because its embedded helper cannot be replaced in nested Docker, the reference lane alone sets `sandbox.network.allowAllUnixSockets=true`. The candidate lane does not receive that flag and exercises the restored on-disk 2.1.88 helper. Both lanes retain bubblewrap filesystem isolation, create the workspace receipt, and deny the credential read. The receipt records this setup as an allowed comparator-only difference.
 
 Send identical inputs through the custom SDK to:
 

@@ -3,6 +3,7 @@
 // [Output] Provider-free proof of Dream helper auth headers, in-memory TTL, redaction, and fail-closed settings.
 // [Pos] Dream Gateway bootstrap contract; no real Gateway secret, model, database, or business service is used.
 // [Sync] 2026-08-24: cover virtualenv-style helper symlinks without weakening real-executable validation.
+// [Sync] 2026-08-30: prove Notion's Bash-only projection is absent from provider helper children.
 
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -109,6 +110,10 @@ function startRuntime({ baseURL, cwd, marker, settings }) {
         CLAUDE_CODE_API_KEY_HELPER_TTL_MS: "120000",
         INK_BOOTSTRAP_HELPER_MARKER: marker,
         INK_BOOTSTRAP_HELPER_TOKEN: helperToken,
+        NOTION_HOME: path.join(cwd, ".notion-home"),
+        NOTION_API_TOKEN: "notion-helper-must-not-receive",
+        NOTION_KEYRING: "0",
+        NOTION_WORKERS_CONFIG_FILE: path.join(cwd, ".notion-home", "workers.json"),
       },
       stdio: ["pipe", "pipe", "pipe"],
     },
@@ -187,7 +192,9 @@ test("Dream inline apiKeyHelper supplies Bearer subject plus service header with
   const marker = path.join(root, "helper-invocations.txt");
   await writeFile(helper, [
     'import { appendFile } from "node:fs/promises";',
-    'await appendFile(process.env.INK_BOOTSTRAP_HELPER_MARKER, "called\\n");',
+    'const names = ["NOTION_HOME", "NOTION_API_TOKEN", "NOTION_KEYRING", "NOTION_WORKERS_CONFIG_FILE"];',
+    'const status = names.map(name => `${name}=${process.env[name] === undefined ? "unset" : "set"}`).join(" ");',
+    'await appendFile(process.env.INK_BOOTSTRAP_HELPER_MARKER, `called ${status}\\n`);',
     'process.stdout.write(`${process.env.INK_BOOTSTRAP_HELPER_TOKEN}\\n`);',
   ].join("\n"));
   const provider = await startProvider();
@@ -209,7 +216,10 @@ test("Dream inline apiKeyHelper supplies Bearer subject plus service header with
     { authorization: `Bearer ${helperToken}`, serviceKey },
     { authorization: `Bearer ${helperToken}`, serviceKey },
   ]);
-  assert.equal(await readFile(marker, "utf8"), "called\n");
+  assert.equal(
+    await readFile(marker, "utf8"),
+    "called NOTION_HOME=unset NOTION_API_TOKEN=unset NOTION_KEYRING=unset NOTION_WORKERS_CONFIG_FILE=unset\n",
+  );
   assert(!runtime.output().includes(helperToken));
   assert(!runtime.output().includes(serviceKey));
   assert(!JSON.stringify(runtime.frames).includes(helperToken));

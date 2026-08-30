@@ -3,6 +3,8 @@
 // [Pos] End-to-end clean-room multi-platform npm packaging contract; foreign target binaries are inspected, never executed.
 // [Sync] 2026-08-24: bind the final Dream receipt and formal publication attestation into all five packages.
 // [Sync] 2026-08-28: require the accepted source tree/native executable binding in the formal package set.
+// [Sync] 2026-08-30: require the authorized Runtime 0.1.4 receipt and formal five-package release set.
+// [Sync] 2026-08-30: prove sandbox.notion-cli is emitted by the clean-room manifest generation chain.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -21,9 +23,14 @@ const packageScript = path.join(repositoryRoot, "scripts", "package-cleanroom-np
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-cleanroom-npm.mjs");
 const policy = JSON.parse(await readFile(path.join(repositoryRoot, "runtime", "cleanroom-npm-policy.json"), "utf8"));
 const artifactPolicy = JSON.parse(await readFile(path.join(repositoryRoot, "runtime", "cleanroom-artifact-policy.json"), "utf8"));
-const businessReceiptBody = await readFile(path.join(repositoryRoot, artifactPolicy.publicationGate.businessAcceptance.receiptPath));
-const businessReceipt = JSON.parse(businessReceiptBody);
-const businessReceiptSha256 = createHash("sha256").update(businessReceiptBody).digest("hex");
+const formalPublication = artifactPolicy.publicationGate.publicationAllowed === true;
+const businessReceiptBody = formalPublication
+  ? await readFile(path.join(repositoryRoot, artifactPolicy.publicationGate.businessAcceptance.receiptPath))
+  : undefined;
+const businessReceipt = businessReceiptBody ? JSON.parse(businessReceiptBody) : undefined;
+const businessReceiptSha256 = businessReceiptBody
+  ? createHash("sha256").update(businessReceiptBody).digest("hex")
+  : undefined;
 const targets = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
 
 function run(command, args, options = {}) {
@@ -59,15 +66,24 @@ test("clean-room npm policy is an exact MIT four-platform/five-package no-map co
   assert.equal(policy.materialPolicy.sourceMapsAllowed, false);
   assert.ok(policy.materialPolicy.forbiddenSuffixes.includes(".map"));
   assert.equal(policy.publication.packageGenerationAllowed, true);
+  assert.equal(policy.version, "0.1.4");
   assert.equal(policy.publication.npmPublishAllowed, true);
   assert.equal(artifactPolicy.publicationGate.productionEligible, true);
   assert.equal(artifactPolicy.publicationGate.publicationAllowed, true);
   assert.equal(artifactPolicy.publicationGate.redistributionAllowed, true);
+  assert.equal(artifactPolicy.publicationGate.businessAcceptance.passed, true);
+  assert.equal(
+    artifactPolicy.publicationGate.businessAcceptance.receiptPath,
+    "runtime/attestations/dream-real-business-acceptance-0.1.4.json",
+  );
   assert.equal(artifactPolicy.publicationGate.businessAcceptance.receiptSha256, businessReceiptSha256);
   assert.equal(businessReceipt.schemaVersion, "ink-dream-real-business-acceptance/v2");
   assert.equal(businessReceipt.subject.acceptedTarget, "darwin-arm64");
-  assert.match(businessReceipt.subject.sourceTreeSha256, /^[a-f0-9]{64}$/);
-  assert.match(businessReceipt.subject.acceptedExecutableSha256, /^[a-f0-9]{64}$/);
+  assert.equal(businessReceipt.authorization.explicitPublicNpmReleaseApproved, true);
+  assert.deepEqual(Object.values(artifactPolicy.publicationGate.targetHostQualification), [
+    true, true, true, true,
+  ]);
+  assert(artifactPolicy.requiredCapabilities.includes("sandbox.notion-cli"));
   for (const target of targets) {
     const platform = policy.platforms[target];
     assert.equal(platform.package, `@glide-the/ink-claude-code-dream-${target}`);
@@ -75,7 +91,63 @@ test("clean-room npm policy is an exact MIT four-platform/five-package no-map co
   }
 });
 
+test("provider-free clean-room stages declare the stable Notion sandbox capability while publication stays closed", { timeout: 360_000 }, async t => {
+  if (formalPublication) return t.skip("candidate-only generation evidence is unnecessary after formal publication");
+
+  const build = run(bun, [buildScript]);
+  assert.equal(build.status, 0, `${build.stdout}\n${build.stderr}`);
+  const staged = run(process.execPath, [packageScript, "stage"], {
+    env: {
+      ...process.env,
+      INK_CLEANROOM_QUALIFICATION_FIXTURE: "provider-free-test",
+    },
+  });
+  assert.equal(staged.status, 0, `${staged.stdout}\n${staged.stderr}`);
+  const receipt = JSON.parse(staged.stdout);
+  assert.equal(receipt.packages.length, 5);
+  assert.equal(receipt.tarballs.length, 0);
+
+  for (const item of receipt.packages) {
+    const manifestPath = item.target
+      ? path.join(item.root, "runtime", "manifest", "capabilities.json")
+      : path.join(item.root, "manifest", "capabilities.json");
+    const releasePath = item.target
+      ? path.join(item.root, "runtime", "release-manifest.json")
+      : path.join(item.root, "release-manifest.json");
+    const capabilities = JSON.parse(await readFile(manifestPath, "utf8"));
+    const release = JSON.parse(await readFile(releasePath, "utf8"));
+    assert.equal(capabilities.schemaVersion, "ink-cleanroom-capability-evidence/v1");
+    assert.equal(capabilities.runtime.fixture, "provider-free-test");
+    assert.deepEqual(
+      capabilities.capabilities.map(entry => entry.id),
+      artifactPolicy.requiredCapabilities,
+    );
+    assert(capabilities.capabilities.some(entry => entry.id === "sandbox.notion-cli"));
+    assert.equal(release.status.publicationAllowed, false);
+    assert.equal(release.status.redistributionAllowed, true);
+  }
+
+  const selector = receipt.packages.find(item => item.target === undefined);
+  const fixturePrepack = run("npm", ["pack", "--dry-run", "--json"], { cwd: selector.root });
+  assert.notEqual(fixturePrepack.status, 0);
+  assert.match(`${fixturePrepack.stdout}\n${fixturePrepack.stderr}`, /integrity gate failed|Runtime manifest/i);
+
+  const localCoreCapabilities = JSON.parse(
+    await readFile(path.join(repositoryRoot, "runtime", "local-capabilities.json"), "utf8"),
+  );
+  const officialEnvelopeCapabilities = JSON.parse(
+    await readFile(path.join(repositoryRoot, "runtime", "capabilities.json"), "utf8"),
+  );
+  assert.equal(localCoreCapabilities.runtime.mode, "headless-sdk-runtime");
+  assert.equal(officialEnvelopeCapabilities.runtime.mode, "official-cli-compatibility-envelope");
+  assert.equal(localCoreCapabilities.capabilities.some(entry => entry.id === "sandbox.notion-cli"), false);
+  assert.equal(officialEnvelopeCapabilities.capabilities.some(entry => entry.id === "sandbox.notion-cli"), false);
+});
+
 test("four target builds produce five verified npm tarballs and the installed meta package selects the host", { timeout: 360_000 }, async t => {
+  if (!formalPublication) {
+    return t.skip("formal package test requires an open checked publication gate");
+  }
   const hostTarget = `${process.platform}-${process.arch}`;
   if (!targets.includes(hostTarget)) return t.skip(`unsupported test host: ${hostTarget}`);
 
@@ -119,8 +191,8 @@ test("four target builds produce five verified npm tarballs and the installed me
   const tarballRoot = path.join(repositoryRoot, policy.tarballRoot);
   const tarballs = await readdir(tarballRoot);
   assert.equal(tarballs.filter(name => name.endsWith(".tgz")).length, 5);
-  const metaTarball = path.join(tarballRoot, "glide-the-ink-claude-code-dream-0.1.3.tgz");
-  const hostTarball = path.join(tarballRoot, `glide-the-ink-claude-code-dream-${hostTarget}-0.1.3.tgz`);
+  const metaTarball = path.join(tarballRoot, "glide-the-ink-claude-code-dream-0.1.4.tgz");
+  const hostTarball = path.join(tarballRoot, `glide-the-ink-claude-code-dream-${hostTarget}-0.1.4.tgz`);
 
   // Dream passes canonical real Workspace paths. Canonicalize macOS' /var ->
   // /private/var temp alias before deriving CLAUDE_CODE_TMPDIR as well.

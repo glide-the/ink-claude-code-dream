@@ -138,11 +138,14 @@ The current official `2.1.241` binary has no public core source/build graph suit
 
 - Bun is pinned to exactly `1.4.0` because earlier local Bun did not implement the required feature API.
 - `runtime/core-prune-profile.json` declares all 89 observed features, required capabilities, source input assertions, defines, and DCE exclusions.
+- Linux runtime assets restore the exact chunk-adjacent `vendor/seccomp/<arch>/{apply-seccomp,unix-block.bpf}` layout used by the recovered sandbox-runtime code. `apply-seccomp` is the Docker-style repository-authored passthrough; `unix-block.bpf` comes from locked Apache-2.0 `@anthropic-ai/sandbox-runtime@0.0.45`. Source identity, SHA-256, mode, and output path enter the build receipt.
 - `runtime/core-resolution-map.json` maps recovered package entries and permits only source-digest-bound narrow facades.
 - `scripts/build-core-prune.ts` reads an explicit absolute, normalized, non-symlink source root; writes only ignored `dist/core-local`; records digest, metafile, gaps, and DCE results.
 - `scripts/verify-core-prune.mjs` refuses any artifact unless build status is successful, gaps are zero, forbidden inputs are absent, and every required capability input survives.
 
 Current result: build and verifier pass with 1,989 inputs, 48 outputs, zero gaps, passing DCE assertions, and every required MCP transform applied. The executable core is locally packaged and digest-qualified. This establishes the repository's technical `productionEligible=true` state, not permission to publish, redistribute, deploy, or claim a real-business run.
+
+The restored 2.1.88 settings converter does not forward `settings.sandbox.seccomp` into `SandboxRuntimeConfig`; its working extension point is the sandbox-runtime on-disk auto-discovery path. The Linux local-core build therefore places `runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh` directly at that verified helper path. Unlike the later embedded-filter helper, the 2.1.88 call includes the BPF path as argv 1, so this shim discards that one argument before `exec`. The passthrough leaves bubblewrap filesystem/network isolation logic in place but cannot compensate for an outer host that denies bubblewrap namespace creation.
 
 ## 8. Candidate comparison
 
@@ -237,7 +240,7 @@ flowchart LR
 
 The current build moved through `blocked` → `built` → `verified` → `qualified`; a DCE pass alone was not sufficient. The package is locally production-eligible under its artifact contract; its real Dream main journey and final real Comfy lane passed. Authenticated Admin UI evidence remains unavailable because no administrator browser session was supplied. Publication, redistribution, and deployment remain separate decisions.
 
-多平台发布不复用这一份 Darwin ARM64 资格结论。core builder 现在只允许 native `darwin-arm64`、`darwin-x64`、`linux-arm64`、`linux-x64`，receipt 及 SDK/MCP/management/full qualification subject 都携带 `runtimeTarget`；四个平台分别绑定各自 ripgrep SHA-256。npm 目标由 `@glide-the/ink-claude-code-dream` 选择包和四个平台包组成，平台包固定依赖并实测 `bun@1.4.0`。Windows、Linux musl 和交叉打包没有完整证据，保持 fail-closed。
+多平台发布不复用这一份 Darwin ARM64 资格结论。core builder 现在只允许 native `darwin-arm64`、`darwin-x64`、`linux-arm64`、`linux-x64`，receipt 及 SDK/MCP/management/full qualification subject 都携带 `runtimeTarget`；四个平台分别绑定各自 ripgrep SHA-256，两个 Linux 目标还分别绑定同架构 seccomp helper/BPF。npm 目标由 `@glide-the/ink-claude-code-dream` 选择包和四个平台包组成，平台包固定依赖并实测 `bun@1.4.0`。Windows、Linux musl 和交叉打包没有完整证据，保持 fail-closed。
 
 `npm pack` 有三层独立安全门：仓库根 lifecycle 拒绝 legacy envelope；生成式 package prepack 校验法律状态、qualification、target/arch、manifest、ripgrep checksum 和 Bun 版本；最终 tgz verifier 再拒绝 legacy material、用户数据和任意 `**/*.map`。当前 publication/redistribution 两个字段均为 false，且 npm 发布许可证为空，所以 workflow 在下载制品前就停止。
 

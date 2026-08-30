@@ -5,7 +5,7 @@
 // [Sync] 2026-08-24: bind Dream's canonical CLI/manifest/capability contract into all five packages.
 // [Sync] 2026-08-24: make a deterministic CycloneDX SBOM part of every exact package inventory.
 // [Sync] 2026-08-24: require and embed the final Dream business-receipt digest for formal publication.
-// [Sync] 2026-08-28: bind Runtime 0.1.3 packages to the exact real-business-tested source tree and native executable.
+// [Sync] 2026-08-30: bind Runtime 0.1.4 packages to the authorized version-bound Dream receipt.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -90,7 +90,9 @@ async function loadBusinessAcceptance() {
   return { receipt, sha256: acceptance.receiptSha256 };
 }
 
-const businessAcceptance = await loadBusinessAcceptance();
+const businessAcceptance = formalPublication
+  ? await loadBusinessAcceptance()
+  : { receipt: null, sha256: null };
 
 function sbomLicense(license) {
   return /^[A-Za-z0-9.-]+$/.test(license)
@@ -231,7 +233,9 @@ function validatePolicy() {
     cleanroomPolicy.publicationGate?.productionEligible !== formalPublication ||
     cleanroomPolicy.publicationGate?.redistributionAllowed !== formalPublication ||
     Object.values(cleanroomPolicy.publicationGate?.targetHostQualification ?? {}).length !== 4 ||
-    Object.values(cleanroomPolicy.publicationGate?.targetHostQualification ?? {}).some(value => value !== true) ||
+    Object.values(cleanroomPolicy.publicationGate?.targetHostQualification ?? {}).some(
+      value => value !== formalPublication,
+    ) ||
     JSON.stringify(Object.keys(policy.platforms)) !== JSON.stringify(allowedTargets)
   ) {
     fail("policy/root package identity, MIT, exact Bun, target order, or formal publication gate drift");
@@ -403,6 +407,7 @@ async function stagePackages() {
       fail(`unqualified or stale clean-room target build: ${target}`);
     }
     if (
+      formalPublication &&
       target === businessAcceptance.receipt.subject.acceptedTarget &&
       (
         buildManifest.build.sourceTreeSha256 !== businessAcceptance.receipt.subject.sourceTreeSha256 ||

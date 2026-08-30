@@ -15,7 +15,7 @@ const defaultPackageRoot = path.join(
   repositoryRoot,
   "dist",
   "core-package-local",
-  "ink-claude-code-dream-0.1.3",
+  "ink-claude-code-dream-0.1.4",
 );
 
 function fail(message) {

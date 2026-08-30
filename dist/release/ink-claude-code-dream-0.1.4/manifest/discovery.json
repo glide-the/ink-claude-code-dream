@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "releaseId": "ink-claude-code-dream-0.1.4",
+  "runtimeVersion": "0.1.4",
+  "protocol": {
+    "name": "claude-code-stream-json",
+    "version": 1
+  },
+  "executable": "bin/ink-claude-code-dream",
+  "releaseManifest": "release-manifest.json",
+  "releaseManifestSha256": "63dc42cc0e61e2cea329e7b7d7d4e88c3ba6c0ca7cc50cdc83d2b498caa8eb60",
+  "evidenceManifest": "manifest/capabilities.json",
+  "status": {
+    "corePruned": false,
+    "productionEligible": false
+  },
+  "sdk": {
+    "distribution": "ink-claude-dream-agent-sdk",
+    "version": "0.2.144",
+    "dreamObservedVersion": "0.2.144",
+    "modified": false,
+    "option": "ClaudeAgentOptions.cli_path",
+    "discoveryEnvironment": "CLAUDE_CODE_CLI_PATH",
+    "dreamHelper": "sdk_env.apply_cli_path_to_options",
+    "mcpHelper": "sdk_env.resolve_claude_cli_path",
+    "underlyingCoreEnvironment": "INK_CLAUDE_CODE_EXECUTABLE",
+    "workspaceEnvironment": "INK_CLAUDE_RUNTIME_WORKSPACE_ROOT"
+  }
+}
