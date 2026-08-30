@@ -6,6 +6,7 @@
 node_modules/
 dist/core-local/
 dist/core-package-local/
+dist/core-package-linux-x64/
 dist/npm-stage/
 dist/npm-tarballs/
 dist/cleanroom/

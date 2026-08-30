@@ -2,7 +2,7 @@
 // [Output] Fail on clean-room/legacy contract drift, missing headers, restricted material, secrets, or unsafe package scripts.
 // [Pos] Read-only clean-room lint gate; it never reads user configuration or external Runtime data.
 // [Sync] 2026-08-24: verify the final Dream receipt digest and authorized clean-room publication gate.
-// [Sync] 2026-08-28: validate Runtime 0.1.3, SDK 0.2.144, and the exact accepted source/executable receipt binding.
+// [Sync] 2026-08-30: validate Runtime 0.1.4 business evidence, four-target qualification, and explicit npm authorization.
 
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
@@ -14,7 +14,11 @@ const packageJson = JSON.parse(await readFile(resolve(root, "package.json"), "ut
 if (packageJson.name !== "ink-claude-code-dream") {
   throw new Error("package name must be the unscoped Runtime distribution identity");
 }
-if (packageJson.bin?.["ink-claude-code-dream"] !== "dist/release/ink-claude-code-dream-0.1.3/bin/ink-claude-code-dream") {
+if (
+  packageJson.version !== "0.1.4" ||
+  packageJson.bin?.["ink-claude-code-dream"] !==
+    "dist/release/ink-claude-code-dream-0.1.4/bin/ink-claude-code-dream"
+) {
   throw new Error("console bin must expose the extensionless Runtime entrypoint");
 }
 if (packageJson.private !== true || packageJson.license !== "MIT") {
@@ -43,6 +47,7 @@ const jsonFiles = [
   "runtime/cleanroom-sandbox-policy.json",
   "runtime/cleanroom-dependency-licenses.json",
   "runtime/attestations/dream-real-business-acceptance-0.1.3.json",
+  "runtime/attestations/dream-real-business-acceptance-0.1.4.json",
 ];
 const parsed = new Map();
 for (const path of jsonFiles) {
@@ -89,13 +94,18 @@ if (
   throw new Error("pruning decision must fail closed until authorization and build inputs exist");
 }
 const cleanroom = parsed.get("runtime/cleanroom-artifact-policy.json");
-const businessReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.3.json";
-const businessReceiptBody = await readFile(resolve(root, businessReceiptPath));
-const businessReceipt = parsed.get(businessReceiptPath);
-const businessReceiptSha256 = createHash("sha256").update(businessReceiptBody).digest("hex");
+const historicalReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.3.json";
+const historicalReceiptBody = await readFile(resolve(root, historicalReceiptPath));
+const historicalReceipt = parsed.get(historicalReceiptPath);
+const historicalReceiptSha256 = createHash("sha256").update(historicalReceiptBody).digest("hex");
+const currentReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.4.json";
+const currentReceiptBody = await readFile(resolve(root, currentReceiptPath));
+const currentReceipt = parsed.get(currentReceiptPath);
+const currentReceiptSha256 = createHash("sha256").update(currentReceiptBody).digest("hex");
 const targetQualification = cleanroom.publicationGate?.targetHostQualification;
 if (
   cleanroom.schemaVersion !== "ink-cleanroom-runtime-policy/v1" ||
+  cleanroom.artifact?.version !== "0.1.4" ||
   cleanroom.artifact?.license !== "MIT" ||
   cleanroom.source?.root !== "src/cleanroom" ||
   cleanroom.source?.externalImplementationInputAllowed !== false ||
@@ -106,31 +116,52 @@ if (
   cleanroom.publicationGate?.redistributionAllowed !== true ||
   cleanroom.publicationGate?.businessAcceptance?.required !== true ||
   cleanroom.publicationGate?.businessAcceptance?.passed !== true ||
-  cleanroom.publicationGate?.businessAcceptance?.receiptPath !== businessReceiptPath ||
-  cleanroom.publicationGate?.businessAcceptance?.receiptSha256 !== businessReceiptSha256 ||
+  cleanroom.publicationGate?.businessAcceptance?.receiptPath !== currentReceiptPath ||
+  cleanroom.publicationGate?.businessAcceptance?.receiptSha256 !== currentReceiptSha256 ||
   Object.keys(targetQualification ?? {}).sort().join(",") !==
     "darwin-arm64,darwin-x64,linux-arm64,linux-x64" ||
   Object.values(targetQualification ?? {}).some(value => value !== true) ||
-  businessReceipt?.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
-  businessReceipt?.subject?.runtime !== "ink-claude-code-dream" ||
-  businessReceipt?.subject?.version !== cleanroom.artifact?.version ||
-  businessReceipt?.subject?.acceptedTarget !== "darwin-arm64" ||
-  !/^[a-f0-9]{64}$/.test(businessReceipt?.subject?.sourceTreeSha256 ?? "") ||
-  !/^[a-f0-9]{64}$/.test(businessReceipt?.subject?.acceptedExecutableSha256 ?? "") ||
-  businessReceipt?.acceptance?.status !== "passed" ||
-  businessReceipt?.acceptance?.publicProductionEntrypoints !== true ||
-  businessReceipt?.privacy?.accountIdentifierIncluded !== false ||
-  businessReceipt?.privacy?.oauthCredentialsIncluded !== false ||
-  businessReceipt?.authorization?.explicitPublicNpmReleaseApproved !== true ||
-  businessReceipt?.authorization?.pypiPublicationApproved !== false ||
+  historicalReceiptSha256 !== "2e7da1f41a41af3b229b79080085e587cdae39e664d7630ed209592ec8c73d4b" ||
+  historicalReceipt?.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
+  historicalReceipt?.subject?.runtime !== "ink-claude-code-dream" ||
+  historicalReceipt?.subject?.version !== "0.1.3" ||
+  historicalReceipt?.subject?.acceptedTarget !== "darwin-arm64" ||
+  !/^[a-f0-9]{64}$/.test(historicalReceipt?.subject?.sourceTreeSha256 ?? "") ||
+  !/^[a-f0-9]{64}$/.test(historicalReceipt?.subject?.acceptedExecutableSha256 ?? "") ||
+  historicalReceipt?.acceptance?.status !== "passed" ||
+  historicalReceipt?.acceptance?.publicProductionEntrypoints !== true ||
+  historicalReceipt?.privacy?.accountIdentifierIncluded !== false ||
+  historicalReceipt?.privacy?.oauthCredentialsIncluded !== false ||
+  historicalReceipt?.authorization?.explicitPublicNpmReleaseApproved !== true ||
+  historicalReceipt?.authorization?.pypiPublicationApproved !== false ||
+  currentReceiptSha256 !== "87f3d1c6040e5462d85e6259a5cb16509a5d26838d5299d1ba350a4ba463dbea" ||
+  currentReceipt?.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
+  currentReceipt?.subject?.runtime !== "ink-claude-code-dream" ||
+  currentReceipt?.subject?.version !== "0.1.4" ||
+  currentReceipt?.subject?.acceptedTarget !== "darwin-arm64" ||
+  currentReceipt?.subject?.sourceTreeSha256 !== "266362ac3543ca6d5dc7a400e2a23ac718e231abb761eab8f824726ab595de81" ||
+  currentReceipt?.subject?.acceptedExecutableSha256 !== "969f9193be8750e2573e4c4ea9c3556d48687925d9f57b8ea676669d753980dd" ||
+  currentReceipt?.acceptance?.status !== "passed" ||
+  currentReceipt?.acceptance?.publicProductionEntrypoints !== true ||
+  currentReceipt?.acceptance?.sameThreadResume !== true ||
+  currentReceipt?.acceptance?.ordinaryChatSucceeded !== true ||
+  currentReceipt?.acceptance?.notionCliContract?.notionMutationPerformed !== false ||
+  currentReceipt?.privacy?.accountIdentifierIncluded !== false ||
+  currentReceipt?.privacy?.oauthCredentialsIncluded !== false ||
+  currentReceipt?.privacy?.environmentValuesIncluded !== false ||
+  currentReceipt?.privacy?.notionApiBodiesIncluded !== false ||
+  currentReceipt?.authorization?.explicitPublicNpmReleaseApproved !== true ||
+  currentReceipt?.authorization?.pypiPublicationApproved !== false ||
   !Array.isArray(cleanroom.requiredCapabilities) ||
-  cleanroom.requiredCapabilities.length !== 13
+  cleanroom.requiredCapabilities.length !== 14 ||
+  !cleanroom.requiredCapabilities.includes("sandbox.notion-cli")
 ) {
   throw new Error("clean-room source/material/publication contract drift");
 }
 const cleanroomNpm = parsed.get("runtime/cleanroom-npm-policy.json");
 if (
   cleanroomNpm.schemaVersion !== "ink-cleanroom-npm-policy/v1" ||
+  cleanroomNpm.version !== "0.1.4" ||
   cleanroomNpm.license !== "MIT" ||
   cleanroomNpm.bunVersion !== "1.4.0" ||
   cleanroomNpm.entrypoint !== "src/cleanroom/cli.ts" ||
@@ -150,7 +181,12 @@ if (
   cleanroomSandbox.version !== "0.0.73" ||
   cleanroomSandbox.license !== "Apache-2.0" ||
   cleanroomSandbox.network?.default !== "deny" ||
+  JSON.stringify(cleanroomSandbox.network?.allowedDomains) !==
+    JSON.stringify(["api.notion.com:443", "developers.notion.com:443", "ntn.dev:443"]) ||
+  cleanroomSandbox.network?.strictAllowlist !== true ||
   cleanroomSandbox.process?.terminateProcessGroup !== true ||
+  cleanroomSandbox.process?.sessionCache !== false ||
+  cleanroomSandbox.notionCli?.observedVersion !== "0.15.1" ||
   cleanroomSandbox.fallback !== "fail-closed"
 ) {
   throw new Error("clean-room production sandbox contract drift");

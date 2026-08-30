@@ -4,7 +4,8 @@
 [Input] A Claude CLI path and the source-only Ink SDK available on sys.path.
 [Output] A JSON receipt for stream-json, permission, tool, interrupt, and resume.
 [Pos] Provider-free process-boundary contract gate for a locally built core.
-[Sync] 2026-08-24: add the first real candidate-core SDK contract runner.
+[Sync] 2026-08-30: make the official nested-Docker comparator skip only its
+                   unpatchable embedded Unix-socket filter and retain bounded Bash diagnostics.
 """
 
 from __future__ import annotations
@@ -45,6 +46,7 @@ class ProviderState:
 
     requests: list[dict[str, Any]] = field(default_factory=list)
     tool_result_seen: bool = False
+    bash_result_content: str = ""
     skill_result_seen: bool = False
     plugin_skill_result_seen: bool = False
     agent_result_seen: bool = False
@@ -273,6 +275,10 @@ def _handler(state: ProviderState) -> type[BaseHTTPRequestHandler]:
             state.tool_result_seen = (
                 state.tool_result_seen or "toolu_runtime_contract" in result_ids
             )
+            if "toolu_runtime_contract" in result_ids:
+                state.bash_result_content = _tool_result_content(
+                    payload, "toolu_runtime_contract"
+                )
             state.skill_result_seen = (
                 state.skill_result_seen or "toolu_runtime_skill" in result_ids
             )
@@ -465,6 +471,9 @@ async def run_contract(cli: Path) -> dict[str, Any]:
             "cat sdk-contract.txt"
         )
         settings_path = workspace / ".claude" / "settings.json"
+        reference_allows_unix_sockets = (
+            os.environ.get("INK_CORE_REFERENCE_ALLOW_ALL_UNIX_SOCKETS") == "1"
+        )
         settings_path.write_text(
             json.dumps(
                 {
@@ -482,6 +491,11 @@ async def run_contract(cli: Path) -> dict[str, Any]:
                         "credentials": {
                             "files": [{"path": str(credential_file), "mode": "deny"}]
                         },
+                        **(
+                            {"network": {"allowAllUnixSockets": True}}
+                            if reference_allows_unix_sockets
+                            else {}
+                        ),
                     }
                 }
             )
@@ -609,6 +623,12 @@ async def run_contract(cli: Path) -> dict[str, Any]:
             if not session_id or any(result.session_id != session_id for result in results):
                 raise AssertionError("session ID was not stable across turns")
             output_file = workspace / "sdk-contract.txt"
+            if not output_file.is_file():
+                raise AssertionError(
+                    "Bash tool did not create the workspace receipt; "
+                    f"tool_result={provider.bash_result_content[-2000:]!r}; "
+                    f"stderr={''.join(stderr_lines[-20:])[-4000:]!r}"
+                )
             if output_file.read_text() != "runtime-contract-ok\n":
                 raise AssertionError("Bash tool did not execute in the workspace")
             if sandbox_boundary.read_text() != "credential-denied\n":
@@ -710,6 +730,13 @@ async def run_contract(cli: Path) -> dict[str, Any]:
                     "tmpdirMode": "0700",
                 },
                 "provider": {"requestCount": len(provider.requests)},
+                "sandboxSetup": {
+                    "unixSocketRestriction": (
+                        "disabled-for-official-docker-comparator"
+                        if reference_allows_unix_sockets
+                        else "runtime-default"
+                    )
+                },
             }
 
 

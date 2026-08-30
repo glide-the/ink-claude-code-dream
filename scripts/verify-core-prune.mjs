@@ -1,7 +1,7 @@
 // [Input] Local-only core-prune profile, resolution map, build receipt, metafile, and resolution gaps.
 // [Output] Fail unless Bun/source digest/feature-DCE/output-path/resolution evidence is internally consistent and built.
 // [Pos] Read-only verifier for dist/core-local; it neither builds nor reads external restored source.
-// [Sync] 2026-08-24: gate native target identity and the target-specific checksum-pinned runtime assets.
+// [Sync] 2026-08-30: gate restored 2.1.88 seccomp asset provenance, digest, path, and mode.
 
 import { opendir, readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
@@ -89,7 +89,14 @@ const selectedRuntimeAssets = [
   ...(profile.runtimeAssetTargets?.[receipt.runtimeTarget] ?? []),
 ];
 if (JSON.stringify(receipt.runtimeAssets) !== JSON.stringify(
-  selectedRuntimeAssets.map(({ output, sha256, mode, license }) => ({ output, sha256, mode, license })),
+  selectedRuntimeAssets.map(({ sourceRoot, sourceIdentity, output, sha256, mode, license }) => ({
+    sourceRoot: sourceRoot ?? "authorized-package",
+    sourceIdentity: sourceIdentity ?? `@anthropic-ai/claude-code@${profile.sourceVersionEvidence}`,
+    output,
+    sha256,
+    mode,
+    license,
+  })),
 )) fail("runtime-asset receipt drift");
 for (const asset of receipt.runtimeAssets) {
   const assetPath = join(outputRoot, "bundle", asset.output);

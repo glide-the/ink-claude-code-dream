@@ -2,10 +2,12 @@
 // [Output] Exactly one bounded ephemeral provider token, or a redacted fail-closed error.
 // [Pos] Shell-free helper execution boundary for Dream's short-lived subject-token helper.
 // [Sync] 2026-08-24: expose bounded helper failure categories without returning commands, paths, tokens, or stderr.
+// [Sync] 2026-08-30: keep Dream's actor/thread Notion projection exclusive to production Bash.
 
 import { spawn } from "node:child_process";
 import { constants } from "node:fs";
 import { access, lstat, realpath } from "node:fs/promises";
+import { withoutNotionBashEnvironment } from "../environment.ts";
 
 const MAX_TOKEN_BYTES = 64 * 1024;
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -135,7 +137,7 @@ export async function runApiKeyHelper(
   return await new Promise<string>((resolve, reject) => {
     const child = spawn(executable, args, {
       cwd: process.cwd(),
-      env: environment,
+      env: withoutNotionBashEnvironment(environment),
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,

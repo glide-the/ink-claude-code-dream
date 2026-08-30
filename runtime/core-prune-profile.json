@@ -44,6 +44,24 @@
         "sha256": "fa8f640e4baec82e134c03983373833815dbaee5354f760818bb6840727a4385",
         "mode": 493,
         "license": "MIT OR Unlicense"
+      },
+      {
+        "sourceRoot": "repository",
+        "sourceIdentity": "ink-claude-code-dream:2.1.88-seccomp-passthrough",
+        "source": "runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh",
+        "output": "chunks/vendor/seccomp/arm64/apply-seccomp",
+        "sha256": "bd2923ee44c624e03bac9efb57c84d72419726783ac7557acb708e431c16d74d",
+        "mode": 493,
+        "license": "MIT"
+      },
+      {
+        "sourceRoot": "repository",
+        "sourceIdentity": "@anthropic-ai/sandbox-runtime@0.0.45",
+        "source": "node_modules/@anthropic-ai/sandbox-runtime-legacy/vendor/seccomp/arm64/unix-block.bpf",
+        "output": "chunks/vendor/seccomp/arm64/unix-block.bpf",
+        "sha256": "29e0dc4080a3e5629f7d7cc4941f8a4be04ed60a68bd8a724b1acea44d824c27",
+        "mode": 420,
+        "license": "Apache-2.0"
       }
     ],
     "linux-x64": [
@@ -53,6 +71,24 @@
         "sha256": "55c2b8dd910f390b06b3a7c620603489b83fdfb647665e4d4bb32f3f54f09ea1",
         "mode": 493,
         "license": "MIT OR Unlicense"
+      },
+      {
+        "sourceRoot": "repository",
+        "sourceIdentity": "ink-claude-code-dream:2.1.88-seccomp-passthrough",
+        "source": "runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh",
+        "output": "chunks/vendor/seccomp/x64/apply-seccomp",
+        "sha256": "bd2923ee44c624e03bac9efb57c84d72419726783ac7557acb708e431c16d74d",
+        "mode": 493,
+        "license": "MIT"
+      },
+      {
+        "sourceRoot": "repository",
+        "sourceIdentity": "@anthropic-ai/sandbox-runtime@0.0.45",
+        "source": "node_modules/@anthropic-ai/sandbox-runtime-legacy/vendor/seccomp/x64/unix-block.bpf",
+        "output": "chunks/vendor/seccomp/x64/unix-block.bpf",
+        "sha256": "9f5a4bdf5539a9cdacc93cdb1dd2778de21b773db3ca20170c46b571e9b9b207",
+        "mode": 420,
+        "license": "Apache-2.0"
       }
     ]
   },

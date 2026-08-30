@@ -2,16 +2,20 @@
 <!-- [Output] Explain the qualified local minimal-core workflow, remaining business gate, legacy envelope, and safe Git/release boundary. -->
 <!-- [Pos] Operator-facing entry point for ink-claude-code-dream. -->
 <!-- [Sync] 2026-08-28: prepare clean-room Runtime 0.1.3 with model-bounded max_tokens and conditional effort projection. -->
+<!-- [Sync] 2026-08-30: authorize Runtime 0.1.4 clean-room publication after Notion acceptance and four-target qualification. -->
+<!-- [Sync] 2026-08-30: restore the 2.1.88 local-core Linux seccomp path with the Docker-style passthrough. -->
 
 # ink-claude-code-dream
 
 This private repository builds a locally packaged, IM-focused Claude Runtime named `ink-claude-code-dream`. Its primary path uses the user-authorized Claude Code `2.1.88` restored source as an external local input and Bun `1.4.0` compile-time feature DCE. Generated core and package files go only to Git-ignored `dist/core-local/` and `dist/core-package-local/`; Git stores the repository-authored, source-bound transformation builder, capability profile, resolution map, tests, manifests, and documentation. This is technical provenance, not a license conclusion.
 
-Current technical status: **built, verified, and locally production-eligible under the repository's artifact contract**. The exact core has bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5` and source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`. Its sanitized graph has 1,989 inputs, 48 outputs, zero resolution gaps, and passing DCE assertions. Source provenance remains `2.1.88`; the separately qualified Dream-facing CLI compatibility version is `2.1.241`. Digest-bound SDK real-process differential, stdio/HTTP MCP tools/resources differential, MCP management lifecycle, and `full-runtime-qualification` all exited 0. The local package contains 62 files with 61 checksum entries, has artifact-tree SHA-256 `b674fb04734cde23c3821ae7796f3125e96e110392f6be353c30e1e7f59b0f5b`, and reproduced byte-identically twice.
+The current Linux x64 local-core was built and qualified in a privileged Docker harness from source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`; its bundle SHA-256 is `a5827e0e6a1f5c3f09f5c4ceca66122893e531d3f31a644811273bae89487e9a`. SDK/Bash, stdio/HTTP MCP, MCP management, OAuth, static contracts, compatibility tests, and lint all exited 0. The qualified package has 64 files, 63 checksum entries, artifact-tree SHA-256 `b69f165f21a333489f35d1fb6e4e55c03b41a61fd11746e75163422505bbcb77`, and `productionEligible=true`. Source provenance remains `2.1.88`; `2.1.241` is only the separately qualified Dream-facing CLI compatibility value. The current profile restores the Linux-only disk path that the 2.1.88 sandbox code searches: `chunks/vendor/seccomp/<arch>/apply-seccomp` is the Docker-style passthrough with SHA-256 `bd2923ee44c624e03bac9efb57c84d72419726783ac7557acb708e431c16d74d`, and `unix-block.bpf` is checksum-pinned from `@anthropic-ai/sandbox-runtime@0.0.45`.
 
 This is a technical artifact decision, not a publication or deployment grant: `productionEligible=true`, while `publicationAllowed=false` and `redistributionAllowed=false`. The Dream manifest gate and backend suite passed (1,954 passed, 24 skipped, 607 subtests), the current standard Runtime run passed 44 tests with 2 external OAuth-fixture tests skipped, and the current custom-core real Dream main journey passed. The official MCP Python SDK `2.0.0` fixture at commit `6f69a3758ebf2ee55ce050f58b470ce11af71133` separately passed the complete OAuth CLI contract 3/3 through pipe and real-PTY lanes. The final real Comfy acceptance also passed through Dream's public configure/auth/callback/inventory/logout/remove path: `comfyui-cloud` `0.40.1` connected with 41 tools and a complete 16-stage safe receipt ending in `credentials_present` → `flow_resolved` → `success_stdout_flushed`.
 
 The existing Node supervisor/envelope and its `dist/release/` receipts remain a historical process-boundary and rollback baseline. Its green tests do not prove the minimal core.
+
+The clean-room Runtime `0.1.4` adds the stable `sandbox.notion-cli` capability for production Bash only. At each fresh or resumed Runtime start it validates an exact canonical `{workspace}/.notion-home`, fixes `NOTION_KEYRING=0`, accepts only an optional nonempty single-line token and an exact existing `workers.json`, and admits only a native owner/root `ntn` plus the three required HTTPS hosts. Invalid, ambient, foreign-thread, or stale projections remain unset. Provider helpers and stdio MCP children explicitly remove these names. The exact darwin-arm64 executable passed a normal three-turn Dream Chat journey covering fresh Bash, same-thread resume, read-only `ntn` doctor/identity, and ordinary Chat. Four target formats, five-package reproducibility, and explicit public npm authorization are checked, so the clean-room production, redistribution, and publication gates are open for the same-SHA CI release. This claim does not apply to the restored-source local core. See the [Notion CLI sandbox task record](docs/notion-cli-sandbox-task.md).
 
 ## Capability boundary
 
@@ -82,13 +86,21 @@ The final exact-Node verification command, `PATH=/Users/dmeck/.nvm/versions/node
 
 The official CLI `2.1.241` remains the current behavior comparator and direct rollback target. It is not the source of this core: the implementation is restored `2.1.88` plus the separate `2.1.238`/`2.1.239` MCP compatibility patch and source-bound OAuth repair. The custom package business path and final real Comfy lane passed. Authenticated Admin UI evidence remains unavailable because no administrator browser session was supplied; publication/redistribution remain prohibited.
 
+### Linux seccomp 恢复与容器兼容
+
+2.1.88 的 sandbox adapter 不会从 Dream `settings.json` 转发 `sandbox.seccomp`；它依赖 sandbox-runtime 从 bundle chunk 相邻目录自动发现 `vendor/seccomp/<arch>`。因此这里恢复的是实际磁盘资产和摘要约束，不是新增一个无效的 settings 配置项。
+
+Linux local-core 构建时直接把 [`runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh`](runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh) 放到该 `apply-seccomp` 路径，不存在部署后再覆盖的第二套模式。2.1.88 会把 BPF 路径作为第一个参数传给 helper，所以该脚本先 `shift` 再 `exec "$@"`；这是同一个 Docker workaround 对 2.1.88 argv 的适配。它只关闭 Unix socket seccomp 层，不会赋予 bubblewrap 创建 user/mount namespace 的宿主权限。
+
 See the [canonical design](docs/design/claude-code-runtime-minimalization.md), [build guide](docs/build/README.md), and [test guide](docs/test/README.md).
 
 ## npm 发布状态
 
 仓库根 `package.json` 是私有构建编排器和历史 envelope，不是发布包；根级 `npm pack`/`npm publish` 会被 lifecycle 拒绝。可审查的目标布局是 `@glide-the/ink-claude-code-dream` 顶层选择包，加 Darwin/Linux 的 arm64/x64 四个平台包。每个平台必须使用同平台 qualification、ripgrep 和 `bun@1.4.0`，Windows 暂无完整证据并 fail-closed。
 
-clean-room `0.1.3` 的 `publicationAllowed=true`、`redistributionAllowed=true` 与 Dream 回执摘要已绑定；
-发布仍必须通过 main 同 SHA qualification 与 npm Trusted Publisher，四个平台包先于 selector。
+clean-room `0.1.3` 的历史发布回执仍保留；`0.1.4` 已有摘要绑定的真实 Dream 回执、四目标
+native-format/package/reproducibility qualification 和用户明确的公开 npm 授权。其
+`productionEligible=true`、`publicationAllowed=true`、`redistributionAllowed=true`，且 npm
+`npmPublishAllowed=true`，仅允许 main 同 SHA 的 qualification → 平台四包 → selector 顺序发布。
 所有 npm 包清单和 tgz 强制不包含 `*.map`。历史 restored-source/local-core 路径仍禁止发布。
 详见 [npm 多平台发布设计](docs/design/npm多平台发布设计.md)。

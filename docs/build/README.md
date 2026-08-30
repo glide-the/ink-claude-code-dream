@@ -2,6 +2,8 @@
 <!-- [Output] Give fail-closed local-core, legacy-envelope, packaging, and Git-boundary commands. -->
 <!-- [Pos] Build and release operator guide. -->
 <!-- [Sync] 2026-08-24: add fail-closed @glide-the four-platform npm staging, tarball, OIDC publication flow, and zero-source-map rule for every release form. -->
+<!-- [Sync] 2026-08-30: document the authorized Runtime 0.1.4 clean-room qualification and publication flow. -->
+<!-- [Sync] 2026-08-30: document the restored 2.1.88 Linux path with the Docker-style passthrough and locked BPF. -->
 
 # Build and package
 
@@ -12,11 +14,29 @@ There are two distinct build products. Do not combine their claims:
 
 Both products forbid `*.map`. The legacy envelope build disables esbuild source-map generation, while the minimal core, npm stage, npm dry-run inventory, and final tgz verifier independently reject source maps.
 
+The separate repository-authored clean-room Runtime is prepared as `0.1.4`. Its checked policy generates `sandbox.notion-cli` into the platform and selector capability manifests. The exact darwin-arm64 executable has a version-bound real Dream acceptance receipt, the four targets have native-format/package/reproducibility qualification, and public npm publication is explicitly authorized. The checked clean-room production, redistribution, and publication flags are open only for the main-branch same-SHA workflows.
+
+## Clean-room Runtime 0.1.4 release
+
+Build the exact Bun `1.4.0` targets and the formal five-tarball set locally:
+
+```sh
+./node_modules/.bin/bun scripts/build-cleanroom-targets.ts
+node scripts/package-cleanroom-npm.mjs all
+node scripts/verify-cleanroom-npm.mjs
+```
+
+The source-of-truth is `runtime/cleanroom-artifact-policy.json#requiredCapabilities`. The packager emits it verbatim as entries in each platform package's `runtime/manifest/capabilities.json` and the selector's `manifest/capabilities.json`; Dream should require stable ID `sandbox.notion-cli` and reject a missing ID. `runtime/local-capabilities.json` and `runtime/capabilities.json` belong to the distinct local-core and official-envelope products, so they intentionally do not claim this clean-room-only capability.
+
+Local tarballs remain pre-publication evidence. Public release must use `.github/workflows/qualify-npm-runtime.yml` on main, then pass that exact successful run ID to `.github/workflows/publish-npm.yml`; the publisher re-verifies all five archives and publishes four platform packages before the selector. Never publish the restored-source local core.
+
 ## Requirements
 
 - repository dependencies installed from checked-in `bun.lock`;
+- exact build-only alias `@anthropic-ai/sandbox-runtime-legacy -> @anthropic-ai/sandbox-runtime@0.0.45`, which supplies the checksum-pinned Linux BPF asset expected by the restored code;
 - `node_modules/.bin/bun` exactly `1.4.0` for the core builder;
 - an absolute, normalized, non-symlink `INK_AUTHORIZED_CORE_SOURCE_ROOT` containing `src/` and recovered `node_modules/`;
+- an absolute, normalized, non-symlink `INK_AUTHORIZED_CORE_PACKAGE_ROOT` containing the original 2.1.88 package assets such as ripgrep;
 - restored-source baseline digest SHA-256 `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` for 4,471 files / 46,447,794 bytes;
 - exact Node `24.13.0` only when reproducing the legacy envelope archive.
 
@@ -27,9 +47,11 @@ bun install --frozen-lockfile
 ./node_modules/.bin/bun --version
 
 INK_AUTHORIZED_CORE_SOURCE_ROOT=/absolute/path/to/claude-code-sourcemap/restored-src \
+INK_AUTHORIZED_CORE_PACKAGE_ROOT=/absolute/path/to/claude-code-sourcemap/package \
   bun run build:core-local
 
 INK_AUTHORIZED_CORE_SOURCE_ROOT=/absolute/path/to/claude-code-sourcemap/restored-src \
+INK_AUTHORIZED_CORE_PACKAGE_ROOT=/absolute/path/to/claude-code-sourcemap/package \
   bun run verify:core-local
 ```
 
@@ -40,16 +62,19 @@ The builder:
 3. refuses to write unless `dist/core-local/` is Git-ignored;
 4. hashes the complete source input;
 5. builds `${INK_AUTHORIZED_CORE_SOURCE_ROOT}/src/entrypoints/cli.tsx` with the 89-feature profile;
-6. writes a sanitized metafile, resolution-gap report, source/build receipt, and DCE evidence only under `dist/core-local/`;
-7. never edits or copies the restored tree into the repository.
+6. for Linux only, copies the repository-authored Docker-style passthrough as `apply-seccomp` and exact `sandbox-runtime@0.0.45` `unix-block.bpf` bytes into the chunk-adjacent `vendor/seccomp/<arch>` path that the 2.1.88 code searches;
+7. writes a sanitized metafile, resolution-gap report, source/build receipt, and DCE evidence only under `dist/core-local/`;
+8. never edits or copies the restored tree into the repository.
 
-The verifier requires `status=built`, Bun `1.4.0`, zero gaps, zero forbidden inputs, every required capability input in the metafile, and all required MCP transforms applied. Current evidence passes: source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`, bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5`, 1,989 inputs, 48 outputs, zero gaps, and passing DCE assertions. The build receipt binds source provenance `2.1.88` separately from the qualified Dream CLI compatibility version `2.1.241`.
+The verifier requires `status=built`, Bun `1.4.0`, zero gaps, zero forbidden inputs, every required capability input in the metafile, all required MCP transforms applied, and exact runtime-asset source identity/digest/mode/path. The current Docker-native Linux x64 build passed for source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `a5827e0e6a1f5c3f09f5c4ceca66122893e531d3f31a644811273bae89487e9a`; its qualified 64-file package has artifact-tree SHA-256 `b69f165f21a333489f35d1fb6e4e55c03b41a61fd11746e75163422505bbcb77`. The build receipt binds source provenance `2.1.88` separately from the Dream CLI compatibility value `2.1.241`.
 
 Generated layout:
 
 ```text
 dist/core-local/
   bundle/
+    chunks/vendor/seccomp/<arch>/apply-seccomp     # Linux only
+    chunks/vendor/seccomp/<arch>/unix-block.bpf    # Linux only
   build-receipt.json
   metafile.json
   resolution-gaps.json
@@ -57,6 +82,12 @@ dist/core-local/
 ```
 
 `dist/core-local/` is disposable local output. Deleting it is the build rollback; it has no database or Dream-state implications.
+
+### Linux apply-seccomp passthrough
+
+The Linux local-core build always materializes `runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh` as packaged `lib/core/chunks/vendor/seccomp/<arch>/apply-seccomp`. The artifact receipt and checksum inventory bind those bytes directly; deployment does not mutate the package afterward. This local-core behavior remains outside the public clean-room npm package.
+
+The restored 2.1.88 runtime calls the helper as `apply-seccomp <unix-block.bpf> <command> ...`; the shim therefore removes exactly argv 1 before executing the command. This bypasses only the Unix-socket seccomp layer. A host that rejects bubblewrap's outer user/mount namespace still requires a topology/capability change outside the Runtime.
 
 ## MCP compatibility build layer
 

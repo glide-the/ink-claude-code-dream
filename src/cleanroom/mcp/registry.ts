@@ -2,7 +2,8 @@
 // [Output] Lifecycle registry, discovery inventory, calls, reads, and model tool bindings.
 // [Pos] Stateful connection owner for the clean-room MCP client slice.
 // [Sync] 2026-08-25: add SDK SSE while preserving verified auth and scope-upgrade semantics.
-// [Sync] 2026-08-28: publish anonymous/OAuth/SSE discovery under Runtime 0.1.3.
+// [Sync] 2026-08-30: prepare anonymous/OAuth/SSE discovery under Runtime 0.1.4.
+// [Sync] 2026-08-30: exclude Dream's Notion Bash capability from stdio MCP child environments.
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
@@ -21,6 +22,7 @@ import {
   resourceUrlFromServerUrl,
 } from "@modelcontextprotocol/sdk/shared/auth-utils.js";
 import type { FetchLike, Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import { withoutNotionBashEnvironment } from "../environment.ts";
 import { mcpModelToolName } from "./naming.ts";
 import {
   HeadlessMcpOAuthFlow,
@@ -464,7 +466,7 @@ function makeTransport(
     return new StdioClientTransport({
       command: config.command,
       args: config.args,
-      env: { ...getDefaultEnvironment(), ...config.env },
+      env: withoutNotionBashEnvironment({ ...getDefaultEnvironment(), ...config.env }),
       ...(config.cwd ? { cwd: config.cwd } : {}),
       stderr: "pipe",
     });
@@ -563,7 +565,7 @@ export class McpRegistry {
 
   constructor(configs: ReadonlyMap<string, McpServerConfig>, options: McpRegistryOptions = {}) {
     this.clientName = options.clientName ?? "ink-claude-code-dream";
-    this.clientVersion = options.clientVersion ?? "0.1.3";
+    this.clientVersion = options.clientVersion ?? "0.1.4";
     this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
     this.httpFetch = options.httpFetch;
     this.oauthProviderFactory = options.oauthProviderFactory;

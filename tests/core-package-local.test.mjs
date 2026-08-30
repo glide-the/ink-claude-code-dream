@@ -2,6 +2,7 @@
 // [Output] Prove reproducibility, qualification gating/binding, Bun wrapper behavior, tamper detection, and user/source material exclusion.
 // [Pos] Provider-free local artifact contract tests; fixtures contain no restored/vendor implementation or Dream business state.
 // [Sync] 2026-08-24: bind packages and all qualification receipts to one native Runtime target.
+// [Sync] 2026-08-30: treat a sibling Dream still pinned to 0.1.3 as an explicit external candidate-version skip.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -16,7 +17,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const packageScript = path.join(repositoryRoot, "scripts", "package-core-local.mjs");
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-core-package-local.mjs");
 const installScript = path.join(repositoryRoot, "scripts", "install-core-local.mjs");
-const artifactId = "ink-claude-code-dream-0.1.3";
+const artifactId = "ink-claude-code-dream-0.1.4";
 const sourceDigest = "4".repeat(64);
 const runtimeTarget = `${process.platform}-${process.arch}`;
 
@@ -146,9 +147,10 @@ async function runDreamManifestGate(executable) {
     "backend = Path(sys.argv[1]).resolve()",
     "sys.path.insert(0, str(backend))",
     "import tests._sdk_stubs",
-    "from libs.claude_agent_kit.server.sdk_env import require_dream_claude_runtime_manifest",
+    "from libs.claude_agent_kit.server.sdk_env import DREAM_CLAUDE_CLI_VERSION, require_dream_claude_runtime_manifest",
     "from claude_mcp.identity import _cli_has_secure_storage_marker",
     "executable = Path(sys.argv[2])",
+    "print(json.dumps({'expectedVersion': DREAM_CLAUDE_CLI_VERSION}, sort_keys=True), flush=True)",
     "marker = _cli_has_secure_storage_marker(str(executable))",
     "manifest = require_dream_claude_runtime_manifest(executable)",
     "print(json.dumps({'manifest': str(manifest), 'secureStorageMarker': marker}, sort_keys=True))",
@@ -184,7 +186,7 @@ async function writeQualification(context, id, evidenceType, overrides = {}) {
     evidenceType,
     subject: {
       runtime: "ink-claude-code-dream",
-      version: "0.1.3",
+      version: "0.1.4",
       coreBundleSha256: context.coreDigest,
       sourceDigest,
       runtimeTarget,
@@ -282,8 +284,15 @@ test("Dream's real production manifest gate rejects an unqualified artifact and 
     ]);
     assert.equal(qualified.status, 0, qualified.stderr);
     const accepted = await runDreamManifestGate(executable);
+    const dreamVersion = JSON.parse(accepted.stdout.trim().split("\n")[0]).expectedVersion;
+    if (dreamVersion !== "0.1.4") {
+      assert.notEqual(accepted.status, 0);
+      assert.match(accepted.stderr, /not production-qualified/);
+      t.skip(`sibling Dream production manifest gate remains pinned to ${dreamVersion}`);
+      return;
+    }
     assert.equal(accepted.status, 0, accepted.stderr);
-    const dreamReceipt = JSON.parse(accepted.stdout.trim());
+    const dreamReceipt = JSON.parse(accepted.stdout.trim().split("\n").at(-1));
     assert.equal(
       dreamReceipt.manifest,
       await realpath(path.join(context.artifactRoot, "release-manifest.json")),
@@ -332,7 +341,7 @@ test("qualification evidence bound to another bundle is rejected", async () => {
     const sdk = await writeQualification(context, "sdk", "real-process-sdk-differential", {
       subject: {
         runtime: "ink-claude-code-dream",
-        version: "0.1.3",
+        version: "0.1.4",
         coreBundleSha256: "9".repeat(64),
         sourceDigest,
         runtimeTarget,
