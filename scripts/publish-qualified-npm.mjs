@@ -2,7 +2,7 @@
 // [Input] Verified immutable five-tarball set, checked npm policy and CI-only npm authentication.
 // [Output] Publish platforms then selector, or verify identical already-published bytes on retry.
 // [Pos] Existing GitHub npm workflow publication helper; never builds or logs credentials.
-// [Sync] 2026-09-13: bound registry propagation waits; distinguish absence from immutable mismatch without logging credentials.
+// [Sync] 2026-09-13: bound monotonic registry waits with integer subprocess timeouts; distinguish absence from immutable mismatch safely.
 
 import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
@@ -84,7 +84,7 @@ export async function publishQualifiedNpm(directory, {
       }
       const deadline = now() + visibilityTimeoutMs;
       while (actual === null) {
-        const remaining = deadline - now();
+        const remaining = Math.floor(deadline - now());
         if (remaining <= 0) {
           throw new Error(`Registry visibility timed out after ${visibilityTimeoutMs}ms: ${name}@${policy.version}; upload accepted, retry only the identical qualified archive set`);
         }
