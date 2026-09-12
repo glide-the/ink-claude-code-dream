@@ -1,7 +1,7 @@
 // [Input] Checked legacy/clean-room npm policies, root lifecycle guards, tarball verifiers, and publication workflows.
 // [Output] Prove scoped layouts, closed legacy gates, receipt-bound clean-room publication, OIDC/token auth, and zero-map tarballs.
 // [Pos] Provider-free npm publication contract tests; they never publish, authenticate, or copy a vendor core.
-// [Sync] 2026-08-24: recognize the private MIT repository orchestrator without opening the legacy publish gate.
+// [Sync] 2026-09-13: recognize the private UNLICENSED mixed-source orchestrator without opening any publication gate.
 // [Sync] 2026-08-24: require exact acceptance-receipt hashing in the clean-room qualification/publication path.
 // [Sync] 2026-08-26: require scoped-token mode to remove OIDC carriers and override tarball provenance only at publish time.
 
@@ -87,7 +87,7 @@ test("all generated shell launchers and Node prepack gates parse before authoriz
 
 test("repository root cannot be npm packed as the legacy envelope", () => {
   assert.equal(packageJson.private, true);
-  assert.equal(packageJson.license, "MIT");
+  assert.equal(packageJson.license, "UNLICENSED");
   assert.equal(packageJson.scripts.prepack, "node scripts/npm-root-guard.mjs");
   assert.equal(packageJson.scripts.prepublishOnly, "node scripts/npm-root-guard.mjs");
   const packed = spawnSync("npm", ["pack", "--dry-run", "--json"], {

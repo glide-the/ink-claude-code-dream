@@ -3,7 +3,7 @@
 // [Output] A real-process stdio/HTTP MCP differential receipt.
 // [Pos] Protocol release gate for handshake, tools, resources, inventory, and colon names.
 // [Sync] 2026-08-24: bind MCP differential evidence to the exact native Runtime target.
-// [Sync] 2026-09-12: require candidate identity Runtime 0.1.6 in new MCP evidence.
+// [Sync] 2026-09-13: require candidate identity Runtime 0.1.7 in new MCP evidence.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -114,7 +114,7 @@ async function qualificationSubject() {
   const bundle = await readFile(path.resolve(coreBundlePath));
   return {
     runtime: "ink-claude-code-dream",
-    version: "0.1.6",
+    version: "0.1.7",
     coreBundleSha256: createHash("sha256").update(bundle).digest("hex"),
     sourceDigest: coreReceipt.sourceDigest.digest,
     runtimeTarget: coreReceipt.runtimeTarget,

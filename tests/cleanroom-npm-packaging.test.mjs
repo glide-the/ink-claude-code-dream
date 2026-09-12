@@ -3,7 +3,7 @@
 // [Pos] End-to-end clean-room multi-platform npm packaging contract; foreign target binaries are inspected, never executed.
 // [Sync] 2026-08-24: bind the final Dream receipt and formal publication attestation into all five packages.
 // [Sync] 2026-08-28: require the accepted source tree/native executable binding in the formal package set.
-// [Sync] 2026-09-12: require the 0.1.6 package-root cli.js selector, keep the
+// [Sync] 2026-09-13: require the 0.1.7 package-root cli.js selector, keep the
 //                    changed candidate publication-closed, and exercise a
 //                    provider-free five-package install through Dream's resolver.
 
@@ -84,7 +84,7 @@ test("clean-room npm policy is an exact MIT four-platform/five-package no-map co
   assert.equal(policy.materialPolicy.sourceMapsAllowed, false);
   assert.ok(policy.materialPolicy.forbiddenSuffixes.includes(".map"));
   assert.equal(policy.publication.packageGenerationAllowed, true);
-  assert.equal(policy.version, "0.1.6");
+  assert.equal(policy.version, "0.1.7");
   assert.equal(policy.publication.npmPublishAllowed, false);
   assert.equal(artifactPolicy.publicationGate.productionEligible, false);
   assert.equal(artifactPolicy.publicationGate.publicationAllowed, false);

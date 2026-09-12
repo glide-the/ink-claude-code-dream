@@ -1,7 +1,7 @@
 // [Input] Consume a checksum-verified release directory, fixed SOURCE_DATE_EPOCH, and pinned archive Node/zlib toolchain.
 // [Output] Create a deterministic tar.gz with sorted entries, fixed metadata/gzip header, and SHA-256 sidecar.
 // [Pos] Reproducible archive packer; the external Claude core is intentionally absent.
-// [Sync] 2026-09-12: bind deterministic archive names to Runtime 0.1.6.
+// [Sync] 2026-09-13: bind deterministic archive names to Runtime 0.1.7.
 
 import { createHash } from "node:crypto";
 import { createWriteStream } from "node:fs";
@@ -11,9 +11,9 @@ import { pipeline } from "node:stream/promises";
 import { createGzip } from "node:zlib";
 import { pack as createTarPack } from "tar-stream";
 
-const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.6");
+const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.7");
 const releaseId = basename(releaseRoot);
-const archive = resolve("dist/ink-claude-code-dream-0.1.6.tar.gz");
+const archive = resolve("dist/ink-claude-code-dream-0.1.7.tar.gz");
 const packageJson = JSON.parse(await readFile(resolve("package.json"), "utf8"));
 const requiredNode = packageJson.inkBuild?.archiveNode;
 if (!requiredNode || process.versions.node !== requiredNode) {

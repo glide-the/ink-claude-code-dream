@@ -1,7 +1,7 @@
 <!-- [Input] Canonical selector package metadata and generated native package contract. -->
 <!-- [Output] Explain the package-root CLI entrypoint, supported aliases/targets, and excluded mutable data. -->
 <!-- [Pos] npm selector package README copied unchanged into the generated package. -->
-<!-- [Sync] 2026-09-12: restore the package-root cli.js layout for Runtime 0.1.6. -->
+<!-- [Sync] 2026-09-13: bind the restored-source-free package-root selector to Runtime 0.1.7. -->
 
 # @glide-the/ink-claude-code-dream
 

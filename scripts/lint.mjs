@@ -1,9 +1,8 @@
 // [Input] Repository source, Bun/package contract, Runtime manifests, headers, and git inventory.
-// [Output] Fail on clean-room/legacy contract drift, missing headers, restricted material, secrets, or unsafe package scripts.
+// [Output] Fail on clean-room/legacy contract drift, restored-snapshot drift, missing headers, secrets, or unsafe package scripts.
 // [Pos] Read-only clean-room lint gate; it never reads user configuration or external Runtime data.
 // [Sync] 2026-08-24: verify the final Dream receipt digest and authorized clean-room publication gate.
-// [Sync] 2026-09-12: require the separated private workspace/package-root
-//                    selector structure and publication-closed 0.1.6 candidate.
+// [Sync] 2026-09-13: admit the verified research snapshot while keeping it outside every clean-room package and closing 0.1.7 release gates.
 
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
@@ -17,7 +16,7 @@ const repositoryLicense = await readFile(resolve(root, "LICENSE"));
 const sourcePackageLicense = await readFile(resolve(root, "package/LICENSE.md"));
 if (
   packageJson.name !== "ink-claude-code-dream" ||
-  packageJson.version !== "0.1.6" ||
+  packageJson.version !== "0.1.7" ||
   packageJson.private !== true ||
   Object.hasOwn(packageJson, "bin") ||
   sourcePackage.name !== "@glide-the/ink-claude-code-dream" ||
@@ -30,8 +29,8 @@ if (
 ) {
   throw new Error("private workspace or package-root selector contract drift");
 }
-if (packageJson.license !== "MIT" || sourcePackage.license !== "MIT") {
-  throw new Error("repository orchestrator must remain private while its clean-room source is MIT-licensed");
+if (packageJson.license !== "UNLICENSED" || sourcePackage.license !== "MIT") {
+  throw new Error("mixed-source repository must be unlicensed while its clean-room package remains MIT-licensed");
 }
 if (packageJson.inkBuild?.archiveNode !== "24.13.0") {
   throw new Error("archive Node/zlib toolchain pin drift");
@@ -50,6 +49,7 @@ const jsonFiles = [
   "runtime/bare-profile.json",
   "runtime/dependency-licenses.json",
   "runtime/pruning-decision.json",
+  "runtime/local-artifact-policy.json",
   "runtime/npm-release-policy.json",
   "runtime/cleanroom-artifact-policy.json",
   "runtime/cleanroom-npm-policy.json",
@@ -85,6 +85,10 @@ if (
 const licenses = parsed.get("runtime/dependency-licenses.json");
 if (
   licenses.legalGate?.officialBinaryMustBeUnmodified !== true ||
+  licenses.legalGate?.vendorSourceMayBeCommitted !== false ||
+  licenses.legalGate?.restoredResearchSnapshotMayBeCommitted !== true ||
+  licenses.legalGate?.restoredResearchSnapshot !== "restored-src/source-snapshot.json" ||
+  licenses.legalGate?.restoredResearchSnapshotMayBePublished !== false ||
   licenses.legalGate?.vendorBinaryMayBeCommitted !== false
 ) {
   throw new Error("license gate drift");
@@ -114,13 +118,16 @@ const previousReceiptSha256 = createHash("sha256").update(previousReceiptBody).d
 const targetQualification = cleanroom.publicationGate?.targetHostQualification;
 if (
   cleanroom.schemaVersion !== "ink-cleanroom-runtime-policy/v1" ||
-  cleanroom.artifact?.version !== "0.1.6" ||
+  cleanroom.artifact?.version !== "0.1.7" ||
   cleanroom.artifact?.entrypoint !== "cli.js" ||
   cleanroom.artifact?.license !== "MIT" ||
   cleanroom.source?.root !== "src/cleanroom" ||
   cleanroom.source?.externalImplementationInputAllowed !== false ||
   cleanroom.source?.restoredSourceAllowed !== false ||
   cleanroom.source?.derivedAnthropicRuntimeAllowed !== false ||
+  cleanroom.source?.repositoryResearchSnapshot !== "restored-src/source-snapshot.json" ||
+  cleanroom.source?.repositoryResearchSnapshotAllowed !== true ||
+  cleanroom.source?.repositoryResearchSnapshotIsBuildInput !== false ||
   cleanroom.publicationGate?.publicationAllowed !== false ||
   cleanroom.publicationGate?.productionEligible !== false ||
   cleanroom.publicationGate?.redistributionAllowed !== false ||
@@ -168,10 +175,24 @@ if (
 ) {
   throw new Error("clean-room source/material/publication contract drift");
 }
+const localArtifact = parsed.get("runtime/local-artifact-policy.json");
+if (
+  localArtifact.schemaVersion !== "ink-core-local-artifact-policy/v1" ||
+  localArtifact.artifact?.version !== "0.1.7" ||
+  localArtifact.legalGate?.publicationAllowed !== false ||
+  localArtifact.legalGate?.redistributionAllowed !== false ||
+  localArtifact.legalGate?.restoredSourceMayBeCommitted !== true ||
+  localArtifact.legalGate?.restoredSourceUse !== "checked-research-and-local-qualification-only" ||
+  localArtifact.legalGate?.restoredSourceSnapshot !== "restored-src/source-snapshot.json" ||
+  localArtifact.legalGate?.restoredSourceMayBePublished !== false ||
+  localArtifact.materialPolicy?.restoredSourceBundled !== false
+) {
+  throw new Error("local research-source/artifact boundary drift");
+}
 const cleanroomNpm = parsed.get("runtime/cleanroom-npm-policy.json");
 if (
   cleanroomNpm.schemaVersion !== "ink-cleanroom-npm-policy/v1" ||
-  cleanroomNpm.version !== "0.1.6" ||
+  cleanroomNpm.version !== "0.1.7" ||
   cleanroomNpm.license !== "MIT" ||
   cleanroomNpm.bunVersion !== "1.4.0" ||
   cleanroomNpm.entrypoint !== "src/cleanroom/cli.ts" ||
@@ -230,14 +251,23 @@ const inventoryResult = spawnSync(
   { cwd: root, encoding: "buffer" },
 );
 if (inventoryResult.status !== 0) throw new Error("git inventory failed");
+const restoredSourceResult = spawnSync(
+  process.execPath,
+  [resolve(root, "scripts/sync-restored-source.mjs"), "verify"],
+  { cwd: root, encoding: "utf8" },
+);
+if (restoredSourceResult.status !== 0) {
+  throw new Error(`restored source snapshot verification failed: ${restoredSourceResult.stderr}`);
+}
 const paths = inventoryResult.stdout
   .toString("utf8")
   .split("\0")
   .filter(Boolean);
 for (const path of paths) {
-  if (path.startsWith("restored-src/") || path.startsWith("vendor/")) {
+  if (path.startsWith("vendor/")) {
     throw new Error(`restricted source path found: ${path}`);
   }
+  if (path.startsWith("restored-src/src/")) continue;
   // Generated artifacts are validated by their dedicated manifest/tarball
   // gates. The source lint must not interpret a cross-compiled executable as
   // checked-in vendor material.

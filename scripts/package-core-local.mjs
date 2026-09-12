@@ -3,7 +3,7 @@
 // [Output] Build a byte-reproducible, local-only Bun Runtime artifact with manifest, checksums, SBOM, license, and qualification evidence.
 // [Pos] Fail-closed local derived-artifact packager; it never reads or copies restored source or mutable user Runtime data.
 // [Sync] 2026-08-24: bind package and qualification evidence to one native darwin/linux target.
-// [Sync] 2026-09-12: package the separately gated local-core Runtime 0.1.6 candidate.
+// [Sync] 2026-09-13: package the separately gated local-core Runtime 0.1.7 candidate and checked research snapshot boundary.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -152,7 +152,7 @@ function validatePolicy(policy) {
   if (policy.schemaVersion !== "ink-core-local-artifact-policy/v1") fail("unsupported local artifact policy");
   if (
     policy.artifact?.name !== "ink-claude-code-dream" ||
-    policy.artifact?.version !== "0.1.6" ||
+    policy.artifact?.version !== "0.1.7" ||
     policy.artifact?.entrypoint !== "bin/ink-claude-code-dream" ||
     policy.artifact?.coreEntrypoint !== "lib/core/cli.js" ||
     policy.artifact?.bunVersion !== "1.4.0" ||
@@ -182,7 +182,10 @@ function validatePolicy(policy) {
     typeof publicationAllowed !== "boolean" ||
     typeof redistributionAllowed !== "boolean" ||
     publicationAllowed !== redistributionAllowed ||
-    policy.legalGate?.restoredSourceMayBeCommitted !== false ||
+    policy.legalGate?.restoredSourceMayBeCommitted !== true ||
+    policy.legalGate?.restoredSourceUse !== "checked-research-and-local-qualification-only" ||
+    policy.legalGate?.restoredSourceSnapshot !== "restored-src/source-snapshot.json" ||
+    policy.legalGate?.restoredSourceMayBePublished !== false ||
     typeof policy.legalGate?.derivedBundleMayBeCommitted !== "boolean"
   ) {
     fail("local legal/publish gate is incomplete or internally inconsistent");

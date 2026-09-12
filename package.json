@@ -1,8 +1,8 @@
 {
   "name": "ink-claude-code-dream",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
-  "license": "MIT",
+  "license": "UNLICENSED",
   "type": "module",
   "description": "Private build and verification workspace for the Dream Claude CLI package",
   "engines": {
@@ -23,6 +23,7 @@
   },
   "scripts": {
     "lint": "node scripts/lint.mjs",
+    "restored-source:verify": "node scripts/sync-restored-source.mjs verify",
     "build": "bun run scripts/build.ts",
     "test": "bun run build && node --test --test-concurrency=1 tests/*.test.mjs",
     "test:upstream-sdk": "bun run build && node scripts/run-upstream-sdk-contract.mjs",

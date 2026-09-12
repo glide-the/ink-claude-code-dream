@@ -3,7 +3,7 @@
 // [Output] Provider-free evidence for version, initialize, streaming, parser shapes, sessions, headers, and interrupt.
 // [Pos] First-slice process-boundary contract; it makes no external provider, tool, MCP, or persistence call.
 // [Sync] 2026-08-24: add clean-room Runtime JSONL/SSE/interrupt coverage.
-// [Sync] 2026-09-12: verify the truthful Runtime 0.1.6 help surface.
+// [Sync] 2026-09-13: verify the truthful Runtime 0.1.7 help surface.
 
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";

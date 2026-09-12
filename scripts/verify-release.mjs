@@ -2,14 +2,14 @@
 // [Output] Fail closed on checksum/contract/target drift, unsafe content, any source map, or a bundled Claude core.
 // [Pos] Post-build executable acceptance gate; it validates no SDK-specific manifest protocol.
 // [Sync] 2026-08-24: require current Dream SDK 0.2.145 and reject source maps throughout generated release material.
-// [Sync] 2026-09-12: verify the Runtime 0.1.6 release directory and identity.
+// [Sync] 2026-09-13: verify the Runtime 0.1.7 release directory and research-source exclusion.
 
 import { createHash } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
 import { access, readFile, readdir, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
-const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.6");
+const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.7");
 const checksumPath = join(releaseRoot, "manifest", "checksums.sha256");
 const checksumLines = (await readFile(checksumPath, "utf8")).trim().split("\n");
 const checksummedPaths = new Set();
@@ -41,7 +41,7 @@ if (
 const manifest = JSON.parse(await readFile(releaseManifestPath, "utf8"));
 if (
   manifest.schemaVersion !== "ink-claude-cli-envelope/v1" ||
-  manifest.runtime?.version !== "0.1.6" ||
+  manifest.runtime?.version !== "0.1.7" ||
   manifest.runtime?.integration?.environment !== "CLAUDE_CODE_CLI_PATH" ||
   manifest.runtime?.integration?.sdkOption !== "ClaudeAgentOptions.cli_path" ||
   manifest.runtime?.integration?.sdkDistribution !== "ink-claude-dream-agent-sdk" ||
@@ -176,7 +176,9 @@ const licenseReport = JSON.parse(
 if (
   licenseReport.legalGate?.officialBinaryMustBeUnmodified !== true ||
   licenseReport.legalGate?.builtInAuthenticationMustRemainAvailable !== true ||
-  licenseReport.legalGate?.vendorOrRestoredSourceMayBeCommitted !== false
+  licenseReport.legalGate?.vendorSourceMayBeCommitted !== false ||
+  licenseReport.legalGate?.restoredResearchSnapshotMayBeCommitted !== true ||
+  licenseReport.legalGate?.restoredResearchSnapshotMayBePublished !== false
 ) {
   throw new Error("license report legal gate mismatch");
 }
@@ -193,6 +195,7 @@ async function filesUnder(root) {
 
 const files = await filesUnder(releaseRoot);
 const forbiddenPaths = [
+  "/restored-src/",
   "/projects/",
   "/workspace/",
   "/plugins/",

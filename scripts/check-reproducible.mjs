@@ -1,7 +1,7 @@
 // [Input] Consume the repository source, Bun lock, deterministic builder/packer, and fixed SOURCE_DATE_EPOCH.
 // [Output] Build and pack twice, then fail if either release inventory or archive SHA-256 changes.
 // [Pos] Reproducibility acceptance gate.
-// [Sync] 2026-09-12: bind reproducibility paths to the Runtime 0.1.6 candidate.
+// [Sync] 2026-09-13: bind reproducibility paths to the Runtime 0.1.7 candidate.
 
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -9,9 +9,9 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 
 const environment = { ...process.env, SOURCE_DATE_EPOCH: "1787443200" };
-const archive = resolve("dist/ink-claude-code-dream-0.1.6.tar.gz");
+const archive = resolve("dist/ink-claude-code-dream-0.1.7.tar.gz");
 const checksums = resolve(
-  "dist/release/ink-claude-code-dream-0.1.6/manifest/checksums.sha256",
+  "dist/release/ink-claude-code-dream-0.1.7/manifest/checksums.sha256",
 );
 
 function command(executable, args) {

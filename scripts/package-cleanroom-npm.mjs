@@ -5,7 +5,7 @@
 // [Sync] 2026-08-24: bind Dream's canonical CLI/manifest/capability contract into all five packages.
 // [Sync] 2026-08-24: make a deterministic CycloneDX SBOM part of every exact package inventory.
 // [Sync] 2026-08-24: require and embed the final Dream business-receipt digest for formal publication.
-// [Sync] 2026-09-12: stage Runtime 0.1.6 from the reviewed package-root
+// [Sync] 2026-09-13: stage Runtime 0.1.7 from the reviewed package-root
 //                    package.json/cli.js template; keep publication closed
 //                    until new same-SHA qualification and acceptance exist.
 

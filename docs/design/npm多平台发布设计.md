@@ -2,7 +2,7 @@
 <!-- [Output] 定义 restored-source-free 五包拓扑、正式资格、首次 2FA bootstrap 与后续 Trusted Publishing。 -->
 <!-- [Pos] 当前公共 npm 发布设计；授权由 checked Dream 回执固定，历史恢复源码永不成为公共输入。 -->
 <!-- [Sync] 2026-08-28：记录 0.1.3 opaque 模型能力修复的同 SHA qualification、五包发布和公共 registry 回验。 -->
-<!-- [Sync] 2026-09-12：恢复 package/cli.js selector 源，并将 0.1.6 新制品的发布与资格门全部关闭。 -->
+<!-- [Sync] 2026-09-13：恢复完整研究源码树但排除于公共构建，并保持 0.1.7 新制品发布与资格门关闭。 -->
 
 # Clean-room Runtime 的 npm 多平台发布设计
 
@@ -15,7 +15,7 @@
 研究/回滚证据，不得进入本拓扑。
 
 `0.1.4` 的最终 Dream 真实业务验收和正式发布是历史已完成事实；`0.1.5` 的验收回执也保持
-不可变。但 `0.1.6` 改变 selector 源树、入口与摘要，旧回执不能授权新制品。
+不可变。未发布的 `0.1.6` 已被 `0.1.7` 取代；后者恢复原始研究源码树并改变仓库 inventory，旧回执不能授权新制品。恢复树不属于 MIT，也不进入本公共编译/制品图。
 `runtime/cleanroom-artifact-policy.json` 当前为：
 
 - `productionEligible=false`；
@@ -86,7 +86,7 @@ INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test npm run cleanroom:npm:pac
 INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test npm run cleanroom:npm:verify
 ```
 
-当前 `0.1.6` 使用 `INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test` 生成带 marker 的
+当前 `0.1.7` 使用 `INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test` 生成带 marker 的
 本地 tgz；五个 stage 的 `npm pack --dry-run --json` 必须被 prepack 拒绝。离线安装 meta 加
 当前 host 平台 tgz 后，两个 alias 都必须输出 `2.1.241 (Claude Code)`，Dream 的真实 Python
 resolver 必须将 npm bin symlink 解析到 package-root `cli.js`，再读取相邻

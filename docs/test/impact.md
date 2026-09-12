@@ -2,6 +2,7 @@
 <!-- [Output] Record the tested impact, protected capabilities, completed technical/business scope, external blockers, and rollback point. -->
 <!-- [Pos] Impact and qualification-scope receipt for the minimal Runtime work. -->
 <!-- [Sync] 2026-08-24: record fail-closed local installation, startup recovery, and refreshed package identity. -->
+<!-- [Sync] 2026-09-13: preserve historical qualification while correcting the checked research-source and 0.1.7 boundary. -->
 
 # Test impact record
 
@@ -45,7 +46,7 @@ The final exact-Node command `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:
 
 The qualified package is now installed under content-addressed user-prefix release/toolchain directories. The PATH launcher follows its symlink to the real release root and chooses the dedicated `ink-claude-code-bun-1.4.0`; ambient Bun remains `1.2.20`. With both Runtime override variables unset, `ink-claude-code-dream --version` returned `2.1.241 (Claude Code)`, the bound MCP management contract exited 0, and Dream FastAPI reached `Application startup complete` before a clean shutdown.
 
-The restored source remains a read-only local input. Only replayable builders, patches, manifests, tests, and documentation may enter Git; restored source and generated artifacts do not. No Anthropic redistribution authorization has been obtained, so public publication and redistribution are prohibited.
+The `0.1.7` correction additionally preserves the exact 1,902-file/35-directory research snapshot in Git, without rewriting upstream files or treating them as MIT. Generated artifacts remain ignored. Historical qualification above is not rebound to `0.1.7`; its release gates remain false. No Anthropic redistribution authorization has been obtained, so restored source and derived artifacts cannot be publicly published or redistributed. Dream changes for this correction are limited to project/release version metadata, its exact Runtime contract, tests, and documentation.
 
 ## Rollback point
 

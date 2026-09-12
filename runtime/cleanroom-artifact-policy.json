@@ -2,7 +2,7 @@
   "schemaVersion": "ink-cleanroom-runtime-policy/v1",
   "artifact": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "license": "MIT",
     "entrypoint": "cli.js",
     "supportedTargets": [
@@ -17,7 +17,10 @@
     "root": "src/cleanroom",
     "externalImplementationInputAllowed": false,
     "restoredSourceAllowed": false,
-    "derivedAnthropicRuntimeAllowed": false
+    "derivedAnthropicRuntimeAllowed": false,
+    "repositoryResearchSnapshot": "restored-src/source-snapshot.json",
+    "repositoryResearchSnapshotAllowed": true,
+    "repositoryResearchSnapshotIsBuildInput": false
   },
   "requiredCapabilities": [
     "extensions.plugins",
@@ -39,7 +42,7 @@
     "productionEligible": false,
     "publicationAllowed": false,
     "redistributionAllowed": false,
-    "reason": "Runtime 0.1.6 changes the selector package layout; the 0.1.5 digest-bound acceptance cannot authorize the new source tree or generated package set.",
+    "reason": "Runtime 0.1.7 adds the checked research-source snapshot; the 0.1.5 digest-bound acceptance cannot authorize the new repository tree or generated package set.",
     "businessAcceptance": {
       "required": true,
       "passed": false,

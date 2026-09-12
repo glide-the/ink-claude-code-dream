@@ -3,7 +3,7 @@
   "releaseManifest": "../release-manifest.json",
   "runtime": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "protocolVersion": "claude-code-stream-json/1",
     "mode": "official-cli-compatibility-envelope",
     "coreLoadingReduction": 0,
@@ -30,7 +30,8 @@
     "sourceEvidence": {
       "restoredVersion": "2.1.88",
       "restoredCommit": "a8a678cb6244e6770e1e421767ff0987a1d95549",
-      "limitation": "Historical sourcemap restoration only; it is not evidence of current native internals and is not a legal/current rebuild input."
+      "checkedSnapshot": "../restored-src/source-snapshot.json",
+      "limitation": "Historical sourcemap restoration only; it is not evidence of current native internals or authorization to publish source-derived artifacts."
     },
     "officialChannelsObserved": {
       "observedAt": "2026-08-24T00:00:00+08:00",

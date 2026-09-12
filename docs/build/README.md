@@ -1,11 +1,11 @@
-<!-- [Input] Bun locks, authorized external restored source, core profile/resolution map, compatibility manifest, and legacy envelope build. -->
+<!-- [Input] Checked restored-source snapshot, Bun locks, authorized complete local-core inputs, clean-room policies, and legacy envelope build. -->
 <!-- [Output] Give fail-closed local-core, legacy-envelope, packaging, and Git-boundary commands. -->
 <!-- [Pos] Build and release operator guide. -->
 <!-- [Sync] 2026-08-24: add fail-closed @glide-the four-platform npm staging, tarball, OIDC publication flow, and zero-source-map rule for every release form. -->
 <!-- [Sync] 2026-08-30: document the authorized Runtime 0.1.4 clean-room qualification and publication flow. -->
 <!-- [Sync] 2026-08-30: document the restored 2.1.88 Linux path with the Docker-style passthrough and locked BPF. -->
 <!-- [Sync] 2026-08-30: record the completed Runtime 0.1.4 qualification and npm publication workflows. -->
-<!-- [Sync] 2026-09-12: add the package-root 0.1.6 candidate build/install lane with publication gates closed. -->
+<!-- [Sync] 2026-09-13: verify the complete original source snapshot and 0.1.7 candidate with publication gates closed. -->
 
 # Build and package
 
@@ -18,9 +18,18 @@ Both products forbid `*.map`. The legacy envelope build disables esbuild source-
 
 The separate repository-authored clean-room Runtime is published as `0.1.4`. Its checked policy generates `sandbox.notion-cli` into the platform and selector capability manifests. The exact darwin-arm64 executable has a version-bound real Dream acceptance receipt, the four targets have native-format/package/reproducibility qualification, and public npm publication is explicitly authorized. Main commit `0ebafe95db22101cf77db2c27e73b561d3af37a6` passed qualification run `33306855166`; publish run `33306940462` reverified that exact artifact and published the four platform packages before the selector.
 
-Runtime `0.1.6` is the current source candidate, not a release. `package/` now owns the selector's `package.json` and package-root `cli.js`; the root package is only the private builder. Because the source tree and selector digest changed, checked policy closes every production/publication/redistribution/target gate. See [Runtime 0.1.6 release-candidate notes](runtime-0.1.6-release-notes.md).
+Runtime `0.1.7` is the current source candidate, not a release. It restores the complete byte-exact `restored-src/src` tree and supersedes the incomplete unpublished `0.1.6` candidate. The mixed-source root is private and `UNLICENSED`; `package/` owns the independent MIT selector. The restored snapshot is research-only and excluded from clean-room builds/tarballs. Every production/publication/redistribution/target gate remains closed. See [Runtime 0.1.7 notes](runtime-0.1.7-release-notes.md).
 
-## Clean-room Runtime 0.1.6 candidate
+## Restored-source integrity
+
+```sh
+node scripts/sync-restored-source.mjs verify
+node --test tests/restored-source-structure.test.mjs
+```
+
+The gate requires 1,902 files, 35 original module directories, and exact commit/subtree/byte inventory. It does not execute or reformat the restored implementation. This checked `src`-only snapshot does not replace the explicit complete authorized source/dependency/package roots required by the separate historical local-core builder below.
+
+## Clean-room Runtime 0.1.7 candidate
 
 Build and verify all five local packages without opening publication:
 
@@ -174,9 +183,9 @@ It targets Node ESM and supervises an external official executable. Its manifest
 
 ## Git and publication gate
 
-May enter Git: repository-authored replayable source-bound builders, capability profiles, resolution maps, source-hash-bound patches/manifests, tests, documentation, SBOM/checksum tooling, and non-vendor interface definitions. This inventory does not itself grant redistribution rights.
+May enter Git: repository-authored tooling/tests/docs and the exact research-only `restored-src/src` snapshot bound by `source-snapshot.json`. The snapshot retains Anthropic copyright and is not MIT code. This inventory does not grant redistribution rights.
 
-Must stay out of Git and public release: the read-only restored/vendor source input, `dist/core-local`, `dist/core-package-local`, generated artifacts, vendor binaries/maps, source-containing maps, transcripts, Workspace bodies, plugin materialization, settings, complete environment data, OAuth tokens, authentication files, and credentials. The ignored local package may contain only the runtime assets named by its checksum/SBOM/license manifests.
+Must stay out of Git: recovered dependencies/vendor artifacts, `dist/core-local`, `dist/core-package-local`, generated artifacts, vendor binaries/maps, transcripts, Workspace bodies, plugin materialization, settings, complete environment data, OAuth tokens, authentication files, and credentials. Restored source and derived artifacts must also stay out of public releases. The ignored local package may contain only assets named by its checksum/SBOM/license manifests.
 
 The user's local build authorization is not a public redistribution grant, and no Anthropic redistribution authorization has been obtained. Do not publicly publish or redistribute the restored source or derived core. The local Dream main journey and final real Comfy lane passed; authenticated Admin UI evidence remains the separate missing-session gap. Official `2.1.241` remains the behavior comparator and rollback executable; the local implementation remains restored `2.1.88` plus separately applied MCP compatibility and OAuth repairs.
 

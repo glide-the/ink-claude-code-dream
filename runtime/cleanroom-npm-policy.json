@@ -1,7 +1,7 @@
 {
   "schemaVersion": "ink-cleanroom-npm-policy/v1",
   "repository": "glide-the/ink-claude-code-dream",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "license": "MIT",
   "bunVersion": "1.4.0",
   "entrypoint": "src/cleanroom/cli.ts",
@@ -106,6 +106,6 @@
   "publication": {
     "packageGenerationAllowed": true,
     "npmPublishAllowed": false,
-    "reason": "Runtime 0.1.6 changes the selector package layout and requires a new same-SHA Dream acceptance, four-target qualification, and explicit publication authorization."
+    "reason": "Runtime 0.1.7 adds the checked research-source snapshot and requires new same-SHA Dream acceptance, four-target qualification, and explicit publication authorization."
   }
 }

@@ -5,7 +5,7 @@
 // [Sync] 2026-08-24: verify Dream's canonical CLI, release manifest, capabilities, and digest bindings.
 // [Sync] 2026-08-24: verify a deterministic dependency-complete CycloneDX SBOM in every tarball.
 // [Sync] 2026-09-12: verify the package-root cli.js selector and permit only
-//                    explicit provider-free qualification for the 0.1.6 candidate.
+//                    explicit provider-free qualification for the 0.1.7 candidate.
 
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";

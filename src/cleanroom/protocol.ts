@@ -3,7 +3,7 @@
 // [Pos] Single clean-room protocol state machine; feature modules are injected through narrow public APIs.
 // [Sync] 2026-08-24: expose bounded initialization-stage diagnostics without leaking underlying errors.
 // [Sync] 2026-08-28: route every provider turn through the authoritative Messages request builder.
-// [Sync] 2026-09-12: expose Runtime 0.1.6 as the MCP client identity.
+// [Sync] 2026-09-13: expose Runtime 0.1.7 as the MCP client identity.
 
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -459,7 +459,7 @@ export class CleanroomProtocol {
     const mcpRegistry = await initializeStage("mcp", async () => {
       const registry = await createMcpRegistryFromArgv(argv, {
         clientName: "ink-claude-code-dream",
-        clientVersion: "0.1.6",
+        clientVersion: "0.1.7",
         cwd,
         ...(oauthConfigDir
           ? {

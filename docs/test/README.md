@@ -6,17 +6,19 @@
 <!-- [Sync] 2026-08-30: run the authorized Runtime 0.1.4 formal five-package qualification lane. -->
 <!-- [Sync] 2026-08-30: add 2.1.88 Linux seccomp asset and BPF-first passthrough evidence. -->
 <!-- [Sync] 2026-08-30: record the successful Runtime 0.1.4 publication and public-registry fresh install. -->
-<!-- [Sync] 2026-09-12: add Runtime 0.1.6 package-root candidate and Dream resolver verification without publication claims. -->
+<!-- [Sync] 2026-09-13: add exact restored-source structure and Runtime 0.1.7/Dream resolver verification without publication claims. -->
 
 # Test guide
 
 Runtime compatibility is an interface contract. A Dream business test is the third layer, not a substitute for exhaustive protocol comparison.
 
-## Runtime 0.1.6 package-root candidate
+## Runtime 0.1.7 source-structure candidate
+
+`node scripts/sync-restored-source.mjs verify` and `tests/restored-source-structure.test.mjs` require the original 35 directories and 1,902-file byte-exact snapshot. They also assert research-only licensing and continued clean-room npm exclusion. No restored implementation file is executed or rewritten by these gates.
 
 `tests/cleanroom-npm-packaging.test.mjs` now separates the private root workspace from the checked `package/` selector source, requires no `exports`, checks both aliases against `cli.js`, builds/verifies five fixture-marked tarballs, fresh-installs the selector and host package, runs both commands, and invokes Dream's real resolver when the sibling checkout is supplied through `INK_DREAM_ROOT`/`INK_DREAM_PYTHON`. It also proves staged prepack rejects the closed candidate.
 
-The focused CLI tests require truthful `--help`, reference-compatible camel/kebab tool aliases, and fail-closed unknown options. Request tests no longer assert fictional model-family heuristics. Passing these tests is provider-free technical evidence only; `0.1.6` still lacks same-SHA real-business and release authorization evidence.
+The focused CLI tests require truthful `--help`, reference-compatible camel/kebab tool aliases, and fail-closed unknown options. Request tests no longer assert fictional model-family heuristics. Passing these tests is provider-free technical evidence only; `0.1.7` still lacks same-SHA real-business and release authorization evidence.
 
 ## Runtime 0.1.4 Notion sandbox evidence
 
@@ -120,6 +122,6 @@ Fault injection and destructive testing must remain isolated; those results are 
 - Layer 1 proves what Bun included/excluded, not behavior.
 - Layer 2 proves Runtime interface parity, not end-user business persistence.
 - Layer 3 proves the integrated business journey, not unexercised protocol branches.
-- Layers 1 and 2 establish the current technical package's local `productionEligible=true` state; they do not authorize publication, redistribution, deployment, or claim layer 3.
+- Historical layers 1 and 2 establish only the recorded local package's `productionEligible=true` state; current `0.1.7` gates remain false. They do not authorize publication, redistribution, or deployment.
 - Old wrapper receipts in `acceptance-results.md` remain historical baselines and do not substitute for a current-core real-business result.
-- The restored source is a read-only local input; Git holds only replayable builders/patches/manifests/tests/docs, not restored source or generated artifacts. Without Anthropic redistribution authorization, neither may be publicly published or redistributed.
+- Git now preserves the exact immutable research snapshot alongside replayable tooling; generated artifacts remain ignored. The source is not MIT-licensed and neither it nor derived artifacts may be publicly published or redistributed without Anthropic authorization.

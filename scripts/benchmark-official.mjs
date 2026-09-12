@@ -1,7 +1,7 @@
 // [Input] INK_ACCEPTANCE_REAL_CLAUDE pointing to an already verified official Claude Code executable.
 // [Output] Compare direct versus envelope version latency and verify --help bytes/exit stay identical.
 // [Pos] Optional local performance/difference evidence; it makes no model call and changes no installation.
-// [Sync] 2026-09-12: compare the Runtime 0.1.6 candidate release path.
+// [Sync] 2026-09-13: compare the Runtime 0.1.7 candidate release path.
 
 import { createHash } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
@@ -15,7 +15,7 @@ const core = process.env.INK_ACCEPTANCE_REAL_CLAUDE
   : null;
 if (!core) throw new Error("INK_ACCEPTANCE_REAL_CLAUDE is required");
 await access(core, fsConstants.X_OK);
-const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.6");
+const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.7");
 const wrapper = join(releaseRoot, "bin", "ink-claude-code-dream.mjs");
 await access(wrapper, fsConstants.X_OK);
 

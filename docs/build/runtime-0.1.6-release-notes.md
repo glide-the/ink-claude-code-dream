@@ -2,8 +2,12 @@
 <!-- [Output] Release-candidate notes, upgrade impact, validation scope, and remaining publication actions. -->
 <!-- [Pos] Build/release note for the package-root selector correction; it is not a publication announcement. -->
 <!-- [Sync] 2026-09-12: document the 0.1.6 candidate and its deliberately closed release gates. -->
+<!-- [Sync] 2026-09-13: retain this unpublished historical candidate; complete source restoration is now 0.1.7. -->
 
 # Runtime 0.1.6 release-candidate notes
+
+This incomplete candidate was never published and is superseded by
+[Runtime 0.1.7](runtime-0.1.7-release-notes.md), which restores the complete source module tree.
 
 Runtime `0.1.6` restores `package/` as the selector package source and moves the public CLI entrypoint to package-root `cli.js`. The root `package.json` is now only the private build workspace. Both `claude` and `ink-claude-code-dream` continue to resolve to one selector, and the selector continues to dispatch to the exact Darwin/Linux arm64/x64 optional native package.
 

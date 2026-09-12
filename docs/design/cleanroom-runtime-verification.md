@@ -2,10 +2,16 @@
 <!-- [Output] 给出版本/能力矩阵、真实业务回执边界、内存观测、正式制品摘要和 registry 发布证据。 -->
 <!-- [Pos] Clean-room Runtime 的 digest-bound 技术、发布资格与 registry 回下载记录。 -->
 <!-- [Sync] 2026-08-28：记录 0.1.3 opaque 模型能力修复、v2 真实回执、main qualification、五包发布与公共 registry/Dream 回验。 -->
+<!-- [Sync] 2026-09-13：保留历史摘要，说明 0.1.7 的 checked 研究源码不进入 clean-room 编译或发布图。 -->
 
 # Clean-room Runtime 技术验证
 
 ## 结论边界
+
+本文后续摘要和业务回执是其对应历史版本的证据。当前 `0.1.7` 已原样恢复
+`restored-src/src` 的 1,902 个文件和 35 个模块目录；这份非 MIT 研究快照只保存在仓库中，
+不进入 clean-room 编译、tarball 或 SBOM provenance。lint 校验其精确字节，而制品 verifier
+继续拒绝恢复源码。`0.1.7` 的所有发布/生产/再分发/目标资格门仍为 false，不能复用旧回执。
 
 仓库自有 `src/cleanroom/`、兼容许可证依赖和四个平台制品已通过 provider-free 技术合同。
 Dream 本轮验收使用既有真实账户和业务数据，经 Dream、Admin、Gateway、本机真实
@@ -85,9 +91,9 @@ workflow 均为 `success`。五个 generated prepack
 同时检查 exact inventory、native magic、Dream manifest、capability、checksum 和可执行位。
 
 `src/cleanroom/` 对 `restored-src`、`core-package-local`、`claude-code-sourcemap` 和
-`LicenseRef-Anthropic-All-Rights-Reserved` 的扫描为零命中；Git inventory 没有顶层
+`LicenseRef-Anthropic-All-Rights-Reserved` 的历史扫描为零命中；当时 Git inventory 没有顶层
 `restored-src/` 或 `vendor/`。tarball verifier 还对禁止路径段和禁止字节模式逐文件扫描。
-这证明当前构建没有恢复实现输入；它不否认仓库还保留不进入该编译图的历史本地研究脚本。
+这证明对应历史构建没有恢复实现输入。当前仓库保留精确研究快照和本地研究脚本，但它们仍不进入 clean-room 编译图。
 
 ## 内存观测
 

@@ -1,7 +1,7 @@
 """[Input] Built CLI wrapper, Dream's existing CLI-path helper, and installed compatible SDK distribution.
 [Output] Compare one SDK JSONL request through the direct fake core and wrapper without changing either SDK namespace.
 [Pos] Cross-repository read-only acceptance; it never imports an SDK fork or modifies Dream.
-[Sync] 2026-09-12: bind cross-repository candidate evidence to Runtime 0.1.6.
+[Sync] 2026-09-13: bind cross-repository candidate evidence to Runtime 0.1.7.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ DREAM_REPOSITORY = Path(
     os.environ.get("INK_DREAM_REPO", REPOSITORY.parent / "ink-dream-memory")
 ).resolve()
 DREAM_BACKEND = DREAM_REPOSITORY / "backend"
-WRAPPER = REPOSITORY / "dist/release/ink-claude-code-dream-0.1.6/bin/ink-claude-code-dream"
+WRAPPER = REPOSITORY / "dist/release/ink-claude-code-dream-0.1.7/bin/ink-claude-code-dream"
 FAKE_CORE = REPOSITORY / "tests/fixtures/fake-claude.mjs"
 EXPECTED_SDK_DISTRIBUTION = "ink-claude-dream-agent-sdk"
 EXPECTED_SDK_VERSION = "0.2.145"

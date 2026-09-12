@@ -2,7 +2,7 @@
 // [Output] Lifecycle registry, discovery inventory, calls, reads, and model tool bindings.
 // [Pos] Stateful connection owner for the clean-room MCP client slice.
 // [Sync] 2026-08-25: add SDK SSE while preserving verified auth and scope-upgrade semantics.
-// [Sync] 2026-09-12: prepare anonymous/OAuth/SSE discovery under Runtime 0.1.6.
+// [Sync] 2026-09-13: prepare anonymous/OAuth/SSE discovery under Runtime 0.1.7.
 // [Sync] 2026-08-30: exclude Dream's Notion Bash capability from stdio MCP child environments.
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -565,7 +565,7 @@ export class McpRegistry {
 
   constructor(configs: ReadonlyMap<string, McpServerConfig>, options: McpRegistryOptions = {}) {
     this.clientName = options.clientName ?? "ink-claude-code-dream";
-    this.clientVersion = options.clientVersion ?? "0.1.6";
+    this.clientVersion = options.clientVersion ?? "0.1.7";
     this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
     this.httpFetch = options.httpFetch;
     this.oauthProviderFactory = options.oauthProviderFactory;
