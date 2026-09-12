@@ -104,6 +104,6 @@
   "publication": {
     "packageGenerationAllowed": true,
     "npmPublishAllowed": true,
-    "reason": "The checked clean-room policy, Runtime 0.1.4 Dream acceptance receipt, four-target release qualification, and explicit public release authorization passed."
+    "reason": "The checked clean-room policy, Runtime 0.1.5 Dream acceptance receipt, four-target release qualification, and explicit public release authorization passed."
   }
 }

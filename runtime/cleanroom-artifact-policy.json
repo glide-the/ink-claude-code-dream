@@ -39,7 +39,7 @@
     "productionEligible": true,
     "publicationAllowed": true,
     "redistributionAllowed": true,
-    "reason": "The digest-bound Runtime 0.1.4 Dream acceptance, four-target native-format package qualification, and explicit public npm release authorization passed",
+    "reason": "The digest-bound Runtime 0.1.5 Dream acceptance, four-target native-format package qualification, and explicit public npm release authorization passed",
     "businessAcceptance": {
       "required": true,
       "passed": true,

@@ -2,6 +2,7 @@
 <!-- [Output] Explain the qualified local minimal-core workflow, published clean-room Runtime, legacy envelope, and safe Git/release boundary. -->
 <!-- [Pos] Operator-facing entry point for ink-claude-code-dream. -->
 <!-- [Sync] 2026-09-02: add the reviewed ext-apps development-Skills Marketplace and state its non-Host boundary. -->
+<!-- [Sync] 2026-09-12: align the 0.1.5 source package identity/aliases with the generated selector and record the unpublished registry state. -->
 <!-- [Sync] 2026-08-28: prepare clean-room Runtime 0.1.3 with model-bounded max_tokens and conditional effort projection. -->
 <!-- [Sync] 2026-08-30: authorize Runtime 0.1.4 clean-room publication after Notion acceptance and four-target qualification. -->
 <!-- [Sync] 2026-08-30: restore the 2.1.88 local-core Linux seccomp path with the Docker-style passthrough. -->
@@ -16,6 +17,8 @@ The current Linux x64 local-core was built and qualified in a privileged Docker 
 This is a technical artifact decision, not a publication or deployment grant: `productionEligible=true`, while `publicationAllowed=false` and `redistributionAllowed=false`. The Dream manifest gate and backend suite passed (1,954 passed, 24 skipped, 607 subtests), the current standard Runtime run passed 44 tests with 2 external OAuth-fixture tests skipped, and the current custom-core real Dream main journey passed. The official MCP Python SDK `2.0.0` fixture at commit `6f69a3758ebf2ee55ce050f58b470ce11af71133` separately passed the complete OAuth CLI contract 3/3 through pipe and real-PTY lanes. The final real Comfy acceptance also passed through Dream's public configure/auth/callback/inventory/logout/remove path: `comfyui-cloud` `0.40.1` connected with 41 tools and a complete 16-stage safe receipt ending in `credentials_present` → `flow_resolved` → `success_stdout_flushed`.
 
 The existing Node supervisor/envelope and its `dist/release/` receipts remain a historical process-boundary and rollback baseline. Its green tests do not prove the minimal core.
+
+Runtime `0.1.5` aligns the private source package with the generated selector: both use `@glide-the/ink-claude-code-dream`, and both `claude` and `ink-claude-code-dream` resolve to the same versioned entrypoint. The comparison with the authorized read-only `claude-code-sourcemap` reference is documented in [Claude sourcemap package contract alignment](docs/design/claude-sourcemap-package-contract-alignment.md). It does not copy restored source, claim the vendor package name, or add ZIP policy to the Runtime. An anonymous registry check on 2026-09-12 still returned `0.1.4` as the newest public version, so `0.1.5` is a source candidate rather than a publication/deployment claim.
 
 The clean-room Runtime `0.1.4` adds the stable `sandbox.notion-cli` capability for production Bash only. At each fresh or resumed Runtime start it validates an exact canonical `{workspace}/.notion-home`, fixes `NOTION_KEYRING=0`, accepts only an optional nonempty single-line token and an exact existing `workers.json`, and admits only a native owner/root `ntn` plus the three required HTTPS hosts. Invalid, ambient, foreign-thread, or stale projections remain unset. Provider helpers and stdio MCP children explicitly remove these names. The exact darwin-arm64 executable passed a normal three-turn Dream Chat journey covering fresh Bash, same-thread resume, read-only `ntn` doctor/identity, and ordinary Chat. Four target formats, five-package reproducibility, and explicit public npm authorization were checked; main commit `0ebafe95db22101cf77db2c27e73b561d3af37a6` then passed qualification run `33306855166` and published all four platform packages before the selector in run `33306940462`. This claim does not apply to the restored-source local core. See the [Notion CLI sandbox task record](docs/notion-cli-sandbox-task.md).
 
@@ -81,7 +84,7 @@ bun run test:mcp-auth-compat
 
 ## SDK and Dream integration
 
-Dream installs `ink-claude-dream-agent-sdk==0.2.144` while keeping the upstream `claude_agent_sdk` import namespace and launcher. Official and custom Runtimes are selected through the existing absolute CLI-path injection point. No Dream business implementation is required to switch between them.
+Dream installs `ink-claude-dream-agent-sdk==0.2.145` while keeping the upstream `claude_agent_sdk` import namespace and launcher. Official and custom Runtimes are selected through the existing absolute CLI-path injection point. No Dream business implementation is required to switch between them.
 
 Runtime acceptance has three ordered layers:
 

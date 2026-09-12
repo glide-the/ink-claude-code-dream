@@ -38,7 +38,7 @@ try {
       "install",
       "--python",
       python,
-      "claude-agent-sdk==0.2.144",
+      "claude-agent-sdk==0.2.145",
       `mcp==${version}`,
     ]);
     receipts.push(

@@ -205,7 +205,7 @@ function verifyDreamManifest(files, releasePath, capabilityPath, artifactPath, e
     release.runtime?.version !== policy.version ||
     release.runtime?.entrypoint !== "bin/ink-claude-code-dream" ||
     release.runtime?.integration?.environment !== "CLAUDE_CODE_CLI_PATH" ||
-    release.runtime?.integration?.sdkVersion !== "0.2.144" ||
+    release.runtime?.integration?.sdkVersion !== "0.2.145" ||
     release.runtime?.integration?.sdkOption !== "ClaudeAgentOptions.cli_path" ||
     release.core?.corePruned !== true ||
     release.core?.productionEligible !== expectedProductionEligible ||

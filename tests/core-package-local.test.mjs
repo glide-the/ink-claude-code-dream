@@ -17,7 +17,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const packageScript = path.join(repositoryRoot, "scripts", "package-core-local.mjs");
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-core-package-local.mjs");
 const installScript = path.join(repositoryRoot, "scripts", "install-core-local.mjs");
-const artifactId = "ink-claude-code-dream-0.1.4";
+const artifactId = "ink-claude-code-dream-0.1.5";
 const sourceDigest = "4".repeat(64);
 const runtimeTarget = `${process.platform}-${process.arch}`;
 
@@ -186,7 +186,7 @@ async function writeQualification(context, id, evidenceType, overrides = {}) {
     evidenceType,
     subject: {
       runtime: "ink-claude-code-dream",
-      version: "0.1.4",
+      version: "0.1.5",
       coreBundleSha256: context.coreDigest,
       sourceDigest,
       runtimeTarget,
@@ -285,7 +285,7 @@ test("Dream's real production manifest gate rejects an unqualified artifact and 
     assert.equal(qualified.status, 0, qualified.stderr);
     const accepted = await runDreamManifestGate(executable);
     const dreamVersion = JSON.parse(accepted.stdout.trim().split("\n")[0]).expectedVersion;
-    if (dreamVersion !== "0.1.4") {
+    if (dreamVersion !== "0.1.5") {
       assert.notEqual(accepted.status, 0);
       assert.match(accepted.stderr, /not production-qualified/);
       t.skip(`sibling Dream production manifest gate remains pinned to ${dreamVersion}`);
@@ -341,7 +341,7 @@ test("qualification evidence bound to another bundle is rejected", async () => {
     const sdk = await writeQualification(context, "sdk", "real-process-sdk-differential", {
       subject: {
         runtime: "ink-claude-code-dream",
-        version: "0.1.4",
+        version: "0.1.5",
         coreBundleSha256: "9".repeat(64),
         sourceDigest,
         runtimeTarget,

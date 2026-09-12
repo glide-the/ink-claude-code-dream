@@ -1,14 +1,14 @@
 // [Input] Consume the generated immutable release directory, inventory, Runtime manifest, and material policy.
 // [Output] Fail closed on checksum/contract/target drift, unsafe content, any source map, or a bundled Claude core.
 // [Pos] Post-build executable acceptance gate; it validates no SDK-specific manifest protocol.
-// [Sync] 2026-08-24: require current Dream SDK 0.2.144 and reject source maps throughout generated release material.
+// [Sync] 2026-08-24: require current Dream SDK 0.2.145 and reject source maps throughout generated release material.
 
 import { createHash } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
 import { access, readFile, readdir, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
-const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.4");
+const releaseRoot = resolve("dist/release/ink-claude-code-dream-0.1.5");
 const checksumPath = join(releaseRoot, "manifest", "checksums.sha256");
 const checksumLines = (await readFile(checksumPath, "utf8")).trim().split("\n");
 const checksummedPaths = new Set();
@@ -40,12 +40,12 @@ if (
 const manifest = JSON.parse(await readFile(releaseManifestPath, "utf8"));
 if (
   manifest.schemaVersion !== "ink-claude-cli-envelope/v1" ||
-  manifest.runtime?.version !== "0.1.4" ||
+  manifest.runtime?.version !== "0.1.5" ||
   manifest.runtime?.integration?.environment !== "CLAUDE_CODE_CLI_PATH" ||
   manifest.runtime?.integration?.sdkOption !== "ClaudeAgentOptions.cli_path" ||
   manifest.runtime?.integration?.sdkDistribution !== "ink-claude-dream-agent-sdk" ||
-  manifest.runtime?.integration?.sdkVersion !== "0.2.144" ||
-  manifest.runtime?.integration?.dreamObservedSdkVersion !== "0.2.144" ||
+  manifest.runtime?.integration?.sdkVersion !== "0.2.145" ||
+  manifest.runtime?.integration?.dreamObservedSdkVersion !== "0.2.145" ||
   manifest.runtime?.integration?.sdkModified !== false ||
   manifest.core?.version !== "2.1.241" ||
   manifest.core?.delivery !== "external-not-bundled" ||
@@ -89,8 +89,8 @@ if (
   discovery.sdk?.discoveryEnvironment !== "CLAUDE_CODE_CLI_PATH" ||
   discovery.sdk?.modified !== false ||
   discovery.sdk?.distribution !== "ink-claude-dream-agent-sdk" ||
-  discovery.sdk?.version !== "0.2.144" ||
-  discovery.sdk?.dreamObservedVersion !== "0.2.144" ||
+  discovery.sdk?.version !== "0.2.145" ||
+  discovery.sdk?.dreamObservedVersion !== "0.2.145" ||
   discovery.status?.corePruned !== false ||
   discovery.status?.productionEligible !== false
 ) {
@@ -132,9 +132,9 @@ const capabilities = JSON.parse(
 if (
   capabilities.core?.dreamPinnedVersion !== "2.1.241" ||
   capabilities.integrations?.agentSdk?.package !== "ink-claude-dream-agent-sdk" ||
-  capabilities.integrations?.agentSdk?.dreamPinnedVersion !== "0.2.144" ||
+  capabilities.integrations?.agentSdk?.dreamPinnedVersion !== "0.2.145" ||
   capabilities.integrations?.agentSdk?.upstreamBundledCliVersion !== "2.1.241" ||
-  capabilities.integrations?.agentSdk?.acceptedVersions?.join(",") !== "0.2.144"
+  capabilities.integrations?.agentSdk?.acceptedVersions?.join(",") !== "0.2.145"
 ) {
   throw new Error("Runtime capability evidence does not match Dream's locked SDK/CLI");
 }
@@ -236,7 +236,7 @@ if (core.version !== "2.1.241") throw new Error("SBOM external core version mism
 const agentSdk = sbom.components.find(
   (item) => item.name === "ink-claude-dream-agent-sdk",
 );
-if (agentSdk?.version !== "0.2.144") {
+if (agentSdk?.version !== "0.2.145") {
   throw new Error("SBOM Dream SDK distribution/version mismatch");
 }
 const rollback = JSON.parse(
@@ -245,8 +245,8 @@ const rollback = JSON.parse(
 if (
   rollback.claudeCodeVersion !== "2.1.241" ||
   rollback.agentSdkDistribution !== "ink-claude-dream-agent-sdk" ||
-  rollback.agentSdkVersion !== "0.2.144" ||
-  rollback.dreamObservedSdkVersion !== "0.2.144"
+  rollback.agentSdkVersion !== "0.2.145" ||
+  rollback.dreamObservedSdkVersion !== "0.2.145"
 ) {
   throw new Error("rollback receipt does not match Dream's locked SDK/CLI");
 }

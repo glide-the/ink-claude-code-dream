@@ -45,11 +45,11 @@
     "agentSdk": {
       "language": "python",
       "package": "ink-claude-dream-agent-sdk",
-      "dreamPinnedVersion": "0.2.144",
-      "upstreamBaselineVersion": "0.2.144",
+      "dreamPinnedVersion": "0.2.145",
+      "upstreamBaselineVersion": "0.2.145",
       "upstreamBundledCliVersion": "2.1.241",
       "acceptedVersions": [
-        "0.2.144"
+        "0.2.145"
       ],
       "launcherOption": "ClaudeAgentOptions.cli_path",
       "discoveryEnvironment": "CLAUDE_CODE_CLI_PATH",

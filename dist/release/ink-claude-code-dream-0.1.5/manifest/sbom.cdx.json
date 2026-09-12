@@ -7,9 +7,9 @@
     "timestamp": "2026-08-23T00:00:00.000Z",
     "component": {
       "type": "application",
-      "name": "ink-claude-code-dream",
+      "name": "@glide-the/ink-claude-code-dream",
       "version": "0.1.5",
-      "bomRef": "ink-claude-code-dream@0.1.5"
+      "bomRef": "@glide-the/ink-claude-code-dream@0.1.5"
     },
     "tools": {
       "components": [

@@ -3,8 +3,10 @@
 // [Pos] End-to-end clean-room multi-platform npm packaging contract; foreign target binaries are inspected, never executed.
 // [Sync] 2026-08-24: bind the final Dream receipt and formal publication attestation into all five packages.
 // [Sync] 2026-08-28: require the accepted source tree/native executable binding in the formal package set.
-// [Sync] 2026-08-30: require the authorized Runtime 0.1.4 receipt and formal five-package release set.
+// [Sync] 2026-09-12: require the authorized Runtime 0.1.5 receipt and formal five-package release set.
 // [Sync] 2026-08-30: prove sandbox.notion-cli is emitted by the clean-room manifest generation chain.
+// [Sync] 2026-09-12: require the repository package to expose the same scoped
+//                    identity and command aliases as the public selector.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -22,6 +24,7 @@ const buildScript = path.join(repositoryRoot, "scripts", "build-cleanroom-target
 const packageScript = path.join(repositoryRoot, "scripts", "package-cleanroom-npm.mjs");
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-cleanroom-npm.mjs");
 const policy = JSON.parse(await readFile(path.join(repositoryRoot, "runtime", "cleanroom-npm-policy.json"), "utf8"));
+const rootPackage = JSON.parse(await readFile(path.join(repositoryRoot, "package.json"), "utf8"));
 const artifactPolicy = JSON.parse(await readFile(path.join(repositoryRoot, "runtime", "cleanroom-artifact-policy.json"), "utf8"));
 const formalPublication = artifactPolicy.publicationGate.publicationAllowed === true;
 const businessReceiptBody = formalPublication
@@ -62,11 +65,14 @@ test("clean-room npm policy is an exact MIT four-platform/five-package no-map co
   assert.equal(policy.entrypoint, "src/cleanroom/cli.ts");
   assert.equal(policy.metaPackage.name, "@glide-the/ink-claude-code-dream");
   assert.deepEqual(policy.metaPackage.commands, ["claude", "ink-claude-code-dream"]);
+  assert.equal(rootPackage.name, policy.metaPackage.name);
+  assert.deepEqual(Object.keys(rootPackage.bin).sort(), [...policy.metaPackage.commands].sort());
+  assert.equal(rootPackage.bin.claude, rootPackage.bin["ink-claude-code-dream"]);
   assert.deepEqual(Object.keys(policy.platforms), targets);
   assert.equal(policy.materialPolicy.sourceMapsAllowed, false);
   assert.ok(policy.materialPolicy.forbiddenSuffixes.includes(".map"));
   assert.equal(policy.publication.packageGenerationAllowed, true);
-  assert.equal(policy.version, "0.1.4");
+  assert.equal(policy.version, "0.1.5");
   assert.equal(policy.publication.npmPublishAllowed, true);
   assert.equal(artifactPolicy.publicationGate.productionEligible, true);
   assert.equal(artifactPolicy.publicationGate.publicationAllowed, true);
@@ -74,7 +80,7 @@ test("clean-room npm policy is an exact MIT four-platform/five-package no-map co
   assert.equal(artifactPolicy.publicationGate.businessAcceptance.passed, true);
   assert.equal(
     artifactPolicy.publicationGate.businessAcceptance.receiptPath,
-    "runtime/attestations/dream-real-business-acceptance-0.1.4.json",
+    "runtime/attestations/dream-real-business-acceptance-0.1.5.json",
   );
   assert.equal(artifactPolicy.publicationGate.businessAcceptance.receiptSha256, businessReceiptSha256);
   assert.equal(businessReceipt.schemaVersion, "ink-dream-real-business-acceptance/v2");
@@ -191,8 +197,8 @@ test("four target builds produce five verified npm tarballs and the installed me
   const tarballRoot = path.join(repositoryRoot, policy.tarballRoot);
   const tarballs = await readdir(tarballRoot);
   assert.equal(tarballs.filter(name => name.endsWith(".tgz")).length, 5);
-  const metaTarball = path.join(tarballRoot, "glide-the-ink-claude-code-dream-0.1.4.tgz");
-  const hostTarball = path.join(tarballRoot, `glide-the-ink-claude-code-dream-${hostTarget}-0.1.4.tgz`);
+  const metaTarball = path.join(tarballRoot, "glide-the-ink-claude-code-dream-0.1.5.tgz");
+  const hostTarball = path.join(tarballRoot, `glide-the-ink-claude-code-dream-${hostTarget}-0.1.5.tgz`);
 
   // Dream passes canonical real Workspace paths. Canonicalize macOS' /var ->
   // /private/var temp alias before deriving CLAUDE_CODE_TMPDIR as well.

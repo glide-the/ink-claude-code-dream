@@ -19,7 +19,7 @@ import { performance } from "node:perf_hooks";
 import { test } from "node:test";
 
 const executable = resolve(
-  "dist/release/ink-claude-code-dream-0.1.4/bin/ink-claude-code-dream",
+  "dist/release/ink-claude-code-dream-0.1.5/bin/ink-claude-code-dream",
 );
 const fakeClaude = resolve("tests/fixtures/fake-claude.mjs");
 await chmod(fakeClaude, 0o755);
@@ -152,8 +152,8 @@ test("Runtime manifest diagnostic does not need or launch a Claude core", async 
     envelope.manifest.runtime.integration.sdkDistribution,
     "ink-claude-dream-agent-sdk",
   );
-  assert.equal(envelope.manifest.runtime.integration.sdkVersion, "0.2.144");
-  assert.equal(envelope.manifest.runtime.integration.dreamObservedSdkVersion, "0.2.144");
+  assert.equal(envelope.manifest.runtime.integration.sdkVersion, "0.2.145");
+  assert.equal(envelope.manifest.runtime.integration.dreamObservedSdkVersion, "0.2.145");
   assert.equal(envelope.manifest.runtime.integration.environment, "CLAUDE_CODE_CLI_PATH");
   assert.match(envelope.sha256, /^[a-f0-9]{64}$/);
 });
@@ -161,7 +161,7 @@ test("Runtime manifest diagnostic does not need or launch a Claude core", async 
 test("pruning decision never converts outer omissions into core deletion", async () => {
   const decision = JSON.parse(
     await readFile(
-      resolve("dist/release/ink-claude-code-dream-0.1.4/manifest/pruning-decision.json"),
+      resolve("dist/release/ink-claude-code-dream-0.1.5/manifest/pruning-decision.json"),
       "utf8",
     ),
   );
@@ -547,7 +547,7 @@ test("esbuild keeps launcher and Runtime manifest diagnostic behind dynamic impo
   const metafile = JSON.parse(
     await readFile(
       resolve(
-        "dist/release/ink-claude-code-dream-0.1.4/manifest/esbuild-metafile.json",
+        "dist/release/ink-claude-code-dream-0.1.5/manifest/esbuild-metafile.json",
       ),
       "utf8",
     ),

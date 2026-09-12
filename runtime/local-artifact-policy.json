@@ -79,7 +79,7 @@
     "schemaVersion": 1,
     "status": "passed",
     "subjectRuntime": "ink-claude-code-dream",
-    "subjectVersion": "0.1.4",
+    "subjectVersion": "0.1.5",
     "requireCoreBundleSha256": true,
     "requireSourceDigest": true
   },

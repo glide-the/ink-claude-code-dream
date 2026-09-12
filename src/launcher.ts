@@ -254,7 +254,7 @@ function signalProcessGroup(pid: number | undefined, signal: NodeJS.Signals): vo
 
 export async function launchOfficialCli(args: string[]): Promise<LaunchResult> {
   const executable = await resolveCoreExecutable();
-  // Dream's locked ink-claude-dream-agent-sdk 0.2.144 probes cli_path with
+  // Dream's locked ink-claude-dream-agent-sdk 0.2.145 probes cli_path with
   // `-v` before its stream-json launch. Do not add another large-core probe here. Deployment must run
   // --runtime-doctor. Dream's `mcp ...` management calls and help are not
   // thread launches and therefore do not require a thread-local TMPDIR.

@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "ink-claude-code-dream",
+      "name": "@glide-the/ink-claude-code-dream",
       "dependencies": {
         "@anthropic-ai/sandbox-runtime": "0.0.73",
         "@modelcontextprotocol/sdk": "1.30.0",

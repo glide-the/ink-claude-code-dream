@@ -2,7 +2,9 @@
 // [Output] Fail on clean-room/legacy contract drift, missing headers, restricted material, secrets, or unsafe package scripts.
 // [Pos] Read-only clean-room lint gate; it never reads user configuration or external Runtime data.
 // [Sync] 2026-08-24: verify the final Dream receipt digest and authorized clean-room publication gate.
-// [Sync] 2026-08-30: validate Runtime 0.1.4 business evidence, four-target qualification, and explicit npm authorization.
+// [Sync] 2026-09-12: validate Runtime 0.1.5 business evidence, four-target qualification, and explicit npm authorization.
+// [Sync] 2026-09-12: require the scoped root identity, shared CLI aliases,
+//                    Runtime 0.1.5 receipt, and Dream SDK 0.2.145 pairing.
 
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
@@ -11,15 +13,17 @@ import { extname, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const packageJson = JSON.parse(await readFile(resolve(root, "package.json"), "utf8"));
-if (packageJson.name !== "ink-claude-code-dream") {
-  throw new Error("package name must be the unscoped Runtime distribution identity");
+if (packageJson.name !== "@glide-the/ink-claude-code-dream") {
+  throw new Error("package name must match the scoped Runtime selector identity");
 }
 if (
-  packageJson.version !== "0.1.4" ||
+  packageJson.version !== "0.1.5" ||
+  packageJson.bin?.claude !==
+    "dist/release/ink-claude-code-dream-0.1.5/bin/ink-claude-code-dream" ||
   packageJson.bin?.["ink-claude-code-dream"] !==
-    "dist/release/ink-claude-code-dream-0.1.4/bin/ink-claude-code-dream"
+    packageJson.bin?.claude
 ) {
-  throw new Error("console bin must expose the extensionless Runtime entrypoint");
+  throw new Error("both console aliases must expose one extensionless Runtime entrypoint");
 }
 if (packageJson.private !== true || packageJson.license !== "MIT") {
   throw new Error("repository orchestrator must remain private while its clean-room source is MIT-licensed");
@@ -47,7 +51,7 @@ const jsonFiles = [
   "runtime/cleanroom-sandbox-policy.json",
   "runtime/cleanroom-dependency-licenses.json",
   "runtime/attestations/dream-real-business-acceptance-0.1.3.json",
-  "runtime/attestations/dream-real-business-acceptance-0.1.4.json",
+  "runtime/attestations/dream-real-business-acceptance-0.1.5.json",
 ];
 const parsed = new Map();
 for (const path of jsonFiles) {
@@ -56,7 +60,7 @@ for (const path of jsonFiles) {
 const release = parsed.get("runtime/release-manifest.json");
 if (
   release.runtime?.name !== "ink-claude-code-dream" ||
-  release.runtime?.integration?.sdkVersion !== "0.2.144" ||
+  release.runtime?.integration?.sdkVersion !== "0.2.145" ||
   release.core?.version !== "2.1.241" ||
   release.core?.execution !== "unmodified-as-published" ||
   release.core?.corePruned !== false ||
@@ -98,14 +102,14 @@ const historicalReceiptPath = "runtime/attestations/dream-real-business-acceptan
 const historicalReceiptBody = await readFile(resolve(root, historicalReceiptPath));
 const historicalReceipt = parsed.get(historicalReceiptPath);
 const historicalReceiptSha256 = createHash("sha256").update(historicalReceiptBody).digest("hex");
-const currentReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.4.json";
+const currentReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.5.json";
 const currentReceiptBody = await readFile(resolve(root, currentReceiptPath));
 const currentReceipt = parsed.get(currentReceiptPath);
 const currentReceiptSha256 = createHash("sha256").update(currentReceiptBody).digest("hex");
 const targetQualification = cleanroom.publicationGate?.targetHostQualification;
 if (
   cleanroom.schemaVersion !== "ink-cleanroom-runtime-policy/v1" ||
-  cleanroom.artifact?.version !== "0.1.4" ||
+  cleanroom.artifact?.version !== "0.1.5" ||
   cleanroom.artifact?.license !== "MIT" ||
   cleanroom.source?.root !== "src/cleanroom" ||
   cleanroom.source?.externalImplementationInputAllowed !== false ||
@@ -134,13 +138,13 @@ if (
   historicalReceipt?.privacy?.oauthCredentialsIncluded !== false ||
   historicalReceipt?.authorization?.explicitPublicNpmReleaseApproved !== true ||
   historicalReceipt?.authorization?.pypiPublicationApproved !== false ||
-  currentReceiptSha256 !== "87f3d1c6040e5462d85e6259a5cb16509a5d26838d5299d1ba350a4ba463dbea" ||
+  currentReceiptSha256 !== "dbe6f521e51c62a774afcb90f1969b66b422ad34e420b1d73f875b989597e662" ||
   currentReceipt?.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
   currentReceipt?.subject?.runtime !== "ink-claude-code-dream" ||
-  currentReceipt?.subject?.version !== "0.1.4" ||
+  currentReceipt?.subject?.version !== "0.1.5" ||
   currentReceipt?.subject?.acceptedTarget !== "darwin-arm64" ||
-  currentReceipt?.subject?.sourceTreeSha256 !== "266362ac3543ca6d5dc7a400e2a23ac718e231abb761eab8f824726ab595de81" ||
-  currentReceipt?.subject?.acceptedExecutableSha256 !== "969f9193be8750e2573e4c4ea9c3556d48687925d9f57b8ea676669d753980dd" ||
+  currentReceipt?.subject?.sourceTreeSha256 !== "94a2daad5c679d743e9c7b1185dc83d12525224e701887db5fd3c4261fecb8df" ||
+  currentReceipt?.subject?.acceptedExecutableSha256 !== "0ba860a59fe58c2f0c51a78ed954555dc5e561790e0ef7d5328cff69e577015b" ||
   currentReceipt?.acceptance?.status !== "passed" ||
   currentReceipt?.acceptance?.publicProductionEntrypoints !== true ||
   currentReceipt?.acceptance?.sameThreadResume !== true ||
@@ -161,7 +165,7 @@ if (
 const cleanroomNpm = parsed.get("runtime/cleanroom-npm-policy.json");
 if (
   cleanroomNpm.schemaVersion !== "ink-cleanroom-npm-policy/v1" ||
-  cleanroomNpm.version !== "0.1.4" ||
+  cleanroomNpm.version !== "0.1.5" ||
   cleanroomNpm.license !== "MIT" ||
   cleanroomNpm.bunVersion !== "1.4.0" ||
   cleanroomNpm.entrypoint !== "src/cleanroom/cli.ts" ||

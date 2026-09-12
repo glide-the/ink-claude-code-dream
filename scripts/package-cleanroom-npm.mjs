@@ -5,7 +5,9 @@
 // [Sync] 2026-08-24: bind Dream's canonical CLI/manifest/capability contract into all five packages.
 // [Sync] 2026-08-24: make a deterministic CycloneDX SBOM part of every exact package inventory.
 // [Sync] 2026-08-24: require and embed the final Dream business-receipt digest for formal publication.
-// [Sync] 2026-08-30: bind Runtime 0.1.4 packages to the authorized version-bound Dream receipt.
+// [Sync] 2026-09-12: bind Runtime 0.1.5 packages to the authorized version-bound Dream receipt.
+// [Sync] 2026-09-12: bind the repository package identity and both Claude-compatible
+//                    command aliases to the generated selector contract.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -223,9 +225,15 @@ function validatePolicy() {
     policy.schemaVersion !== "ink-cleanroom-npm-policy/v1" ||
     policy.repository !== "glide-the/ink-claude-code-dream" ||
     policy.version !== rootPackage.version ||
+    rootPackage.name !== policy.metaPackage.name ||
     policy.license !== "MIT" ||
     rootPackage.license !== "MIT" ||
     rootPackage.private !== true ||
+    JSON.stringify(Object.keys(rootPackage.bin ?? {}).sort()) !==
+      JSON.stringify([...policy.metaPackage.commands].sort()) ||
+    Object.values(rootPackage.bin ?? {}).some(
+      entrypoint => entrypoint !== `dist/release/ink-claude-code-dream-${policy.version}/bin/ink-claude-code-dream`,
+    ) ||
     policy.bunVersion !== "1.4.0" ||
     policy.materialPolicy?.sourceMapsAllowed !== false ||
     policy.publication?.packageGenerationAllowed !== true ||

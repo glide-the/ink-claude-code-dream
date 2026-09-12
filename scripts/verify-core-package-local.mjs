@@ -15,7 +15,7 @@ const defaultPackageRoot = path.join(
   repositoryRoot,
   "dist",
   "core-package-local",
-  "ink-claude-code-dream-0.1.4",
+  "ink-claude-code-dream-0.1.5",
 );
 
 function fail(message) {
@@ -289,7 +289,7 @@ if (
   release.runtime?.integration?.environment !== "CLAUDE_CODE_CLI_PATH" ||
   release.runtime?.integration?.sdkOption !== "ClaudeAgentOptions.cli_path" ||
   release.runtime?.integration?.sdkDistribution !== "ink-claude-dream-agent-sdk" ||
-  release.runtime?.integration?.sdkVersion !== "0.2.144" ||
+  release.runtime?.integration?.sdkVersion !== "0.2.145" ||
   release.runtime?.integration?.sdkModified !== false ||
   release.core?.entrypoint !== policy.artifact.coreEntrypoint ||
   release.core?.corePruned !== true ||
