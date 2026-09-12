@@ -116,8 +116,8 @@ const discovery = {
   },
   sdk: {
     distribution: "ink-claude-dream-agent-sdk",
-    version: "0.2.144",
-    dreamObservedVersion: "0.2.144",
+    version: "0.2.145",
+    dreamObservedVersion: "0.2.145",
     modified: false,
     option: "ClaudeAgentOptions.cli_path",
     discoveryEnvironment: "CLAUDE_CODE_CLI_PATH",
@@ -165,7 +165,7 @@ const sbom = {
     {
       type: "library",
       name: "ink-claude-dream-agent-sdk",
-      version: "0.2.144",
+      version: "0.2.145",
       scope: "optional",
       properties: [{ name: "ink:delivery", value: "Dream Python environment" }],
     },

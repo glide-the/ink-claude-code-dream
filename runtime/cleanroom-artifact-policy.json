@@ -2,7 +2,7 @@
   "schemaVersion": "ink-cleanroom-runtime-policy/v1",
   "artifact": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "license": "MIT",
     "entrypoint": "bin/ink-claude-code-dream",
     "supportedTargets": [
@@ -43,8 +43,8 @@
     "businessAcceptance": {
       "required": true,
       "passed": true,
-      "receiptPath": "runtime/attestations/dream-real-business-acceptance-0.1.4.json",
-      "receiptSha256": "87f3d1c6040e5462d85e6259a5cb16509a5d26838d5299d1ba350a4ba463dbea",
+      "receiptPath": "runtime/attestations/dream-real-business-acceptance-0.1.5.json",
+      "receiptSha256": "dbe6f521e51c62a774afcb90f1969b66b422ad34e420b1d73f875b989597e662",
       "boundary": "Dream, Admin, Gateway, and the normal local PostgreSQL through public production entrypoints"
     },
     "targetHostQualification": {

@@ -1,0 +1,21 @@
+{
+  "name": "ink-claude-code-dream",
+  "description": "Reviewed development plugins compatible with the Ink & Memory Claude Runtime workflow",
+  "owner": {
+    "name": "Glide the"
+  },
+  "plugins": [
+    {
+      "name": "mcp-apps",
+      "description": "Official MCP Apps development Skills; does not install an MCP server or add MCP Apps UI hosting to this headless Runtime",
+      "version": "0.1.0",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/modelcontextprotocol/ext-apps.git",
+        "path": "plugins/mcp-apps",
+        "sha": "10195ad91851502134930e9b80ec2c04e277a720"
+      }
+    }
+  ]
+}
+

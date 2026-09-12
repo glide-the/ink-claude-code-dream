@@ -1,15 +1,15 @@
 {
   "name": "ink-claude-code-dream",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "license": "MIT",
   "type": "module",
   "bin": {
-    "ink-claude-code-dream": "dist/release/ink-claude-code-dream-0.1.4/bin/ink-claude-code-dream"
+    "ink-claude-code-dream": "dist/release/ink-claude-code-dream-0.1.5/bin/ink-claude-code-dream"
   },
   "description": "Fail-closed feasibility distribution for Dream's pinned Claude Code runtime",
   "files": [
-    "dist/release/ink-claude-code-dream-0.1.4",
+    "dist/release/ink-claude-code-dream-0.1.5",
     "README.md"
   ],
   "engines": {

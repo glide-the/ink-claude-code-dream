@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "ink-runtime-data/v1",
+  "releaseIsImmutable": true,
+  "releaseContainsUserData": false,
+  "classes": [
+    {
+      "id": "thread-workspace",
+      "location": "process cwd / INK_CLAUDE_RUNTIME_WORKSPACE_ROOT",
+      "owner": "Dream thread",
+      "packaged": false,
+      "lifecycle": "created-and-cleaned-by-Dream"
+    },
+    {
+      "id": "thread-tmpdir",
+      "location": "CLAUDE_CODE_TMPDIR",
+      "requiredName": ".claude-tmp",
+      "requiredMode": "0700-or-stricter",
+      "symlinksAllowed": false,
+      "owner": "Dream thread",
+      "packaged": false,
+      "lifecycle": "same-thread-lifetime; exact child of declared workspace"
+    },
+    {
+      "id": "session-transcript",
+      "location": "external Claude configuration/session storage",
+      "owner": "Claude Code and Dream session contract",
+      "packaged": false,
+      "lifecycle": "retained-for-resume-under-existing-policy"
+    },
+    {
+      "id": "mcp-config-and-oauth",
+      "location": "external configuration and secure credential storage",
+      "owner": "user/operator and unmodified Claude Code",
+      "packaged": false,
+      "wrapperAccess": "opaque-pass-through-only",
+      "lifecycle": "never-read-copied-logged-or-cleaned-by-wrapper"
+    },
+    {
+      "id": "plugin-skill-hook-material",
+      "location": "external explicit paths or official discovery paths",
+      "owner": "Dream/user/operator",
+      "packaged": false,
+      "lifecycle": "never-materialized-or-cleaned-by-wrapper"
+    },
+    {
+      "id": "authentication",
+      "location": "official supported environment/provider/keychain/config locations",
+      "owner": "end user or authorized operator",
+      "packaged": false,
+      "wrapperAccess": "opaque-unmodified-environment-pass-through",
+      "lifecycle": "managed-only-by-official-Claude-Code-or-provider"
+    }
+  ],
+  "forbiddenInRelease": [
+    "transcripts",
+    "workspace-content",
+    "plugin-materialization",
+    "mcp-credentials",
+    "oauth-tokens",
+    "authentication-files",
+    "settings",
+    "full-environment-dumps"
+  ]
+}

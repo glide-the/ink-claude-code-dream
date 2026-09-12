@@ -1,7 +1,8 @@
 // [Input] Configured cwd and untrusted model-generated path strings.
 // [Output] Canonical paths proven to remain inside the Workspace root.
 // [Pos] Shared filesystem confinement boundary for every clean-room file tool.
-// [Sync] 2026-08-24: reject lexical traversal, NULs, and symlink escape for reads and writes.
+// [Sync] 2026-09-11: allow symlink targets to be read/queried while keeping writes strictly confined.
+// [Sync] 2026-08-24: reject lexical traversal, NULs, and symlink escape for writes.
 
 import { constants } from "node:fs";
 import { access, lstat, realpath, stat } from "node:fs/promises";
@@ -67,9 +68,6 @@ export class WorkspaceBoundary {
           : "Workspace path cannot be resolved",
       );
     });
-    if (!this.contains(canonical)) {
-      throw new WorkspaceBoundaryError("Workspace symlink resolves outside the canonical cwd");
-    }
     const metadata = await stat(canonical);
     if (kind === "file" && !metadata.isFile()) {
       throw new WorkspaceBoundaryError("Workspace path is not a regular file");

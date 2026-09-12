@@ -1,7 +1,7 @@
 {
   "schemaVersion": "ink-cleanroom-npm-policy/v1",
   "repository": "glide-the/ink-claude-code-dream",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "MIT",
   "bunVersion": "1.4.0",
   "entrypoint": "src/cleanroom/cli.ts",

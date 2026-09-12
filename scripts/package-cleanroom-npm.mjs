@@ -327,7 +327,7 @@ function releaseManifest(entrypoint, capabilityEvidencePath, entrypointSha256, t
       entrypoint,
       integration: {
         environment: "CLAUDE_CODE_CLI_PATH",
-        sdkVersion: "0.2.144",
+        sdkVersion: "0.2.145",
         sdkOption: "ClaudeAgentOptions.cli_path",
       },
     },

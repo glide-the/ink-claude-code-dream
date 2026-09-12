@@ -106,7 +106,7 @@ function parseTargets(argv: string[]): string[] {
 
 if (
   policy.schemaVersion !== "ink-cleanroom-npm-policy/v1" ||
-  policy.version !== "0.1.4" ||
+  policy.version !== "0.1.5" ||
   policy.license !== "MIT" ||
   policy.bunVersion !== "1.4.0" ||
   policy.entrypoint !== "src/cleanroom/cli.ts" ||

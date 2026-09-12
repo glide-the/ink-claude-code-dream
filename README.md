@@ -1,6 +1,7 @@
 <!-- [Input] Clean-room Runtime tooling, authorized external restored source, capability profile, compatibility policies, and verification evidence. -->
 <!-- [Output] Explain the qualified local minimal-core workflow, published clean-room Runtime, legacy envelope, and safe Git/release boundary. -->
 <!-- [Pos] Operator-facing entry point for ink-claude-code-dream. -->
+<!-- [Sync] 2026-09-02: add the reviewed ext-apps development-Skills Marketplace and state its non-Host boundary. -->
 <!-- [Sync] 2026-08-28: prepare clean-room Runtime 0.1.3 with model-bounded max_tokens and conditional effort projection. -->
 <!-- [Sync] 2026-08-30: authorize Runtime 0.1.4 clean-room publication after Notion acceptance and four-target qualification. -->
 <!-- [Sync] 2026-08-30: restore the 2.1.88 local-core Linux seccomp path with the Docker-style passthrough. -->
@@ -25,6 +26,17 @@ Keep: headless SDK JSON/JSONL, streaming/control/cancel, session/transcript/resu
 Remove after graph proof: CCR/Remote Control bridge, swarm/team/teammate collaboration UI, interactive Ink REPL, IDE auto-connect/UI surface, updater command/UI, and feedback/reporting command/UI.
 
 Defer: telemetry, shared diagnostics, and shared `autoUpdater.ts` logic. A name that looks unrelated is not deletion evidence.
+
+## Claude Plugin Marketplace
+
+This repository exposes a reviewed local Marketplace catalog. Its `mcp-apps` entry pins the official `modelcontextprotocol/ext-apps` development Skills at commit `10195ad91851502134930e9b80ec2c04e277a720`:
+
+```text
+/plugin marketplace add /absolute/path/to/ink-claude-code-dream
+/plugin install mcp-apps@ink-claude-code-dream
+```
+
+The installed plugin contains four authoring/migration Skills. It does not contain or start an MCP server, and it does not add MCP Apps UI hosting to this headless Runtime. The Runtime currently supports ordinary MCP tool/resource flows only; installing the Skills must not be presented as MCP Apps protocol availability. See the [MCP Apps Marketplace and Host design](docs/design/mcp-apps-marketplace-and-host.md) for the compatibility evidence, product states, security boundary, and phased Host plan.
 
 ## Local core build
 
