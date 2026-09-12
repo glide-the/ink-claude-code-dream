@@ -2,6 +2,7 @@
 // [Output] One validated immutable request-parameter snapshot and the final Anthropic Messages wire object.
 // [Pos] Authoritative clean-room Messages request boundary shared by every provider turn.
 // [Sync] 2026-08-28: let authenticated opaque-model capability replace the unknown 32k fallback without model-ID hardcoding.
+// [Sync] 2026-09-12: remove unsupported fictional model-family heuristics.
 
 export const EFFORT_LEVELS = [
   "low",
@@ -88,8 +89,6 @@ export function getModelOutputTokenCapability(
   const normalized = model.toLowerCase().replaceAll(".", "-").replaceAll("_", "-");
 
   if (
-    normalized.includes("fable-5") ||
-    normalized.includes("mythos-5") ||
     normalized.includes("opus-5") ||
     normalized.includes("sonnet-5") ||
     normalized.includes("opus-4-8") ||
@@ -153,8 +152,6 @@ function projectEffortForModel(
   if (effort === undefined) return undefined;
   const normalized = model.toLowerCase().replaceAll(".", "-").replaceAll("_", "-");
   const supportsXhigh =
-    normalized.includes("fable-5") ||
-    normalized.includes("mythos-5") ||
     normalized.includes("opus-5") ||
     normalized.includes("sonnet-5") ||
     normalized.includes("opus-4-8") ||
@@ -173,9 +170,7 @@ function projectEffortForModel(
   if (
     normalized.includes("haiku") ||
     normalized.includes("sonnet") ||
-    normalized.includes("opus") ||
-    normalized.includes("fable") ||
-    normalized.includes("mythos")
+    normalized.includes("opus")
   ) {
     return undefined;
   }

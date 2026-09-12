@@ -2,7 +2,7 @@
 // [Output] Persistent public OAuthClientProvider with token synchronization and terminal mutation fencing.
 // [Pos] Adapter between the official MCP SDK OAuth flow and private clean-room persistence.
 // [Sync] 2026-08-25: support non-destructive interactive scope upgrades through SDK v1.
-// [Sync] 2026-09-11: prepare OAuth client metadata with Runtime 0.1.5 identity.
+// [Sync] 2026-09-12: prepare OAuth client metadata with Runtime 0.1.6 identity.
 
 import { randomBytes } from "node:crypto";
 import type {
@@ -58,7 +58,7 @@ export class PersistentOAuthClientProvider implements OAuthClientProvider {
       ...(options.clientUri ? { client_uri: new URL(options.clientUri).href } : {}),
       ...(options.scope ? { scope: options.scope } : {}),
       software_id: "ink-claude-code-dream",
-      software_version: options.softwareVersion ?? "0.1.5",
+      software_version: options.softwareVersion ?? "0.1.6",
     };
   }
 

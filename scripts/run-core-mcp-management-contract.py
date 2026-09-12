@@ -5,6 +5,7 @@
 [Output] Secret-safe provider-free receipt for version/help/user HTTP lifecycle, colon names, isolation, and redaction.
 [Pos] Real process-boundary contract; it imports Dream's production driver/parser and does not copy their state machine.
 [Sync] 2026-08-24: bind candidate management evidence to one qualified native Runtime target.
+[Sync] 2026-09-12: require candidate identity Runtime 0.1.6 in new management evidence.
 """
 
 from __future__ import annotations
@@ -481,7 +482,7 @@ def main() -> int:
                 raise ContractFailure("candidate core binding receipt is not built")
             qualification_subject = {
                 "runtime": "ink-claude-code-dream",
-                "version": "0.1.5",
+                "version": "0.1.6",
                 "coreBundleSha256": _sha256(core_bundle),
                 "sourceDigest": source_digest,
                 "runtimeTarget": runtime_target,

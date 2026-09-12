@@ -1,35 +1,76 @@
-<!-- [Input] Authorized read-only claude-code-sourcemap package/source inventory, Runtime 0.1.5 package policy, and Dream PreToolUse ZIP evidence. -->
-<!-- [Output] Define the minimal package-identity and CLI compatibility alignment without copying vendor source or adding another Runtime framework. -->
-<!-- [Pos] Design decision for the 2026-09-12 package-structure review requested after the workspace ZIP incident. -->
-<!-- [Sync] 2026-09-12: record the source comparison, ownership boundary, corrected package identity, aliases, and release state. -->
+<!-- [Input] Authorized read-only Claude Code 2.1.88 package/source inventory, clean-room Runtime package/build policies, and Dream's resolver contract. -->
+<!-- [Output] Record the evidence-led package restoration, deliberate compatibility differences, removed inventions, and closed 0.1.6 release gates. -->
+<!-- [Pos] Canonical design decision for the 2026-09-12 CLI migration and package-structure correction. -->
+<!-- [Sync] 2026-09-12: restore package/ as the selector source, bind cli.js end to end, and invalidate prior acceptance for the changed artifact. -->
 
 # Claude sourcemap package contract alignment
 
-## Background and problem
+## Decision
 
-The workspace ZIP failure was initially attributed to the CLI migration. Source tracing disproved that premise: the mutating-command decision is made by Dream's `backend/libs/claude_agent_kit/server/agent_runner.py` PreToolUse hook before the Runtime receives an approved Bash command. Neither the restored `2.1.88` source nor this Runtime should gain a ZIP policy or a second filesystem state machine for that defect.
+The repository now has two explicit package roles instead of one root manifest pretending to be both:
 
-The follow-up review still found a real package-contract inconsistency. The authorized reference package at `/Users/dmeck/project/claude-code-sourcemap/package/package.json` has one package identity and exposes `claude` through its package-root CLI entrypoint. This repository's generated selector already exposed `claude` and `ink-claude-code-dream`, but the repository root used the unrelated unscoped name `ink-claude-code-dream` and declared only the latter command. Build policy, source package, and generated package therefore described different identities.
+- root `package.json`: private build/test workspace named `ink-claude-code-dream`, with no `bin` and no publish surface;
+- `package/`: the selector package source, with `package.json`, package-root `cli.js`, `README.md`, and `LICENSE.md`.
 
-## Goals and boundaries
+This restores the physical boundary seen in the authorized read-only reference while retaining Dream's already-required native four-package split. Generated `dist/cleanroom-npm/stage/**` directories are release outputs again, not an alternative source tree.
 
-- Keep ZIP admission in Dream PreToolUse and leave Runtime argv, SDK JSONL, provider, MCP, session, transcript, sandbox, and process semantics unchanged.
-- Make the repository package contract use the same owned scoped identity as the generated selector: `@glide-the/ink-claude-code-dream`.
-- Expose `claude` as the compatibility command and retain `ink-claude-code-dream` as Dream's explicit resolver command; both resolve to the same entrypoint.
-- Preserve the reference package's single-entrypoint compatibility shape without claiming Anthropic's package identity, author, license, or publication rights.
-- Keep restored/vendor source external and read-only. The public MIT clean-room packages must not copy the restored source tree merely to imitate its physical directory names.
-- Do not add a package manager, loader, dispatcher, wrapper protocol, or migration framework.
+The workspace ZIP incident is outside this Runtime change. Dream's PreToolUse hook classifies and approves the Bash command before the Runtime executes it. ZIP policy remains owned by its separate task and is not duplicated in Runtime argv, tools, or sandbox code.
 
-## Concepts and rules
+## Read-only evidence
 
-| Concern | Reference fact | Runtime rule |
-| --- | --- | --- |
-| Package identity | `@anthropic-ai/claude-code` belongs to Anthropic. | Use the repository-owned `@glide-the/ink-claude-code-dream`; never impersonate the vendor scope. |
-| CLI entry | The reference package maps `claude` to one CLI file. | Map both supported command names to one immutable Runtime entrypoint. |
-| Source layout | The restored tree is a factual compatibility reference with upstream modules such as `tools/`, `cli/`, `services/mcp/`, and `utils/sandbox/`. | Reuse those facts when locating behavior, but do not copy proprietary modules into the public clean-room source. Existing Runtime modules remain responsible for their current contracts. |
-| ZIP policy | No matching Runtime ZIP mutation policy exists in the reference tree. | Dream owns ordinary/protected workspace classification in PreToolUse; Runtime only executes an approved Bash command inside the supplied sandbox. |
-| Generated packages | The reference npm artifact is one JavaScript package; this Runtime ships a native selector plus target packages. | Keep the target split because native executable selection is an established deployment constraint, while enforcing one selector identity and one CLI behavior. |
+The comparison used these local sources without modifying or copying them:
 
-`scripts/package-cleanroom-npm.mjs` now fails closed unless the root package name equals the selector name, the two command aliases match policy, and both aliases point to the same versioned entrypoint. The packaging test repeats that assertion independently.
+- `/Users/dmeck/project/claude-code-sourcemap/package/package.json`
+- `/Users/dmeck/project/claude-code-sourcemap/package/cli.js`
+- `/Users/dmeck/project/claude-code-sourcemap/package/README.md`
+- `/Users/dmeck/project/claude-code-sourcemap/restored-src/src/`
 
-Runtime `0.1.5` is the source candidate containing this alignment. As of 2026-09-12, an anonymous registry query lists only `0.1.0` through `0.1.4`; therefore this document does not claim that `0.1.5` is published or deployed. Dream may pin the prepared version in source, but a production build remains fail-closed until the same-SHA five-package publication and registry fresh-install gates complete.
+The reference npm artifact is `@anthropic-ai/claude-code@2.1.88`, is an ES module, has no `exports`, and maps only `claude` to package-root `cli.js`. Its package directory also contains its license, lockfile, SDK type declarations, source map, and vendor audio/ripgrep binaries. `node package/cli.js --version` reports `2.1.88 (Claude Code)` and `--help` exposes the interactive and headless command surface.
+
+The clean-room Runtime must not copy the reference source map, vendor binaries, recovered source, package identity, author metadata, license terms, or unsupported UI commands. Package-shape compatibility is not permission to redistribute unrelated material.
+
+## Exact package mapping
+
+| Concern | Reference 2.1.88 | Runtime 0.1.6 | Reason |
+| --- | --- | --- | --- |
+| Source boundary | `package/` is the npm package root | `package/` is the selector source root | Restores the real package/source separation |
+| Package name | `@anthropic-ai/claude-code` | `@glide-the/ink-claude-code-dream` | Never impersonate the vendor scope |
+| Module format | `type: module` | `type: module` | Required by package-root `cli.js` |
+| Exports | absent | absent | A CLI package does not need an invented JS export map |
+| Primary bin | `claude: cli.js` | `claude: cli.js` | Preserves CLI/SDK compatibility |
+| Dream bin | absent | `ink-claude-code-dream: cli.js` | Existing fail-closed Dream resolver contract |
+| Runtime body | JavaScript package plus bundled vendor assets | one selector plus exact native optional package | Existing four-target standalone deployment constraint |
+| Mutable data | external | external | Never package sessions, transcripts, Workspace, OAuth, or credentials |
+
+`runtime/cleanroom-npm-policy.json#metaPackage.sourceRoot` binds the source root to `package`; the packager validates the private workspace, source package identity/version, absence of `exports`, two aliases, exact `cli.js`, optional native package versions, and matching MIT license before staging. The tarball verifier independently checks package inventory, executable mode/hash, manifest entrypoint, capabilities, SBOM, notices, and target binding.
+
+## Removed inventions and preserved Dream behavior
+
+The review removed behavior that had no source or consumer evidence:
+
+- fictional `fable-5` and `mythos-5` output/effort model heuristics;
+- silent acceptance of unknown long options, which hid package/CLI drift;
+- the root workspace's false identity as the published selector package;
+- the generated `bin/ink-claude-code-dream` selector as the meta-package source entrypoint.
+
+The review restored or retained only evidenced behavior:
+
+- package-root `--help` plus the reference's kebab/camel tool aliases;
+- `--version` compatibility value `2.1.241 (Claude Code)` required by Dream;
+- SDK stream-json/control/cancel, sessions/resume/transcripts, Workspace/cwd/TMPDIR, permissions/hooks/tools, plugins/Skills, MCP stdio/HTTP/OAuth/Resources/management, sandbox, and provider/gateway behavior;
+- Dream's explicit command alias and manifest/capability/checksum qualification;
+- Darwin/Linux arm64/x64 native optional packages and signal forwarding.
+
+Interactive Ink UI, IDE/Chrome integration, updater/install flows, remote-control/team UI, telemetry, audio capture, and vendor ripgrep are not claimed by the clean-room selector. Unsupported options now fail closed rather than appearing to work.
+
+## Build, release, and Dream consumption
+
+The meta-package release manifest now declares `runtime.entrypoint: "cli.js"` beside that file. Platform packages keep their internal `runtime/bin/ink-claude-code-dream` native executable because the selector owns that private hop. Dream resolves the installed npm bin symlink to package-root `cli.js`, then validates the adjacent release manifest, exact Runtime version, protocol, capability evidence, and selector digest.
+
+Version `0.1.6` is mandatory because source bytes, package inventory, selector digest, and manifest location changed. The digest-bound `0.1.5` Dream acceptance receipt remains immutable historical evidence and is not rebound or edited. For `0.1.6`, the checked policies therefore set all production, redistribution, publication, and four-target qualification states to false.
+
+The `INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test` lane may build all targets, create five tarballs, verify them, fresh-install the selector/host package, run both aliases, and exercise Dream's resolver. Fixture manifests are marked and `npm pack` remains rejected by the staged prepack gate. This evidence is technical only; it does not publish, deploy, or substitute for same-SHA real-business acceptance and explicit release authorization.
+
+## Rollback
+
+The public `0.1.4` release and historical `0.1.5` receipt are unchanged. Before a future `0.1.6` publication, rollback is simply to keep Dream production on its last qualified public Runtime; source that pins `0.1.6` must fail closed until the five-package registry set exists. After any future publication, rollback must change Dream's exact Runtime version and resolver evidence atomically rather than using an ambient `claude` or `CLAUDE_CODE_CLI_PATH` shortcut.

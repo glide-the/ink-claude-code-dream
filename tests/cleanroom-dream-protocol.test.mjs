@@ -2,7 +2,7 @@
 // [Input] Public clean-room modules, a disposable Workspace/config home, and SDK-shaped argv.
 // [Output] Provider-free evidence for Dream tool inventory, local tools, durable tasks, and stored Bash output.
 // [Pos] Dream-specific P0/P1 compatibility gate; it does not read vendor or restored Runtime source.
-// [Sync] 2026-08-24: cover --tools filtering and the minimum Dream local-tool matrix.
+// [Sync] 2026-09-12: cover documented tool aliases and fail-closed unknown options.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -43,6 +43,32 @@ test("argv distinguishes default tools from an explicit empty --tools inventory"
     "Read",
     "mcp__user__lookup",
   ]);
+});
+
+test("argv accepts the reference tool aliases and rejects unknown options", () => {
+  const parsed = parseRuntimeArgv([
+    "-p",
+    "-r", "session-from-short-alias",
+    "--allowedTools", "Read",
+    "--allowed-tools", "Grep",
+    "--disallowedTools", "Write",
+    "--disallowed-tools", "Edit",
+  ]);
+  assert.deepEqual(parsed.allowedTools, ["Read", "Grep"]);
+  assert.deepEqual(parsed.disallowedTools, ["Write", "Edit"]);
+  assert.equal(parsed.resume, "session-from-short-alias");
+  assert.throws(
+    () => parseRuntimeArgv(["--invented-runtime-mode", "enabled"]),
+    /unsupported option: --invented-runtime-mode/,
+  );
+  assert.throws(
+    () => parseRuntimeArgv(["--invented-runtime-mode=enabled"]),
+    /unsupported option: --invented-runtime-mode/,
+  );
+  assert.throws(
+    () => parseRuntimeArgv(["-x"]),
+    /unsupported option: -x/,
+  );
 });
 
 test("explicit empty --tools exposes no built-ins and disallowedTools removes inventory", async () => {

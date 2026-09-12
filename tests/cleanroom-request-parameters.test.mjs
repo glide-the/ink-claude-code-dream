@@ -3,6 +3,7 @@
 // [Output] Golden final-HTTP-body evidence for effort/max_tokens parsing, opaque-model capability, bounds, omission, streaming, and tool follow-ups.
 // [Pos] Focused request-serialization regression gate; it never calls a real model or records credentials.
 // [Sync] 2026-08-28: prove a server-owned opaque-model capability reaches every compiled transport request.
+// [Sync] 2026-09-12: remove unsupported fictional model-family expectations.
 
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -328,8 +329,6 @@ test("compiled transport computes and bounds max_tokens by model capability", as
     { model: "claude-opus-4-8", expected: 64_000 },
     { model: "claude-opus-5", expected: 64_000 },
     { model: "claude-sonnet-5", expected: 64_000 },
-    { model: "claude-fable-5", expected: 64_000 },
-    { model: "claude-mythos-5", expected: 64_000 },
     { model: "claude-opus-4-6", expected: 64_000 },
     { model: "claude-sonnet-4-6", expected: 32_000 },
     { model: "claude-3-opus", expected: 4_096 },

@@ -2,7 +2,7 @@
 // [Output] Define stable internal shapes for diagnostics and supervised CLI launches.
 // [Pos] Runtime implementation contract only; Dream's locked SDK distribution never parses this schema.
 // [Sync] 2026-08-24: align current Dream SDK observation with ink-claude-dream-agent-sdk 0.2.145.
-// [Sync] 2026-09-11: pair Runtime 0.1.5 with downstream SDK 0.2.145.
+// [Sync] 2026-09-12: pair Runtime 0.1.6 with downstream SDK 0.2.145.
 
 export interface ReleaseManifest {
   schemaVersion: "ink-claude-cli-envelope/v1";

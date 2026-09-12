@@ -1,0 +1,26 @@
+{
+  "name": "@glide-the/ink-claude-code-dream",
+  "version": "0.1.6",
+  "private": true,
+  "description": "Dream-compatible Claude CLI with a package-root entrypoint",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "claude": "cli.js",
+    "ink-claude-code-dream": "cli.js"
+  },
+  "files": [
+    "cli.js",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "engines": {
+    "node": ">=22.0.0 <25.0.0"
+  },
+  "optionalDependencies": {
+    "@glide-the/ink-claude-code-dream-darwin-arm64": "0.1.6",
+    "@glide-the/ink-claude-code-dream-darwin-x64": "0.1.6",
+    "@glide-the/ink-claude-code-dream-linux-arm64": "0.1.6",
+    "@glide-the/ink-claude-code-dream-linux-x64": "0.1.6"
+  }
+}

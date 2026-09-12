@@ -4,7 +4,8 @@
 // [Pos] Immutable five-package verifier; it does not publish, execute foreign binaries, or inspect restored source.
 // [Sync] 2026-08-24: verify Dream's canonical CLI, release manifest, capabilities, and digest bindings.
 // [Sync] 2026-08-24: verify a deterministic dependency-complete CycloneDX SBOM in every tarball.
-// [Sync] 2026-08-28: require the checked Dream receipt digest and exact accepted native executable in every formal release set.
+// [Sync] 2026-09-12: verify the package-root cli.js selector and permit only
+//                    explicit provider-free qualification for the 0.1.6 candidate.
 
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
@@ -36,39 +37,46 @@ function sha256(body) {
   return createHash("sha256").update(body).digest("hex");
 }
 
-const businessReceiptRelative = cleanroomPolicy.publicationGate?.businessAcceptance?.receiptPath;
-if (
-  typeof businessReceiptRelative !== "string" ||
-  !businessReceiptRelative.startsWith("runtime/attestations/") ||
-  path.normalize(businessReceiptRelative) !== businessReceiptRelative ||
-  path.isAbsolute(businessReceiptRelative)
-) {
-  fail("Dream business acceptance receipt path is invalid");
+if (!formalPublication && !qualificationFixture) {
+  fail("candidate verification requires INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test");
 }
-const businessReceiptBody = await readFile(path.join(repositoryRoot, businessReceiptRelative));
-const businessReceipt = JSON.parse(businessReceiptBody.toString("utf8"));
-const businessReceiptSha256 = sha256(businessReceiptBody);
-if (
-  cleanroomPolicy.publicationGate?.businessAcceptance?.passed !== true ||
-  cleanroomPolicy.publicationGate?.businessAcceptance?.receiptSha256 !== businessReceiptSha256 ||
-  businessReceipt.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
-  businessReceipt.subject?.runtime !== cleanroomPolicy.artifact?.name ||
-  businessReceipt.subject?.version !== policy.version ||
-  businessReceipt.subject?.acceptedTarget !== "darwin-arm64" ||
-  !/^[a-f0-9]{64}$/.test(businessReceipt.subject?.sourceTreeSha256 ?? "") ||
-  !/^[a-f0-9]{64}$/.test(businessReceipt.subject?.acceptedExecutableSha256 ?? "") ||
-  businessReceipt.acceptance?.status !== "passed" ||
-  businessReceipt.privacy?.accountIdentifierIncluded !== false ||
-  businessReceipt.privacy?.rawBusinessLogsIncluded !== false ||
-  businessReceipt.privacy?.databaseRowsIncluded !== false ||
-  businessReceipt.privacy?.oauthCredentialsIncluded !== false ||
-  businessReceipt.privacy?.callbacksIncluded !== false ||
-  businessReceipt.privacy?.transcriptsIncluded !== false ||
-  businessReceipt.authorization?.explicitPublicNpmReleaseApproved !== true ||
-  businessReceipt.authorization?.platformPackagesBeforeSelectorRequired !== true ||
-  businessReceipt.authorization?.pypiPublicationApproved !== false
-) {
-  fail("Dream business acceptance receipt binding is invalid");
+let businessReceipt;
+let businessReceiptSha256 = null;
+if (formalPublication) {
+  const businessReceiptRelative = cleanroomPolicy.publicationGate?.businessAcceptance?.receiptPath;
+  if (
+    typeof businessReceiptRelative !== "string" ||
+    !businessReceiptRelative.startsWith("runtime/attestations/") ||
+    path.normalize(businessReceiptRelative) !== businessReceiptRelative ||
+    path.isAbsolute(businessReceiptRelative)
+  ) {
+    fail("Dream business acceptance receipt path is invalid");
+  }
+  const businessReceiptBody = await readFile(path.join(repositoryRoot, businessReceiptRelative));
+  businessReceipt = JSON.parse(businessReceiptBody.toString("utf8"));
+  businessReceiptSha256 = sha256(businessReceiptBody);
+  if (
+    cleanroomPolicy.publicationGate?.businessAcceptance?.passed !== true ||
+    cleanroomPolicy.publicationGate?.businessAcceptance?.receiptSha256 !== businessReceiptSha256 ||
+    businessReceipt.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
+    businessReceipt.subject?.runtime !== cleanroomPolicy.artifact?.name ||
+    businessReceipt.subject?.version !== policy.version ||
+    businessReceipt.subject?.acceptedTarget !== "darwin-arm64" ||
+    !/^[a-f0-9]{64}$/.test(businessReceipt.subject?.sourceTreeSha256 ?? "") ||
+    !/^[a-f0-9]{64}$/.test(businessReceipt.subject?.acceptedExecutableSha256 ?? "") ||
+    businessReceipt.acceptance?.status !== "passed" ||
+    businessReceipt.privacy?.accountIdentifierIncluded !== false ||
+    businessReceipt.privacy?.rawBusinessLogsIncluded !== false ||
+    businessReceipt.privacy?.databaseRowsIncluded !== false ||
+    businessReceipt.privacy?.oauthCredentialsIncluded !== false ||
+    businessReceipt.privacy?.callbacksIncluded !== false ||
+    businessReceipt.privacy?.transcriptsIncluded !== false ||
+    businessReceipt.authorization?.explicitPublicNpmReleaseApproved !== true ||
+    businessReceipt.authorization?.platformPackagesBeforeSelectorRequired !== true ||
+    businessReceipt.authorization?.pypiPublicationApproved !== false
+  ) {
+    fail("Dream business acceptance receipt binding is invalid");
+  }
 }
 
 function stableValue(value) {
@@ -180,20 +188,22 @@ function verifyPublicationAttestation(files, packageName, entrypointSha256, targ
       : "ink-cleanroom-npm-meta-publication-attestation/v1") ||
     attestation.repository !== policy.repository ||
     attestation.version !== policy.version ||
-    attestation.productionEligible !== true ||
-    attestation.publicationAllowed !== true ||
-    attestation.redistributionAllowed !== true ||
+    attestation.productionEligible !== expectedProductionEligible ||
+    attestation.publicationAllowed !== cleanroomPolicy.publicationGate.publicationAllowed ||
+    attestation.redistributionAllowed !== expectedRedistributionAllowed ||
     attestation.businessAcceptanceReceiptSha256 !== businessReceiptSha256 ||
     attestation.sourceMapsIncluded !== false ||
     attestation.entrypointSha256 !== entrypointSha256 ||
-    Object.hasOwn(attestation, "fixture") ||
+    (qualificationFixture
+      ? attestation.fixture !== "provider-free-test"
+      : Object.hasOwn(attestation, "fixture")) ||
     (target ? attestation.runtimeTarget !== target : Object.hasOwn(attestation, "runtimeTarget"))
   ) {
     fail(`${packageName} publication attestation drift`);
   }
 }
 
-function verifyDreamManifest(files, releasePath, capabilityPath, artifactPath, executablePath, packageName) {
+function verifyDreamManifest(files, releasePath, capabilityPath, artifactPath, executablePath, manifestEntrypoint, packageName) {
   const release = JSON.parse(files.get(releasePath).toString("utf8"));
   const capabilities = JSON.parse(files.get(capabilityPath).toString("utf8"));
   const artifact = JSON.parse(files.get(artifactPath).toString("utf8"));
@@ -203,7 +213,7 @@ function verifyDreamManifest(files, releasePath, capabilityPath, artifactPath, e
     release.schemaVersion !== "ink-claude-cli-envelope/v1" ||
     release.runtime?.name !== "ink-claude-code-dream" ||
     release.runtime?.version !== policy.version ||
-    release.runtime?.entrypoint !== "bin/ink-claude-code-dream" ||
+    release.runtime?.entrypoint !== manifestEntrypoint ||
     release.runtime?.integration?.environment !== "CLAUDE_CODE_CLI_PATH" ||
     release.runtime?.integration?.sdkVersion !== "0.2.145" ||
     release.runtime?.integration?.sdkOption !== "ClaudeAgentOptions.cli_path" ||
@@ -306,12 +316,13 @@ if (
   policy.license !== "MIT" ||
   policy.bunVersion !== "1.4.0" ||
   policy.materialPolicy?.sourceMapsAllowed !== false ||
-  policy.publication?.npmPublishAllowed !== true ||
-  cleanroomPolicy.publicationGate?.productionEligible !== true ||
-  cleanroomPolicy.publicationGate?.publicationAllowed !== true ||
-  cleanroomPolicy.publicationGate?.redistributionAllowed !== true ||
+  policy.metaPackage?.sourceRoot !== "package" ||
+  policy.publication?.npmPublishAllowed !== formalPublication ||
+  cleanroomPolicy.publicationGate?.productionEligible !== formalPublication ||
+  cleanroomPolicy.publicationGate?.publicationAllowed !== formalPublication ||
+  cleanroomPolicy.publicationGate?.redistributionAllowed !== formalPublication ||
   Object.values(cleanroomPolicy.publicationGate?.targetHostQualification ?? {}).length !== 4 ||
-  Object.values(cleanroomPolicy.publicationGate?.targetHostQualification ?? {}).some(value => value !== true) ||
+  Object.values(cleanroomPolicy.publicationGate?.targetHostQualification ?? {}).some(value => value !== formalPublication) ||
   JSON.stringify(Object.keys(policy.platforms)) !== JSON.stringify(allowedTargets)
 ) {
   fail("checked policy identity, MIT, exact Bun, target matrix, or no-map gate drift");
@@ -344,8 +355,9 @@ for (const tarball of tarballs) {
     );
     if (
       packageJson.type !== "module" ||
-      packageJson.bin?.claude !== "bin/ink-claude-code-dream" ||
-      packageJson.bin?.["ink-claude-code-dream"] !== "bin/ink-claude-code-dream" ||
+      packageJson.bin?.claude !== policy.metaPackage.entrypoint ||
+      packageJson.bin?.["ink-claude-code-dream"] !== policy.metaPackage.entrypoint ||
+      Object.hasOwn(packageJson, "exports") ||
       packageJson.scripts?.prepack !== "node scripts/prepack.mjs" ||
       JSON.stringify(stableValue(packageJson.optionalDependencies)) !== JSON.stringify(stableValue(optionalDependencies)) ||
       manifest.schemaVersion !== "ink-cleanroom-npm-meta/v1" ||
@@ -354,14 +366,15 @@ for (const tarball of tarballs) {
     ) {
       fail("meta package selector/bin/optionalDependencies manifest drift");
     }
-    const digest = verifyChecksum(files, "bin/ink-claude-code-dream", identity.name);
+    const digest = verifyChecksum(files, policy.metaPackage.entrypoint, identity.name);
     verifyPublicationAttestation(files, identity.name, digest);
     verifyDreamManifest(
       files,
       "release-manifest.json",
       "manifest/capabilities.json",
       "manifest/artifact-manifest.json",
-      "bin/ink-claude-code-dream",
+      policy.metaPackage.entrypoint,
+      policy.metaPackage.entrypoint,
       identity.name,
     );
     verifyDependencyEvidence(
@@ -372,7 +385,7 @@ for (const tarball of tarballs) {
       "meta",
       digest,
     );
-    if (manifest.launcherSha256 !== digest || manifest.selector !== "bin/ink-claude-code-dream" || (modes.get("bin/ink-claude-code-dream") & 0o111) === 0) {
+    if (manifest.launcherSha256 !== digest || manifest.selector !== policy.metaPackage.entrypoint || (modes.get(policy.metaPackage.entrypoint) & 0o111) === 0) {
       fail("meta launcher checksum or executable mode drift");
     }
     reports.push({ name: identity.name, kind: "meta", tarball: path.basename(tarball), bytes: tarballBody.byteLength, sha256: sha256(tarballBody) });
@@ -394,6 +407,7 @@ for (const tarball of tarballs) {
     "runtime/manifest/capabilities.json",
     "runtime/manifest/artifact-manifest.json",
     executablePath,
+    "bin/ink-claude-code-dream",
     identity.name,
   );
   verifyDependencyEvidence(
@@ -418,7 +432,7 @@ for (const tarball of tarballs) {
     manifest.runtime?.binaryFormat !== platform.binaryFormat ||
     manifest.runtime?.bytes !== executable.byteLength ||
     manifest.runtime?.sha256 !== digest ||
-    (target === businessReceipt.subject.acceptedTarget &&
+    (formalPublication && target === businessReceipt.subject.acceptedTarget &&
       (manifest.runtime?.sourceTreeSha256 !== businessReceipt.subject.sourceTreeSha256 ||
         digest !== businessReceipt.subject.acceptedExecutableSha256)) ||
     manifest.runtime?.executable !== executablePath ||

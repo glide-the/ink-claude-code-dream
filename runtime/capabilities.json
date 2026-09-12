@@ -3,7 +3,7 @@
   "releaseManifest": "../release-manifest.json",
   "runtime": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "protocolVersion": "claude-code-stream-json/1",
     "mode": "official-cli-compatibility-envelope",
     "coreLoadingReduction": 0,

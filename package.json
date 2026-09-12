@@ -1,18 +1,10 @@
 {
-  "name": "@glide-the/ink-claude-code-dream",
-  "version": "0.1.5",
+  "name": "ink-claude-code-dream",
+  "version": "0.1.6",
   "private": true,
   "license": "MIT",
   "type": "module",
-  "bin": {
-    "claude": "dist/release/ink-claude-code-dream-0.1.5/bin/ink-claude-code-dream",
-    "ink-claude-code-dream": "dist/release/ink-claude-code-dream-0.1.5/bin/ink-claude-code-dream"
-  },
-  "description": "Fail-closed feasibility distribution for Dream's pinned Claude Code runtime",
-  "files": [
-    "dist/release/ink-claude-code-dream-0.1.5",
-    "README.md"
-  ],
+  "description": "Private build and verification workspace for the Dream Claude CLI package",
   "engines": {
     "node": ">=22.0.0 <25.0.0",
     "bun": ">=1.2.20 <2.0.0"

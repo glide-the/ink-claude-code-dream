@@ -1,7 +1,7 @@
 {
   "schemaVersion": "ink-cleanroom-npm-policy/v1",
   "repository": "glide-the/ink-claude-code-dream",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "license": "MIT",
   "bunVersion": "1.4.0",
   "entrypoint": "src/cleanroom/cli.ts",
@@ -10,6 +10,8 @@
   "tarballRoot": "dist/cleanroom-npm/tarballs",
   "metaPackage": {
     "name": "@glide-the/ink-claude-code-dream",
+    "sourceRoot": "package",
+    "entrypoint": "cli.js",
     "commands": [
       "claude",
       "ink-claude-code-dream"
@@ -68,7 +70,7 @@
       "README.md",
       "SHA256SUMS",
       "THIRD_PARTY_NOTICES.txt",
-      "bin/ink-claude-code-dream",
+      "cli.js",
       "manifest/artifact-manifest.json",
       "manifest/capabilities.json",
       "manifest/dependency-licenses.json",
@@ -103,7 +105,7 @@
   },
   "publication": {
     "packageGenerationAllowed": true,
-    "npmPublishAllowed": true,
-    "reason": "The checked clean-room policy, Runtime 0.1.5 Dream acceptance receipt, four-target release qualification, and explicit public release authorization passed."
+    "npmPublishAllowed": false,
+    "reason": "Runtime 0.1.6 changes the selector package layout and requires a new same-SHA Dream acceptance, four-target qualification, and explicit publication authorization."
   }
 }

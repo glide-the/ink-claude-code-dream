@@ -2,27 +2,31 @@
 <!-- [Output] 定义 restored-source-free 五包拓扑、正式资格、首次 2FA bootstrap 与后续 Trusted Publishing。 -->
 <!-- [Pos] 当前公共 npm 发布设计；授权由 checked Dream 回执固定，历史恢复源码永不成为公共输入。 -->
 <!-- [Sync] 2026-08-28：记录 0.1.3 opaque 模型能力修复的同 SHA qualification、五包发布和公共 registry 回验。 -->
+<!-- [Sync] 2026-09-12：恢复 package/cli.js selector 源，并将 0.1.6 新制品的发布与资格门全部关闭。 -->
 
 # Clean-room Runtime 的 npm 多平台发布设计
 
 ## 当前结论
 
-仓库根包只是私有编排器，不是 npm 交付物；根 `prepack`/`prepublishOnly` 必须拒绝打包。
-唯一允许走向公共 registry 的实现来源是 `src/cleanroom/`。历史
+仓库根包只是私有编排器，不是 npm 交付物；它不声明 `bin`，根 `prepack`/`prepublishOnly`
+必须拒绝打包。selector 的可审查源固定在 `package/`，其 package-root `cli.js` 调度
+`src/cleanroom/` 构建出的 native 平台包。历史
 `dist/core-local`、`dist/core-package-local`、恢复源码和它们的衍生 bundle 只保留为本地
 研究/回滚证据，不得进入本拓扑。
 
-最终 Dream 真实业务验收和显式公共 npm 授权已固定为 checked、隐私删减的 digest-bound
-回执。`runtime/cleanroom-artifact-policy.json` 当前为：
+`0.1.4` 的最终 Dream 真实业务验收和正式发布是历史已完成事实；`0.1.5` 的验收回执也保持
+不可变。但 `0.1.6` 改变 selector 源树、入口与摘要，旧回执不能授权新制品。
+`runtime/cleanroom-artifact-policy.json` 当前为：
 
-- `productionEligible=true`；
-- `publicationAllowed=true`；
-- `redistributionAllowed=true`；
-- Dream v2 真实业务回执 SHA-256 为 `2e7da1f41a41af3b229b79080085e587cdae39e664d7630ed209592ec8c73d4b`；
-- 四个 target qualification 均为 true，且每个资格基础单独记录；
-- `runtime/cleanroom-npm-policy.json#publication.npmPublishAllowed=true`。
+- `productionEligible=false`；
+- `publicationAllowed=false`；
+- `redistributionAllowed=false`；
+- `businessAcceptance.passed=false`，路径与摘要均为 null；
+- 四个 target qualification 均为 false，资格基础为 pending；
+- `runtime/cleanroom-npm-policy.json#publication.npmPublishAllowed=false`。
 
-formal publication 模式禁用旧的 provider-free fixture 注入。每个 tarball 的
+provider-free fixture 只允许本地构建、打包、安装与 Dream resolver 检查，并写入明确 marker；
+prepack 继续拒绝。未来 formal publication 模式必须禁用 fixture 注入。每个 tarball 的
 `npm-publication-attestation.json` 都绑定同一真实业务回执 digest；prepack 和最终 verifier
 任一处发现门、target、entrypoint、fixture、map 或 digest 漂移即失败。
 
@@ -45,7 +49,7 @@ magic 不冒充相应宿主 live execution；Linux 缺 `bubblewrap`/`rg` 时继�
 
 ```text
 @glide-the/ink-claude-code-dream
-  bin/ink-claude-code-dream
+  cli.js
   release-manifest.json
   manifest/{artifact-manifest,capabilities,dependency-licenses,sbom.cdx}.json
   runtime-manifest.json
@@ -78,15 +82,16 @@ bun install --frozen-lockfile
 npm run lint
 npm test
 npm run cleanroom:build:targets
-npm run cleanroom:npm:package
-npm run cleanroom:npm:verify
+INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test npm run cleanroom:npm:package
+INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test npm run cleanroom:npm:verify
 ```
 
-默认命令现在生成正式回执绑定的 tgz；设置旧 `INK_CLEANROOM_QUALIFICATION_FIXTURE` 不得在
-formal 模式加入 fixture 字段。五个 stage 分别执行不带 `--ignore-scripts` 的
-`npm pack --dry-run --json`，prepack 必须成功。离线安装 meta 加当前 host 平台 tgz 后，两个
-alias 都必须输出 `2.1.241 (Claude Code)`，Dream 的真实 Python resolver 还必须解析到
-selector 的 `release-manifest.json`。
+当前 `0.1.6` 使用 `INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test` 生成带 marker 的
+本地 tgz；五个 stage 的 `npm pack --dry-run --json` 必须被 prepack 拒绝。离线安装 meta 加
+当前 host 平台 tgz 后，两个 alias 都必须输出 `2.1.241 (Claude Code)`，Dream 的真实 Python
+resolver 必须将 npm bin symlink 解析到 package-root `cli.js`，再读取相邻
+`release-manifest.json`。只有未来所有 checked gate 打开后，正式 lane 才允许无 fixture 的
+prepack 成功。
 
 ## 发布门与 GitHub Actions
 

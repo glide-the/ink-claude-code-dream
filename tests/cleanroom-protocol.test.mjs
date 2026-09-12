@@ -3,6 +3,7 @@
 // [Output] Provider-free evidence for version, initialize, streaming, parser shapes, sessions, headers, and interrupt.
 // [Pos] First-slice process-boundary contract; it makes no external provider, tool, MCP, or persistence call.
 // [Sync] 2026-08-24: add clean-room Runtime JSONL/SSE/interrupt coverage.
+// [Sync] 2026-09-12: verify the truthful Runtime 0.1.6 help surface.
 
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -263,6 +264,15 @@ test("standalone clean-room CLI reports the compatible Claude Code version", () 
   const result = spawnSync(executable, ["--version"], { encoding: "utf8" });
   assert.equal(result.status, 0);
   assert.equal(result.stdout, "2.1.241 (Claude Code)\n");
+  assert.equal(result.stderr, "");
+});
+
+test("standalone clean-room CLI exposes truthful headless help", () => {
+  const result = spawnSync(executable, ["--help"], { encoding: "utf8" });
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /^Usage: claude /);
+  assert.match(result.stdout, /--input-format <format>/);
+  assert.match(result.stdout, /mcp\s+Configure and inspect MCP servers/);
   assert.equal(result.stderr, "");
 });
 

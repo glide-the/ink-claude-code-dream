@@ -2,7 +2,7 @@
 <!-- [Output] Explain the qualified local minimal-core workflow, published clean-room Runtime, legacy envelope, and safe Git/release boundary. -->
 <!-- [Pos] Operator-facing entry point for ink-claude-code-dream. -->
 <!-- [Sync] 2026-09-02: add the reviewed ext-apps development-Skills Marketplace and state its non-Host boundary. -->
-<!-- [Sync] 2026-09-12: align the 0.1.5 source package identity/aliases with the generated selector and record the unpublished registry state. -->
+<!-- [Sync] 2026-09-12: restore a package-root 0.1.6 selector source, remove invented CLI behavior, and close changed-artifact release gates. -->
 <!-- [Sync] 2026-08-28: prepare clean-room Runtime 0.1.3 with model-bounded max_tokens and conditional effort projection. -->
 <!-- [Sync] 2026-08-30: authorize Runtime 0.1.4 clean-room publication after Notion acceptance and four-target qualification. -->
 <!-- [Sync] 2026-08-30: restore the 2.1.88 local-core Linux seccomp path with the Docker-style passthrough. -->
@@ -18,7 +18,9 @@ This is a technical artifact decision, not a publication or deployment grant: `p
 
 The existing Node supervisor/envelope and its `dist/release/` receipts remain a historical process-boundary and rollback baseline. Its green tests do not prove the minimal core.
 
-Runtime `0.1.5` aligns the private source package with the generated selector: both use `@glide-the/ink-claude-code-dream`, and both `claude` and `ink-claude-code-dream` resolve to the same versioned entrypoint. The comparison with the authorized read-only `claude-code-sourcemap` reference is documented in [Claude sourcemap package contract alignment](docs/design/claude-sourcemap-package-contract-alignment.md). It does not copy restored source, claim the vendor package name, or add ZIP policy to the Runtime. An anonymous registry check on 2026-09-12 still returned `0.1.4` as the newest public version, so `0.1.5` is a source candidate rather than a publication/deployment claim.
+Runtime `0.1.6` restores the reference artifact's physical package boundary: the repository root is again only the private build workspace, while [`package/`](package/) owns the selector package's `package.json`, package-root `cli.js`, README, and license. The selector intentionally has no `exports`; both `claude` and Dream's explicit `ink-claude-code-dream` alias resolve to `cli.js`, which selects one exact native optional package. This preserves Dream's four-target standalone distribution without pretending that generated staging directories are source packages.
+
+The source comparison and deliberate differences are documented in [Claude sourcemap package contract alignment](docs/design/claude-sourcemap-package-contract-alignment.md). The review removed unsupported fictional model-family heuristics and silent unknown-option acceptance, and added only the truthful help/tool aliases present in the reference CLI contract. It does not copy restored/vendor code, reuse the Anthropic package identity, add ZIP policy, or claim interactive Ink/IDE/updater support. Because these changes produce a new source tree and package layout, all `0.1.6` production, redistribution, publication, and target-qualification gates are closed. The immutable `0.1.5` acceptance receipt remains historical evidence only and cannot authorize `0.1.6`.
 
 The clean-room Runtime `0.1.4` adds the stable `sandbox.notion-cli` capability for production Bash only. At each fresh or resumed Runtime start it validates an exact canonical `{workspace}/.notion-home`, fixes `NOTION_KEYRING=0`, accepts only an optional nonempty single-line token and an exact existing `workers.json`, and admits only a native owner/root `ntn` plus the three required HTTPS hosts. Invalid, ambient, foreign-thread, or stale projections remain unset. Provider helpers and stdio MCP children explicitly remove these names. The exact darwin-arm64 executable passed a normal three-turn Dream Chat journey covering fresh Bash, same-thread resume, read-only `ntn` doctor/identity, and ordinary Chat. Four target formats, five-package reproducibility, and explicit public npm authorization were checked; main commit `0ebafe95db22101cf77db2c27e73b561d3af37a6` then passed qualification run `33306855166` and published all four platform packages before the selector in run `33306940462`. This claim does not apply to the restored-source local core. See the [Notion CLI sandbox task record](docs/notion-cli-sandbox-task.md).
 
@@ -112,11 +114,12 @@ See the [canonical design](docs/design/claude-code-runtime-minimalization.md), [
 
 ## npm 发布状态
 
-仓库根 `package.json` 是私有构建编排器和历史 envelope，不是发布包；根级 `npm pack`/`npm publish` 会被 lifecycle 拒绝。可审查的目标布局是 `@glide-the/ink-claude-code-dream` 顶层选择包，加 Darwin/Linux 的 arm64/x64 四个平台包。每个平台必须使用同平台 qualification、ripgrep 和 `bun@1.4.0`，Windows 暂无完整证据并 fail-closed。
+仓库根 `package.json` 是私有构建编排器和历史 envelope，不是发布包；它不再冒充 selector，也不声明 `bin`。可审查的发布源位于 `package/`，结构为 package-root `package.json` + `cli.js`，并由 `runtime/cleanroom-npm-policy.json` 绑定为 `@glide-the/ink-claude-code-dream` 顶层选择包，加 Darwin/Linux 的 arm64/x64 四个平台包。每个平台必须使用同平台 qualification、ripgrep 和 `bun@1.4.0`，Windows 暂无完整证据并 fail-closed。
 
 clean-room `0.1.3` 的历史发布回执仍保留；`0.1.4` 已完成公开发布。main
 `0ebafe95db22101cf77db2c27e73b561d3af37a6` 的 qualification run `33306855166` 与 publish run
 `33306940462` 均成功，发布顺序为四个平台包后 selector。五个 registry tgz 与 qualification
 SHA-256 逐包一致，fresh install 的两个 CLI alias 均输出 `2.1.241 (Claude Code)`；包清单和 tgz
 不含 `*.map`。历史 restored-source/local-core 路径仍禁止发布。
+`0.1.5` 的 digest-bound Dream 验收仍作为不可变历史文件保存。`0.1.6` 是本次 package-root 修复候选；其新 source tree 尚无同 SHA 真实业务验收和四目标资格回执，所以 checked policy 明确设置 `productionEligible=false`、`publicationAllowed=false`、`redistributionAllowed=false`、`npmPublishAllowed=false`。本地 `provider-free-test` fixture 只允许构建、五包打包、fresh install、Dream resolver 和协议验证，不会解除发布 gate。
 详见 [npm 多平台发布设计](docs/design/npm多平台发布设计.md)。

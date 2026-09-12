@@ -5,6 +5,7 @@
 <!-- [Sync] 2026-08-30: document the authorized Runtime 0.1.4 clean-room qualification and publication flow. -->
 <!-- [Sync] 2026-08-30: document the restored 2.1.88 Linux path with the Docker-style passthrough and locked BPF. -->
 <!-- [Sync] 2026-08-30: record the completed Runtime 0.1.4 qualification and npm publication workflows. -->
+<!-- [Sync] 2026-09-12: add the package-root 0.1.6 candidate build/install lane with publication gates closed. -->
 
 # Build and package
 
@@ -16,6 +17,22 @@ There are two distinct build products. Do not combine their claims:
 Both products forbid `*.map`. The legacy envelope build disables esbuild source-map generation, while the minimal core, npm stage, npm dry-run inventory, and final tgz verifier independently reject source maps.
 
 The separate repository-authored clean-room Runtime is published as `0.1.4`. Its checked policy generates `sandbox.notion-cli` into the platform and selector capability manifests. The exact darwin-arm64 executable has a version-bound real Dream acceptance receipt, the four targets have native-format/package/reproducibility qualification, and public npm publication is explicitly authorized. Main commit `0ebafe95db22101cf77db2c27e73b561d3af37a6` passed qualification run `33306855166`; publish run `33306940462` reverified that exact artifact and published the four platform packages before the selector.
+
+Runtime `0.1.6` is the current source candidate, not a release. `package/` now owns the selector's `package.json` and package-root `cli.js`; the root package is only the private builder. Because the source tree and selector digest changed, checked policy closes every production/publication/redistribution/target gate. See [Runtime 0.1.6 release-candidate notes](runtime-0.1.6-release-notes.md).
+
+## Clean-room Runtime 0.1.6 candidate
+
+Build and verify all five local packages without opening publication:
+
+```sh
+./node_modules/.bin/bun scripts/build-cleanroom-targets.ts
+INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test \
+  node scripts/package-cleanroom-npm.mjs all
+INK_CLEANROOM_QUALIFICATION_FIXTURE=provider-free-test \
+  node scripts/verify-cleanroom-npm.mjs
+```
+
+The fixture marker is written into candidate evidence. It permits deterministic technical build/install checks only; generated `scripts/prepack.mjs` still rejects npm packing because `publicationAllowed` is false. The meta tarball contains package-root `cli.js` plus adjacent `release-manifest.json`; each native package retains its private `runtime/bin/ink-claude-code-dream` executable.
 
 ## Clean-room Runtime 0.1.4 release
 

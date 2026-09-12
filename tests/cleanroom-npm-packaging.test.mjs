@@ -3,10 +3,9 @@
 // [Pos] End-to-end clean-room multi-platform npm packaging contract; foreign target binaries are inspected, never executed.
 // [Sync] 2026-08-24: bind the final Dream receipt and formal publication attestation into all five packages.
 // [Sync] 2026-08-28: require the accepted source tree/native executable binding in the formal package set.
-// [Sync] 2026-09-12: require the authorized Runtime 0.1.5 receipt and formal five-package release set.
-// [Sync] 2026-08-30: prove sandbox.notion-cli is emitted by the clean-room manifest generation chain.
-// [Sync] 2026-09-12: require the repository package to expose the same scoped
-//                    identity and command aliases as the public selector.
+// [Sync] 2026-09-12: require the 0.1.6 package-root cli.js selector, keep the
+//                    changed candidate publication-closed, and exercise a
+//                    provider-free five-package install through Dream's resolver.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -25,6 +24,7 @@ const packageScript = path.join(repositoryRoot, "scripts", "package-cleanroom-np
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-cleanroom-npm.mjs");
 const policy = JSON.parse(await readFile(path.join(repositoryRoot, "runtime", "cleanroom-npm-policy.json"), "utf8"));
 const rootPackage = JSON.parse(await readFile(path.join(repositoryRoot, "package.json"), "utf8"));
+const sourcePackage = JSON.parse(await readFile(path.join(repositoryRoot, "package", "package.json"), "utf8"));
 const artifactPolicy = JSON.parse(await readFile(path.join(repositoryRoot, "runtime", "cleanroom-artifact-policy.json"), "utf8"));
 const formalPublication = artifactPolicy.publicationGate.publicationAllowed === true;
 const businessReceiptBody = formalPublication
@@ -33,8 +33,11 @@ const businessReceiptBody = formalPublication
 const businessReceipt = businessReceiptBody ? JSON.parse(businessReceiptBody) : undefined;
 const businessReceiptSha256 = businessReceiptBody
   ? createHash("sha256").update(businessReceiptBody).digest("hex")
-  : undefined;
+  : null;
 const targets = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
+const qualificationEnv = formalPublication
+  ? process.env
+  : { ...process.env, INK_CLEANROOM_QUALIFICATION_FIXTURE: "provider-free-test" };
 
 function run(command, args, options = {}) {
   return spawnSync(command, args, {
@@ -64,30 +67,33 @@ test("clean-room npm policy is an exact MIT four-platform/five-package no-map co
   assert.equal(policy.bunVersion, "1.4.0");
   assert.equal(policy.entrypoint, "src/cleanroom/cli.ts");
   assert.equal(policy.metaPackage.name, "@glide-the/ink-claude-code-dream");
+  assert.equal(policy.metaPackage.sourceRoot, "package");
+  assert.equal(policy.metaPackage.entrypoint, "cli.js");
   assert.deepEqual(policy.metaPackage.commands, ["claude", "ink-claude-code-dream"]);
-  assert.equal(rootPackage.name, policy.metaPackage.name);
-  assert.deepEqual(Object.keys(rootPackage.bin).sort(), [...policy.metaPackage.commands].sort());
-  assert.equal(rootPackage.bin.claude, rootPackage.bin["ink-claude-code-dream"]);
+  assert.equal(rootPackage.name, "ink-claude-code-dream");
+  assert.equal(rootPackage.private, true);
+  assert.equal(Object.hasOwn(rootPackage, "bin"), false);
+  assert.equal(sourcePackage.name, policy.metaPackage.name);
+  assert.equal(sourcePackage.version, policy.version);
+  assert.equal(sourcePackage.private, true);
+  assert.equal(Object.hasOwn(sourcePackage, "exports"), false);
+  assert.deepEqual(Object.keys(sourcePackage.bin).sort(), [...policy.metaPackage.commands].sort());
+  assert.equal(sourcePackage.bin.claude, "cli.js");
+  assert.equal(sourcePackage.bin["ink-claude-code-dream"], "cli.js");
   assert.deepEqual(Object.keys(policy.platforms), targets);
   assert.equal(policy.materialPolicy.sourceMapsAllowed, false);
   assert.ok(policy.materialPolicy.forbiddenSuffixes.includes(".map"));
   assert.equal(policy.publication.packageGenerationAllowed, true);
-  assert.equal(policy.version, "0.1.5");
-  assert.equal(policy.publication.npmPublishAllowed, true);
-  assert.equal(artifactPolicy.publicationGate.productionEligible, true);
-  assert.equal(artifactPolicy.publicationGate.publicationAllowed, true);
-  assert.equal(artifactPolicy.publicationGate.redistributionAllowed, true);
-  assert.equal(artifactPolicy.publicationGate.businessAcceptance.passed, true);
-  assert.equal(
-    artifactPolicy.publicationGate.businessAcceptance.receiptPath,
-    "runtime/attestations/dream-real-business-acceptance-0.1.5.json",
-  );
-  assert.equal(artifactPolicy.publicationGate.businessAcceptance.receiptSha256, businessReceiptSha256);
-  assert.equal(businessReceipt.schemaVersion, "ink-dream-real-business-acceptance/v2");
-  assert.equal(businessReceipt.subject.acceptedTarget, "darwin-arm64");
-  assert.equal(businessReceipt.authorization.explicitPublicNpmReleaseApproved, true);
+  assert.equal(policy.version, "0.1.6");
+  assert.equal(policy.publication.npmPublishAllowed, false);
+  assert.equal(artifactPolicy.publicationGate.productionEligible, false);
+  assert.equal(artifactPolicy.publicationGate.publicationAllowed, false);
+  assert.equal(artifactPolicy.publicationGate.redistributionAllowed, false);
+  assert.equal(artifactPolicy.publicationGate.businessAcceptance.passed, false);
+  assert.equal(artifactPolicy.publicationGate.businessAcceptance.receiptPath, null);
+  assert.equal(artifactPolicy.publicationGate.businessAcceptance.receiptSha256, null);
   assert.deepEqual(Object.values(artifactPolicy.publicationGate.targetHostQualification), [
-    true, true, true, true,
+    false, false, false, false,
   ]);
   assert(artifactPolicy.requiredCapabilities.includes("sandbox.notion-cli"));
   for (const target of targets) {
@@ -151,9 +157,6 @@ test("provider-free clean-room stages declare the stable Notion sandbox capabili
 });
 
 test("four target builds produce five verified npm tarballs and the installed meta package selects the host", { timeout: 360_000 }, async t => {
-  if (!formalPublication) {
-    return t.skip("formal package test requires an open checked publication gate");
-  }
   const hostTarget = `${process.platform}-${process.arch}`;
   if (!targets.includes(hostTarget)) return t.skip(`unsupported test host: ${hostTarget}`);
 
@@ -176,13 +179,13 @@ test("four target builds produce five verified npm tarballs and the installed me
     assert.match(inspected.stdout, expectedFileOutput[target]);
   }
 
-  const packaged = run(process.execPath, [packageScript, "all"]);
+  const packaged = run(process.execPath, [packageScript, "all"], { env: qualificationEnv });
   assert.equal(packaged.status, 0, `${packaged.stdout}\n${packaged.stderr}`);
   const packageReceipt = JSON.parse(packaged.stdout);
   assert.equal(packageReceipt.packages.length, 5);
   assert.equal(packageReceipt.tarballs.length, 5);
 
-  const verified = run(process.execPath, [verifyScript]);
+  const verified = run(process.execPath, [verifyScript], { env: qualificationEnv });
   assert.equal(verified.status, 0, `${verified.stdout}\n${verified.stderr}`);
   const verifyReceipt = JSON.parse(verified.stdout);
   assert.equal(verifyReceipt.status, "cleanroom-npm-verified");
@@ -197,8 +200,8 @@ test("four target builds produce five verified npm tarballs and the installed me
   const tarballRoot = path.join(repositoryRoot, policy.tarballRoot);
   const tarballs = await readdir(tarballRoot);
   assert.equal(tarballs.filter(name => name.endsWith(".tgz")).length, 5);
-  const metaTarball = path.join(tarballRoot, "glide-the-ink-claude-code-dream-0.1.5.tgz");
-  const hostTarball = path.join(tarballRoot, `glide-the-ink-claude-code-dream-${hostTarget}-0.1.5.tgz`);
+  const metaTarball = path.join(tarballRoot, `glide-the-ink-claude-code-dream-${policy.version}.tgz`);
+  const hostTarball = path.join(tarballRoot, `glide-the-ink-claude-code-dream-${hostTarget}-${policy.version}.tgz`);
 
   // Dream passes canonical real Workspace paths. Canonicalize macOS' /var ->
   // /private/var temp alias before deriving CLAUDE_CODE_TMPDIR as well.
@@ -229,18 +232,21 @@ test("four target builds produce five verified npm tarballs and the installed me
       await readFile(path.join(selectorRoot, "release-manifest.json"), "utf8"),
     );
     const selectorLauncher = await readFile(
-      path.join(selectorRoot, "bin", "ink-claude-code-dream"),
+      path.join(selectorRoot, "cli.js"),
       "utf8",
     );
     const selectorCapabilities = JSON.parse(
       await readFile(path.join(selectorRoot, "manifest", "capabilities.json"), "utf8"),
     );
-    assert.equal(selectorManifest.runtime.entrypoint, "bin/ink-claude-code-dream");
+    assert.equal(selectorManifest.runtime.entrypoint, "cli.js");
     assert.match(selectorLauncher, /CLAUDE_SECURESTORAGE_CONFIG_DIR/);
     assert.equal(selectorManifest.core.productionEligible, true);
-    assert.equal(selectorManifest.status.publicationAllowed, true);
+    assert.equal(selectorManifest.status.publicationAllowed, formalPublication);
     assert.equal(selectorManifest.status.redistributionAllowed, true);
-    assert.equal(Object.hasOwn(selectorCapabilities.runtime, "fixture"), false);
+    assert.equal(
+      selectorCapabilities.runtime.fixture,
+      formalPublication ? undefined : "provider-free-test",
+    );
     assert.deepEqual(
       selectorCapabilities.capabilities.map(item => item.id).sort(),
       [...JSON.parse(await readFile(path.join(repositoryRoot, "runtime", "cleanroom-artifact-policy.json"), "utf8")).requiredCapabilities].sort(),
@@ -260,13 +266,17 @@ test("four target builds produce five verified npm tarballs and the installed me
     const selectorAttestation = JSON.parse(
       await readFile(path.join(selectorRoot, "npm-publication-attestation.json"), "utf8"),
     );
-    assert.equal(selectorAttestation.publicationAllowed, true);
+    assert.equal(selectorAttestation.publicationAllowed, formalPublication);
     assert.equal(selectorAttestation.businessAcceptanceReceiptSha256, businessReceiptSha256);
-    assert.equal(Object.hasOwn(selectorAttestation, "fixture"), false);
+    assert.equal(selectorAttestation.fixture, formalPublication ? undefined : "provider-free-test");
     const selectorPrepack = run("npm", ["pack", "--dry-run", "--json"], { cwd: selectorRoot });
-    assert.equal(selectorPrepack.status, 0, `${selectorPrepack.stdout}\n${selectorPrepack.stderr}`);
+    assert.equal(
+      selectorPrepack.status === 0,
+      formalPublication,
+      `${selectorPrepack.stdout}\n${selectorPrepack.stderr}`,
+    );
 
-    const dreamRoot = path.resolve(repositoryRoot, "..", "ink-dream-memory");
+    const dreamRoot = process.env.INK_DREAM_ROOT || path.resolve(repositoryRoot, "..", "ink-dream-memory");
     const dreamPython = process.env.INK_DREAM_PYTHON || path.join(dreamRoot, ".venv", "bin", "python");
     const dreamResolverModule = path.join(
       dreamRoot,
@@ -304,7 +314,7 @@ test("four target builds produce five verified npm tarballs and the installed me
       );
       assert.equal(dreamResolver.status, 0, `${dreamResolver.stdout}\n${dreamResolver.stderr}`);
       const resolverReceipt = JSON.parse(dreamResolver.stdout);
-      assert.equal(path.basename(resolverReceipt.resolved), "ink-claude-code-dream");
+      assert.equal(path.basename(resolverReceipt.resolved), "cli.js");
       assert.equal(
         resolverReceipt.manifest,
         await realpath(path.join(selectorRoot, "release-manifest.json")),
@@ -331,11 +341,15 @@ test("four target builds produce five verified npm tarballs and the installed me
     const platformAttestation = JSON.parse(
       await readFile(path.join(installedPlatformRoot, "npm-publication-attestation.json"), "utf8"),
     );
-    assert.equal(platformAttestation.publicationAllowed, true);
+    assert.equal(platformAttestation.publicationAllowed, formalPublication);
     assert.equal(platformAttestation.businessAcceptanceReceiptSha256, businessReceiptSha256);
-    assert.equal(Object.hasOwn(platformAttestation, "fixture"), false);
+    assert.equal(platformAttestation.fixture, formalPublication ? undefined : "provider-free-test");
     const platformPrepack = run("npm", ["pack", "--dry-run", "--json"], { cwd: installedPlatformRoot });
-    assert.equal(platformPrepack.status, 0, `${platformPrepack.stdout}\n${platformPrepack.stderr}`);
+    assert.equal(
+      platformPrepack.status === 0,
+      formalPublication,
+      `${platformPrepack.stdout}\n${platformPrepack.stderr}`,
+    );
 
     const signalWorkspace = path.join(installRoot, "signal-workspace");
     const signalConfig = path.join(signalWorkspace, ".claude-home");

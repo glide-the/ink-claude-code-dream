@@ -1,6 +1,7 @@
 // [Input] Run identical provider-free CLI requests directly against the fake core and through the built envelope.
 // [Output] Compare opaque protocol bytes/carriers and document the envelope's intentional supervision semantics.
 // [Pos] Paired process-boundary differential suite; it is not official-core, OAuth, Remote, or provider evidence.
+// [Sync] 2026-09-12: compare against the Runtime 0.1.6 release path.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -18,7 +19,7 @@ import { join, resolve } from "node:path";
 import { test } from "node:test";
 
 const envelope = resolve(
-  "dist/release/ink-claude-code-dream-0.1.5/bin/ink-claude-code-dream",
+  "dist/release/ink-claude-code-dream-0.1.6/bin/ink-claude-code-dream",
 );
 const fakeCore = resolve("tests/fixtures/fake-claude.mjs");
 await chmod(fakeCore, 0o755);

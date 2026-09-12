@@ -2,6 +2,7 @@
 // [Output] Prove Runtime evidence, forwarding, gates, and race-safe lifecycle cleanup on every assertion path.
 // [Pos] Provider-free runtime contract suite; it does not claim a real Dream/model acceptance.
 // [Sync] 2026-08-24: assert current Dream SDK distribution and retain race-safe lifecycle cleanup.
+// [Sync] 2026-09-12: require Runtime 0.1.6 release identity and paths.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -19,7 +20,7 @@ import { performance } from "node:perf_hooks";
 import { test } from "node:test";
 
 const executable = resolve(
-  "dist/release/ink-claude-code-dream-0.1.5/bin/ink-claude-code-dream",
+  "dist/release/ink-claude-code-dream-0.1.6/bin/ink-claude-code-dream",
 );
 const fakeClaude = resolve("tests/fixtures/fake-claude.mjs");
 await chmod(fakeClaude, 0o755);
@@ -161,7 +162,7 @@ test("Runtime manifest diagnostic does not need or launch a Claude core", async 
 test("pruning decision never converts outer omissions into core deletion", async () => {
   const decision = JSON.parse(
     await readFile(
-      resolve("dist/release/ink-claude-code-dream-0.1.5/manifest/pruning-decision.json"),
+      resolve("dist/release/ink-claude-code-dream-0.1.6/manifest/pruning-decision.json"),
       "utf8",
     ),
   );
@@ -547,7 +548,7 @@ test("esbuild keeps launcher and Runtime manifest diagnostic behind dynamic impo
   const metafile = JSON.parse(
     await readFile(
       resolve(
-        "dist/release/ink-claude-code-dream-0.1.5/manifest/esbuild-metafile.json",
+        "dist/release/ink-claude-code-dream-0.1.6/manifest/esbuild-metafile.json",
       ),
       "utf8",
     ),

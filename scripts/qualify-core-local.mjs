@@ -3,6 +3,7 @@
 // [Output] An ignored full-runtime qualification receipt bound to the exact core bytes/source digest.
 // [Pos] Technical release gate before packaging and real Dream business acceptance; no user data is read.
 // [Sync] 2026-08-24: bind every qualification lane to the exact native Runtime target.
+// [Sync] 2026-09-12: bind new local qualification receipts to Runtime 0.1.6 only.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -169,7 +170,7 @@ if (
 
 const subject = {
   runtime: "ink-claude-code-dream",
-  version: "0.1.5",
+  version: "0.1.6",
   coreBundleSha256: createHash("sha256").update(coreBundle).digest("hex"),
   sourceDigest: coreReceipt.sourceDigest.digest,
   runtimeTarget: coreReceipt.runtimeTarget,

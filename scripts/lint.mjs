@@ -2,9 +2,8 @@
 // [Output] Fail on clean-room/legacy contract drift, missing headers, restricted material, secrets, or unsafe package scripts.
 // [Pos] Read-only clean-room lint gate; it never reads user configuration or external Runtime data.
 // [Sync] 2026-08-24: verify the final Dream receipt digest and authorized clean-room publication gate.
-// [Sync] 2026-09-12: validate Runtime 0.1.5 business evidence, four-target qualification, and explicit npm authorization.
-// [Sync] 2026-09-12: require the scoped root identity, shared CLI aliases,
-//                    Runtime 0.1.5 receipt, and Dream SDK 0.2.145 pairing.
+// [Sync] 2026-09-12: require the separated private workspace/package-root
+//                    selector structure and publication-closed 0.1.6 candidate.
 
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
@@ -13,19 +12,25 @@ import { extname, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const packageJson = JSON.parse(await readFile(resolve(root, "package.json"), "utf8"));
-if (packageJson.name !== "@glide-the/ink-claude-code-dream") {
-  throw new Error("package name must match the scoped Runtime selector identity");
-}
+const sourcePackage = JSON.parse(await readFile(resolve(root, "package/package.json"), "utf8"));
+const repositoryLicense = await readFile(resolve(root, "LICENSE"));
+const sourcePackageLicense = await readFile(resolve(root, "package/LICENSE.md"));
 if (
-  packageJson.version !== "0.1.5" ||
-  packageJson.bin?.claude !==
-    "dist/release/ink-claude-code-dream-0.1.5/bin/ink-claude-code-dream" ||
-  packageJson.bin?.["ink-claude-code-dream"] !==
-    packageJson.bin?.claude
+  packageJson.name !== "ink-claude-code-dream" ||
+  packageJson.version !== "0.1.6" ||
+  packageJson.private !== true ||
+  Object.hasOwn(packageJson, "bin") ||
+  sourcePackage.name !== "@glide-the/ink-claude-code-dream" ||
+  sourcePackage.version !== packageJson.version ||
+  sourcePackage.private !== true ||
+  sourcePackage.bin?.claude !== "cli.js" ||
+  sourcePackage.bin?.["ink-claude-code-dream"] !== "cli.js" ||
+  Object.hasOwn(sourcePackage, "exports") ||
+  !sourcePackageLicense.equals(repositoryLicense)
 ) {
-  throw new Error("both console aliases must expose one extensionless Runtime entrypoint");
+  throw new Error("private workspace or package-root selector contract drift");
 }
-if (packageJson.private !== true || packageJson.license !== "MIT") {
+if (packageJson.license !== "MIT" || sourcePackage.license !== "MIT") {
   throw new Error("repository orchestrator must remain private while its clean-room source is MIT-licensed");
 }
 if (packageJson.inkBuild?.archiveNode !== "24.13.0") {
@@ -102,29 +107,30 @@ const historicalReceiptPath = "runtime/attestations/dream-real-business-acceptan
 const historicalReceiptBody = await readFile(resolve(root, historicalReceiptPath));
 const historicalReceipt = parsed.get(historicalReceiptPath);
 const historicalReceiptSha256 = createHash("sha256").update(historicalReceiptBody).digest("hex");
-const currentReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.5.json";
-const currentReceiptBody = await readFile(resolve(root, currentReceiptPath));
-const currentReceipt = parsed.get(currentReceiptPath);
-const currentReceiptSha256 = createHash("sha256").update(currentReceiptBody).digest("hex");
+const previousReceiptPath = "runtime/attestations/dream-real-business-acceptance-0.1.5.json";
+const previousReceiptBody = await readFile(resolve(root, previousReceiptPath));
+const previousReceipt = parsed.get(previousReceiptPath);
+const previousReceiptSha256 = createHash("sha256").update(previousReceiptBody).digest("hex");
 const targetQualification = cleanroom.publicationGate?.targetHostQualification;
 if (
   cleanroom.schemaVersion !== "ink-cleanroom-runtime-policy/v1" ||
-  cleanroom.artifact?.version !== "0.1.5" ||
+  cleanroom.artifact?.version !== "0.1.6" ||
+  cleanroom.artifact?.entrypoint !== "cli.js" ||
   cleanroom.artifact?.license !== "MIT" ||
   cleanroom.source?.root !== "src/cleanroom" ||
   cleanroom.source?.externalImplementationInputAllowed !== false ||
   cleanroom.source?.restoredSourceAllowed !== false ||
   cleanroom.source?.derivedAnthropicRuntimeAllowed !== false ||
-  cleanroom.publicationGate?.publicationAllowed !== true ||
-  cleanroom.publicationGate?.productionEligible !== true ||
-  cleanroom.publicationGate?.redistributionAllowed !== true ||
+  cleanroom.publicationGate?.publicationAllowed !== false ||
+  cleanroom.publicationGate?.productionEligible !== false ||
+  cleanroom.publicationGate?.redistributionAllowed !== false ||
   cleanroom.publicationGate?.businessAcceptance?.required !== true ||
-  cleanroom.publicationGate?.businessAcceptance?.passed !== true ||
-  cleanroom.publicationGate?.businessAcceptance?.receiptPath !== currentReceiptPath ||
-  cleanroom.publicationGate?.businessAcceptance?.receiptSha256 !== currentReceiptSha256 ||
+  cleanroom.publicationGate?.businessAcceptance?.passed !== false ||
+  cleanroom.publicationGate?.businessAcceptance?.receiptPath !== null ||
+  cleanroom.publicationGate?.businessAcceptance?.receiptSha256 !== null ||
   Object.keys(targetQualification ?? {}).sort().join(",") !==
     "darwin-arm64,darwin-x64,linux-arm64,linux-x64" ||
-  Object.values(targetQualification ?? {}).some(value => value !== true) ||
+  Object.values(targetQualification ?? {}).some(value => value !== false) ||
   historicalReceiptSha256 !== "2e7da1f41a41af3b229b79080085e587cdae39e664d7630ed209592ec8c73d4b" ||
   historicalReceipt?.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
   historicalReceipt?.subject?.runtime !== "ink-claude-code-dream" ||
@@ -138,24 +144,24 @@ if (
   historicalReceipt?.privacy?.oauthCredentialsIncluded !== false ||
   historicalReceipt?.authorization?.explicitPublicNpmReleaseApproved !== true ||
   historicalReceipt?.authorization?.pypiPublicationApproved !== false ||
-  currentReceiptSha256 !== "dbe6f521e51c62a774afcb90f1969b66b422ad34e420b1d73f875b989597e662" ||
-  currentReceipt?.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
-  currentReceipt?.subject?.runtime !== "ink-claude-code-dream" ||
-  currentReceipt?.subject?.version !== "0.1.5" ||
-  currentReceipt?.subject?.acceptedTarget !== "darwin-arm64" ||
-  currentReceipt?.subject?.sourceTreeSha256 !== "94a2daad5c679d743e9c7b1185dc83d12525224e701887db5fd3c4261fecb8df" ||
-  currentReceipt?.subject?.acceptedExecutableSha256 !== "0ba860a59fe58c2f0c51a78ed954555dc5e561790e0ef7d5328cff69e577015b" ||
-  currentReceipt?.acceptance?.status !== "passed" ||
-  currentReceipt?.acceptance?.publicProductionEntrypoints !== true ||
-  currentReceipt?.acceptance?.sameThreadResume !== true ||
-  currentReceipt?.acceptance?.ordinaryChatSucceeded !== true ||
-  currentReceipt?.acceptance?.notionCliContract?.notionMutationPerformed !== false ||
-  currentReceipt?.privacy?.accountIdentifierIncluded !== false ||
-  currentReceipt?.privacy?.oauthCredentialsIncluded !== false ||
-  currentReceipt?.privacy?.environmentValuesIncluded !== false ||
-  currentReceipt?.privacy?.notionApiBodiesIncluded !== false ||
-  currentReceipt?.authorization?.explicitPublicNpmReleaseApproved !== true ||
-  currentReceipt?.authorization?.pypiPublicationApproved !== false ||
+  previousReceiptSha256 !== "dbe6f521e51c62a774afcb90f1969b66b422ad34e420b1d73f875b989597e662" ||
+  previousReceipt?.schemaVersion !== "ink-dream-real-business-acceptance/v2" ||
+  previousReceipt?.subject?.runtime !== "ink-claude-code-dream" ||
+  previousReceipt?.subject?.version !== "0.1.5" ||
+  previousReceipt?.subject?.acceptedTarget !== "darwin-arm64" ||
+  previousReceipt?.subject?.sourceTreeSha256 !== "94a2daad5c679d743e9c7b1185dc83d12525224e701887db5fd3c4261fecb8df" ||
+  previousReceipt?.subject?.acceptedExecutableSha256 !== "0ba860a59fe58c2f0c51a78ed954555dc5e561790e0ef7d5328cff69e577015b" ||
+  previousReceipt?.acceptance?.status !== "passed" ||
+  previousReceipt?.acceptance?.publicProductionEntrypoints !== true ||
+  previousReceipt?.acceptance?.sameThreadResume !== true ||
+  previousReceipt?.acceptance?.ordinaryChatSucceeded !== true ||
+  previousReceipt?.acceptance?.notionCliContract?.notionMutationPerformed !== false ||
+  previousReceipt?.privacy?.accountIdentifierIncluded !== false ||
+  previousReceipt?.privacy?.oauthCredentialsIncluded !== false ||
+  previousReceipt?.privacy?.environmentValuesIncluded !== false ||
+  previousReceipt?.privacy?.notionApiBodiesIncluded !== false ||
+  previousReceipt?.authorization?.explicitPublicNpmReleaseApproved !== true ||
+  previousReceipt?.authorization?.pypiPublicationApproved !== false ||
   !Array.isArray(cleanroom.requiredCapabilities) ||
   cleanroom.requiredCapabilities.length !== 14 ||
   !cleanroom.requiredCapabilities.includes("sandbox.notion-cli")
@@ -165,16 +171,18 @@ if (
 const cleanroomNpm = parsed.get("runtime/cleanroom-npm-policy.json");
 if (
   cleanroomNpm.schemaVersion !== "ink-cleanroom-npm-policy/v1" ||
-  cleanroomNpm.version !== "0.1.5" ||
+  cleanroomNpm.version !== "0.1.6" ||
   cleanroomNpm.license !== "MIT" ||
   cleanroomNpm.bunVersion !== "1.4.0" ||
   cleanroomNpm.entrypoint !== "src/cleanroom/cli.ts" ||
   cleanroomNpm.metaPackage?.name !== "@glide-the/ink-claude-code-dream" ||
+  cleanroomNpm.metaPackage?.sourceRoot !== "package" ||
+  cleanroomNpm.metaPackage?.entrypoint !== "cli.js" ||
   Object.keys(cleanroomNpm.platforms ?? {}).sort().join(",") !==
     "darwin-arm64,darwin-x64,linux-arm64,linux-x64" ||
   cleanroomNpm.materialPolicy?.sourceMapsAllowed !== false ||
   cleanroomNpm.publication?.packageGenerationAllowed !== true ||
-  cleanroomNpm.publication?.npmPublishAllowed !== true
+  cleanroomNpm.publication?.npmPublishAllowed !== false
 ) {
   throw new Error("clean-room npm identity/target/material contract drift");
 }
@@ -245,6 +253,7 @@ for (const path of paths) {
     throw new Error(`unexpected large file (possible vendor artifact): ${path}`);
   }
   if ([".js", ".mjs", ".ts", ".py", ".md"].includes(extname(path))) {
+    if (path.endsWith("/LICENSE.md")) continue;
     const head = (await readFile(resolve(root, path), "utf8")).split("\n").slice(0, 8).join("\n");
     if (!head.includes("[Input]") || !head.includes("[Output]") || !head.includes("[Pos]")) {
       throw new Error(`missing file contract header: ${path}`);

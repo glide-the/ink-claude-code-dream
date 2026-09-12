@@ -6,10 +6,17 @@
 <!-- [Sync] 2026-08-30: run the authorized Runtime 0.1.4 formal five-package qualification lane. -->
 <!-- [Sync] 2026-08-30: add 2.1.88 Linux seccomp asset and BPF-first passthrough evidence. -->
 <!-- [Sync] 2026-08-30: record the successful Runtime 0.1.4 publication and public-registry fresh install. -->
+<!-- [Sync] 2026-09-12: add Runtime 0.1.6 package-root candidate and Dream resolver verification without publication claims. -->
 
 # Test guide
 
 Runtime compatibility is an interface contract. A Dream business test is the third layer, not a substitute for exhaustive protocol comparison.
+
+## Runtime 0.1.6 package-root candidate
+
+`tests/cleanroom-npm-packaging.test.mjs` now separates the private root workspace from the checked `package/` selector source, requires no `exports`, checks both aliases against `cli.js`, builds/verifies five fixture-marked tarballs, fresh-installs the selector and host package, runs both commands, and invokes Dream's real resolver when the sibling checkout is supplied through `INK_DREAM_ROOT`/`INK_DREAM_PYTHON`. It also proves staged prepack rejects the closed candidate.
+
+The focused CLI tests require truthful `--help`, reference-compatible camel/kebab tool aliases, and fail-closed unknown options. Request tests no longer assert fictional model-family heuristics. Passing these tests is provider-free technical evidence only; `0.1.6` still lacks same-SHA real-business and release authorization evidence.
 
 ## Runtime 0.1.4 Notion sandbox evidence
 

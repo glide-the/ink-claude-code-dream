@@ -1,6 +1,7 @@
 // [Input] Consume the built release, provider-free test fixture, and local environment for timing/mismatch evidence.
 // [Output] Emit bounded JSON acceptance metrics without credentials, model calls, or user material.
 // [Pos] Repeatable technical acceptance harness; real Dream business/model acceptance remains out of scope.
+// [Sync] 2026-09-12: exercise the Runtime 0.1.6 candidate release directory.
 
 import { spawn } from "node:child_process";
 import { chmod, mkdtemp, mkdir } from "node:fs/promises";
@@ -9,7 +10,7 @@ import { join, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 
 const executable = resolve(
-  "dist/release/ink-claude-code-dream-0.1.5/bin/ink-claude-code-dream",
+  "dist/release/ink-claude-code-dream-0.1.6/bin/ink-claude-code-dream",
 );
 const fakeClaude = resolve("tests/fixtures/fake-claude.mjs");
 await chmod(fakeClaude, 0o755);
@@ -69,7 +70,7 @@ process.stdout.write(
     {
       ok: doctor.code === 0,
       node: process.versions.node,
-      runtime: "0.1.5",
+      runtime: "0.1.6",
       fakeCore: "2.1.241",
       coreLoadingReduction: 0,
       coldStartMs: {
