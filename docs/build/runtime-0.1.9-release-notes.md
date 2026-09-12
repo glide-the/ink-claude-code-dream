@@ -90,4 +90,10 @@ AutoDL 与远程生产环境未操作。详细 Dream 接入记录见
 资格 workflow 本身和真实构建输入仍受原四平台门禁约束；未修改版本/Runtime 模块，
 不重发 `0.1.9`、升级 SDK 或新增部署框架。
 
+首次落地的补丁还修改 qualification workflow 自身，所以该次 main 合并仍会触发
+资格任务；交付时仅取消本次精确 merge SHA 的冗余资格 run，常规 CI 保留并等待通过。
+已有 `0.1.9` 原始模块、构建变换和制品字节不变，复用上面的四平台资格，不启动
+自动发布。后续纯 docs/publisher-only 提交才由路径过滤自动跳过；真正构建输入或
+qualification 命令变更仍须重新资格，不使用这一例外绕过门禁。
+
 实施/交互设计见 [唯一源码与采用方案](../design/single-source-release-and-dream-adoption.md)。
