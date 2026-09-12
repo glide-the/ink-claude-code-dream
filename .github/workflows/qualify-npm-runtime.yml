@@ -3,6 +3,7 @@
 # [Pos] Existing qualification lane, automatically run on main before publish-npm.yml.
 # [Sync] 2026-09-13: remove fail-only placeholder and retired cleanroom receipt reuse.
 # [Sync] 2026-09-13: build before fixture-enabled tests; install Dream's pinned YAML import dependency.
+# [Sync] 2026-09-13: temporary hosted Ubuntu userns preparation; keep real sandbox tests enabled.
 
 name: Qualify npm Runtime
 on:
@@ -53,6 +54,15 @@ jobs:
           if [ "$RUNNER_OS" = Linux ]; then
             sudo apt-get update -qq
             sudo apt-get install -y bubblewrap socat
+            # Disposable trusted-main CI host only. Ubuntu's default AppArmor
+            # userns capability restriction prevents even the official CLI's
+            # bwrap from configuring loopback. Restore the value at job end;
+            # no production policy or Runtime sandbox setting is changed.
+            if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+              sysctl -n kernel.apparmor_restrict_unprivileged_userns > "$RUNNER_TEMP/ink-ci-userns-original"
+              sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+            fi
+            bwrap --unshare-user --unshare-net --ro-bind / / --dev /dev --proc /proc /bin/true
           fi
           git clone --filter=blob:none --no-checkout https://github.com/glide-the/claude-code-sourcemap.git "$RUNNER_TEMP/recovered-dependencies"
           git -C "$RUNNER_TEMP/recovered-dependencies" sparse-checkout set --no-cone '/restored-src/node_modules/' '/restored-src/vendor/' '/package/vendor/' '/package/LICENSE.md'
@@ -135,6 +145,15 @@ jobs:
           path: dist/core-local/qualification/*.json
           if-no-files-found: ignore
           retention-days: 7
+      - name: Restore temporary hosted Linux namespace policy
+        if: always() && runner.os == 'Linux'
+        shell: bash
+        run: |
+          if [ -f "$RUNNER_TEMP/ink-ci-userns-original" ]; then
+            original=$(<"$RUNNER_TEMP/ink-ci-userns-original")
+            case "$original" in 0|1) ;; *) exit 1 ;; esac
+            sudo sysctl -w "kernel.apparmor_restrict_unprivileged_userns=$original"
+          fi
   aggregate-release:
     needs: qualify-platform
     runs-on: ubuntu-24.04

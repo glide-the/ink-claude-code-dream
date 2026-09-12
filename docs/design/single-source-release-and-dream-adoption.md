@@ -9,7 +9,7 @@
 
 Runtime 已将原始恢复模块作为实际 `src` 实现。重复保存的
 `restored-src/src` 不再承担实现职责，仍存在双树校验和文档引用。
-现有发布 workflow 是失败占位步骤，不是可执行发布链路；npm 当前最新
+实施前基线（2026-09-13 核对）：发布 workflow 是失败占位步骤，npm 最新
 版本为 0.1.4。本机 Dream 的源码 pin 不等于运行进程已加载新版本。
 
 ## 目标与边界
@@ -25,8 +25,10 @@ Runtime 已将原始恢复模块作为实际 `src` 实现。重复保存的
 源码、构建、制品、发布、安装和运行是六个独立状态，只有各自证据满足才能
 推进。新版本不得覆盖 npm 已有版本；历史不同实现的收据不授权当前制品。
 使用现有四个平台包和选择器拓扑，平台先发布，选择器最后发布。
-构建依赖与平台资源可以来自明确校验的恢复仓库，但源码始终来自本仓库 `src`。
+构建依赖与平台资源可以来自明确校验的恢复仓库，但源码始终来自 Runtime 仓库根目录 `src`，删除的也是同仓库根目录 `restored-src`。
 CI 必须执行真实构建和对应制品验证，不能禁用质量门或伪造通过收据。
+Ubuntu hosted CI 的 userns 宿主前提只在一次性 trusted-main job 临时准备并恢复，
+先执行真实 bwrap preflight；不改变 Runtime sandbox 或本机/生产安全配置。
 
 ## 实施与交互
 
@@ -61,21 +63,27 @@ server-owned 模型 max output 投影，必要兼容应位于既有 source-bound
 
 兼容方案复用原 compiler：`compat/dream-runtime` 的小型策略函数只验证显式
 workspace/environment；六个原始文件先校验完整 sha256，再执行唯一 marker
-内存变换。Bash 使用真实 Dream 的 `NOTION_API_TOKEN` 和
-`NOTION_WORKERS_CONFIG_FILE`，泛用子进程、命令 hook 和 final stdio MCP
-环境禁止继承这四个 Notion 字段。环境的显式 undefined 也阻止 execa 默认
+内存变换。生产 Bash 消费 Dream 已持有的 server-owned `NOTION_HOME`、
+`NOTION_API_TOKEN`、`NOTION_KEYRING`、`NOTION_WORKERS_CONFIG_FILE`；泛用
+子进程、命令 hook 和 final stdio MCP 禁止继承这四个字段。测试只使用 fake
+token/config 与本地 fake provider。环境的显式 undefined 也阻止 execa 默认
 继承重新注入；native ntn/PATH shadow、home 权限/路径检查 fail closed。
 保留原 Sandbox deny 规则，不开放整个 `/tmp` 或用户目录。
 
 显式 max-output/context 和五档全局 effort 只消费既有 server-owned carrier，
 不通过模型 ID 猜测；没有 carrier 时保留 upstream 行为。已有 SDK/MCP
 进程 harness 增加 candidate 模式，验证 native Bash、hook/stdin MCP 隔离和
-真实 provider 请求参数；full qualification 和 package gate 必须绑定该新收据。
+本地 fake provider 的最终请求参数；full qualification 和 package gate 必须绑定该新收据。
 这不是新增 UI/Runtime/Notion CLI 或一般化的策略框架，符合最小目标。
 
-- `src` 原始库存校验通过；`restored-src` 不存在；构建使用唯一源码。
+以下是验收条件，不表示各阶段已完成；完成状态以实际阶段回执为准。
+
+- Runtime `src` 原始库存校验通过；`restored-src` 不存在；构建使用唯一源码。
 - 相关测试、文档路径及 diff 检查通过，历史收据未被改写。
 - GitHub CI 对当前制品成功发布，四个平台包与选择器公开版本一致。
-- 本机安装身份与公开制品一致，Dream resolver 通过且进程使用新版本。
+- 本机安装身份与公开制品一致，关联重启后 backend PID/启动时间与该进程的
+  resolver 身份，核对 Runtime path/package version/manifest 摘要；对同一安装
+  路径执行无真实凭据的既有 Runtime/MCP smoke。health 不替代身份，启动选择
+  不冒充一次真实用户/model turn。
 - 回退只使用上一已验证安装和提交，不覆盖发布版本、不重绑旧收据。
   删除的重复源码可从 Git 提交 `a40037a` 恢复；原始参考仓库保持不动。
