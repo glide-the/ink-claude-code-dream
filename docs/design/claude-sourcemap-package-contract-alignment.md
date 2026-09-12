@@ -1,7 +1,7 @@
 <!-- [Input] Original 2.1.88 src subtree, actual compiler resolution, selector and Dream contracts. -->
 <!-- [Output] Bind identical directories/modules to the actual implementation and preserve source provenance. -->
 <!-- [Pos] Canonical decision for the original-module Runtime unification. -->
-<!-- [Sync] 2026-09-13: supersede 0.1.7's side snapshot with canonical src and remove the parallel implementation. -->
+<!-- [Sync] 2026-09-13: preserve canonical source identity and synchronize completed 0.1.9 release/Dream metadata. -->
 
 # Claude sourcemap package contract alignment
 
@@ -75,8 +75,8 @@ The private mixed-source root package orchestrates builds and has no bin/publish
 `ink-claude-code-dream` aliases, and four exact native optional package versions.
 The selector's MIT license does not relicense original modules.
 
-Runtime root, selector and target expectations are 0.1.9. Dream adoption remains pending
-publication/installation; its current backend/frontend metadata is 0.1.2/0.0.2;
+Runtime root, selector and targets are publicly released at 0.1.9; local installation
+and Dream startup adoption were verified. Dream backend/frontend metadata is 0.1.3/0.0.3;
 SDK stays 0.2.145, source provenance 2.1.88, CLI compatibility 2.1.241, API schema 2.0.0.
 npm package-root and local nested-bin layout checks remain distinct distribution
 contracts for the same implementation, not permission for a second source architecture.
@@ -92,6 +92,11 @@ integration are technically supported together; redistribution/publication requi
 operator authority, recorded without MIT relicensing. Darwin ARM64 base local-core
 qualification passed; all four native hosts and npm package capabilities remain mandatory. The old MIT Runtime 0.1.4 release and
 immutable 0.1.5 acceptance cannot qualify these bytes.
+
+The four-host qualification and exact public five-package verification have also passed
+for source `820be726`; see the current release notes. This does not waive those gates for
+future artifacts. Real model/Notion E2E was subsequently confirmed by the operator,
+separately from automated fixture evidence; Docker image build remains unverified.
 
 CI no longer bans restored source or builds a removed implementation. Qualification and publishing workflows now execute the real same-SHA source-derived
 release chain. No database/API or Dream ZIP-policy change is planned. See the current

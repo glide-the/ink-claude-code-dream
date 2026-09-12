@@ -1,7 +1,7 @@
 <!-- [Input] Original module recovery, duplicate source directory, GitHub npm publishing and local Dream integration. -->
 <!-- [Output] Minimal implementation and interaction plan with independently verifiable release states. -->
 <!-- [Pos] Current source-cleanup/release/adoption design and acceptance checklist. -->
-<!-- [Sync] 2026-09-13: one src implementation; publish through existing CI; adopt in local Dream. -->
+<!-- [Sync] 2026-09-13: retain completed immutable release; scope post-release visibility/documentation fixes without redesign. -->
 
 # 唯一源码、CI 发布与本机 Dream 更新
 
@@ -87,3 +87,27 @@ token/config 与本地 fake provider。环境的显式 undefined 也阻止 execa
   不冒充一次真实用户/model turn。
 - 回退只使用上一已验证安装和提交，不覆盖发布版本、不重绑旧收据。
   删除的重复源码可从 Git 提交 `a40037a` 恢复；原始参考仓库保持不动。
+
+## 发布后收尾：问题、方案与目标审查
+
+`0.1.9` 四平台资格、公开五包、正常 PATH 安装和本机启动采用均已完成，
+结果见 [当前发布说明](../build/runtime-0.1.9-release-notes.md)。用户已另行确认
+真实模型对话/Notion E2E；任务启动的后端随后按要求停止，不重新启动。
+README、folder contract 和发布说明的 pending/旧项目版本必须同步实际状态，
+保留历史基线、来源 SHA 和原始业务收据，不改写已发布制品来源。
+
+原发布工具将上传后的 E404 可见性延迟误报为摘要差异，30 秒窗口不足以覆盖
+本次 2–4 分钟传播。复用现有 npm transport：优先在线查询，每 5 秒重查真实
+E404，包含请求耗时的总等待上限为 5 分钟。上限是可调整的 CI 技术等待预算，
+不是业务或发布权限；超时报尚未可见，只能重试同一 qualified 归档。
+不同摘要立即失败；非 E404、无效元数据或失败上传也立即失败，不能盲目再上传。
+只输出包版本/退出码/结构化错误码，不记录 npm 原始正文或认证值。
+
+为验证控制流程，只在测试中注入 transport/clock；生产 CLI 继续强制 CI-only、
+真实五包 verifier、平台先于 selector、不可变完整摘要和现有认证策略。
+普通 CI 增加离线回归；docs/folder/publisher-only main 提交不生成新 Runtime
+制品，真正的 Runtime/构建输入及 qualification workflow 改动仍触发四平台资格。
+
+审查结论：问题只涉及发布工具和状态文档，不改 Runtime/SDK 接口、原始模块、
+版本、数据库或服务。无需新队列、状态机、部署器、UI、重发 `0.1.9` 或重跑用户
+真实业务流程；重点验收延迟成功、截止时间、摘要差异立即失败、认证脱敏和路径过滤。

@@ -1,7 +1,7 @@
 <!-- [Input] Actual original Runtime bundle, src/reference inventories and installed public SDK/fixture interpreters. -->
 <!-- [Output] Current source, build and local protocol validation, including skipped/remaining lanes. -->
 <!-- [Pos] Test guide for the unified original-module Runtime, not real business acceptance. -->
-<!-- [Sync] 2026-09-13: retire removed implementation's tests and reuse original-source protocol harnesses. -->
+<!-- [Sync] 2026-09-13: add offline publisher verification and separate operator acceptance from technical receipts. -->
 
 # Test guide
 
@@ -70,3 +70,18 @@ four-host native qualification, public registry installation or publication auth
 Current results are in [0.1.9 notes](../build/runtime-0.1.9-release-notes.md).
 Old immutable acceptance receipts cannot qualify current bytes. Publication and local
 adoption follow the current release design; no API/database/ZIP changes are planned.
+
+## Offline publication control
+
+```sh
+node --test tests/publish-qualified-npm.test.mjs
+```
+
+These call the production publisher with injected verifier/npm transport and a virtual clock.
+They test five-archive gating, platform-before-selector order, identical-byte retry, 190-second
+visibility delay, five-minute deadline including query duration, mismatch/error fail-closed,
+and credential-safe token/OIDC handling. Synthetic archive bodies are not Runtime
+qualification and no npm upload or network request is made. Ordinary CI runs these tests;
+docs/folder/publisher-only main commits do not regenerate a published Runtime version.
+The operator separately confirmed real model and real Notion E2E for `0.1.9`; this does not
+change automated test scope. Docker image build remains unverified.
