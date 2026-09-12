@@ -1,7 +1,7 @@
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
 <!-- [Output] Explain the one Runtime implementation, actual build, verification and local integration boundaries. -->
 <!-- [Pos] Operator entry point for ink-claude-code-dream. -->
-<!-- [Sync] 2026-09-13: unify original directories and modules as the actual implementation; retire the parallel cleanroom path. -->
+<!-- [Sync] 2026-09-13: record completed 0.1.9 publication/local adoption and bounded registry visibility verification. -->
 
 # ink-claude-code-dream
 
@@ -91,14 +91,18 @@ The private root package is the build workspace, not the npm selector.
 repository-authored; its MIT license does not relicense the original Runtime modules.
 
 Runtime project, selector and native expectations are `0.1.9`.
-Dream adoption is pending successful publication and verified installation; current Dream metadata is
-backend `0.1.2` / frontend `0.0.2`. Python SDK stays `0.2.145`, source provenance
+All five npm packages are published, and the public archives match the qualified CI bytes.
+Local Dream installation and startup adoption were verified; Dream project metadata is
+backend `0.1.3` / frontend `0.0.3`. Python SDK stays `0.2.145`, source provenance
 `2.1.88`, and Dream-facing CLI compatibility `2.1.241`; API schema stays `2.0.0`.
 
-Native four-target packaging remains a qualification requirement, not a result inherited
-from the removed implementation. Local packaging/installation still requires the current
-digest-bound production gate. Older `0.1.4` public releases and `0.1.5` acceptance are
-historical evidence only.
+The four native-host qualifications passed for release source `820be726`.
+Local packaging/installation still requires its digest-bound production gate. The operator
+subsequently confirmed real model conversation and real Notion end-to-end acceptance;
+this is user-reported acceptance, not an automated test receipt. The task-started local
+backend was stopped at the operator's request; startup evidence does not imply it remains running.
+Docker image build was not verified. Older `0.1.4` public releases and `0.1.5` acceptance
+are historical evidence only. See [release evidence](docs/build/runtime-0.1.9-release-notes.md).
 
 ## Marketplace and publication boundary
 
@@ -112,6 +116,10 @@ is technically supported; public redistribution/publication is a separate author
 and is recorded in runtime/source-authorization.json based on the operator confirmation. No credentials, user data, generated artifacts or source maps are
 added to packages or Git by this correction. CI checks source consistency and static
 contracts; main qualification now builds on four native hosts and automatically feeds the exact artifacts to publishing.
+Documentation/publisher-only changes use ordinary CI without generating another same-version
+artifact set. Publication checks prefer online registry metadata, wait at most five minutes
+per accepted upload for E404 propagation, and stop immediately on different integrity or
+other lookup errors. A visibility timeout never authorizes a fresh build or version overwrite.
 
 Release and local adoption follow the [current design](docs/design/single-source-release-and-dream-adoption.md).
 No API, database or ZIP-policy change is planned. See [build](docs/build/README.md),

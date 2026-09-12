@@ -1,7 +1,7 @@
 <!-- [Input] Canonical original src modules, locked tooling, recovered dependencies/assets and current policy. -->
 <!-- [Output] Actual original-module build and verification commands with explicit release boundaries. -->
 <!-- [Pos] Current build guide; previous envelope/cleanroom procedures are historical only. -->
-<!-- [Sync] 2026-09-13: compile unique original src at Runtime 0.1.9 and retain Dream contract deltas. -->
+<!-- [Sync] 2026-09-13: retain qualified source/build gates and link completed four-host public release evidence. -->
 
 # Build and package
 
@@ -53,8 +53,10 @@ digests. It does not change archive/ZIP policy.
 Production eligibility is computed from fresh digest-bound receipts, not hardcoded.
 The current Darwin ARM64 base local-core package is qualified; installation still requires
 its exact manifest. npm capability qualification and all four native hosts remain separate.
-Four native targets plus package-root selector are the source-derived CI qualification
-plan in `runtime/npm-release-policy.json`, not an already-passing five-native fixture lane.
+Four native targets plus package-root selector passed the source-derived CI qualification
+for release `0.1.9` at source `820be726`; the public five archives match those CI bytes.
+This is real native-host evidence, not the retired five-native fixture lane.
+Docs/publisher-only edits run ordinary CI without rebuilding or republishing that version.
 
 Original source copyright is retained; root is private UNLICENSED and public release
 authority is recorded from the operator confirmation. Old cleanroom MIT receipts cannot

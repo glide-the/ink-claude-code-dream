@@ -4,11 +4,18 @@
 # [Sync] 2026-09-13: remove fail-only placeholder and retired cleanroom receipt reuse.
 # [Sync] 2026-09-13: build before fixture-enabled tests; install Dream's pinned YAML import dependency.
 # [Sync] 2026-09-13: temporary hosted Ubuntu userns preparation; keep real sandbox tests enabled.
+# [Sync] 2026-09-13: docs/publisher-only changes use ordinary CI, not another same-version artifact set.
 
 name: Qualify npm Runtime
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - README.md
+      - docs/**
+      - '**/.folder.md'
+      - scripts/publish-qualified-npm.mjs
+      - tests/publish-qualified-npm.test.mjs
   workflow_dispatch:
 permissions:
   contents: read
