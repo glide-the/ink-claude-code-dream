@@ -1,7 +1,7 @@
 // [Input] Production publisher with injected npm transport/clock and disposable five-archive fixtures.
 // [Output] Offline evidence for exact-byte retries, propagation deadlines, ordering and credential-safe failure.
 // [Pos] Provider-free publication-tool regression; never contacts npm or qualifies synthetic Runtime archives.
-// [Sync] 2026-09-13: cover delayed visibility without republishing or weakening immutable integrity checks.
+// [Sync] 2026-09-13: cover delayed/fractional-clock visibility without republishing or weakening immutable integrity checks.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -72,6 +72,7 @@ async function fixture(t, behavior = () => undefined, env = {}) {
         assert.equal(calls[0].op, "verify");
         assert.ok(args.includes("--registry=https://registry.npmjs.org"));
         if (op === "view") {
+          assert.ok(Number.isInteger(config.timeout) && config.timeout > 0 && config.timeout <= 180000);
           assert.ok(args.includes("--prefer-online"));
           assert.ok(args.includes("--fetch-retries=0"));
           assert.ok(args.includes(`--fetch-timeout=${config.timeout}`));
@@ -151,6 +152,19 @@ test("persistent E404 times out as visibility, not integrity failure, and blocks
   assert.equal(f.elapsed(), 300000);
   assert.equal(f.calls.filter(call => call.op === "publish").length, 1);
   assert.equal(f.logs.length, 0);
+});
+
+test("fractional monotonic clock values still produce valid integer npm/subprocess timeouts", async t => {
+  const f = await fixture(t, ({ op, name, elapsed, advance }) => {
+    if (op === "view" && name === names[0] && elapsed < 190000) {
+      advance(0.25);
+      return missing;
+    }
+  });
+  await publishQualifiedNpm(f.directory, f.options);
+  assert.ok(f.elapsed() >= 190000 && f.elapsed() < 195000);
+  assert.equal(f.calls.filter(call => call.op === "publish").length, 1);
+  assert.equal(f.logs.length, 5);
 });
 
 test("registry-query duration counts toward the five-minute visibility deadline", async t => {
