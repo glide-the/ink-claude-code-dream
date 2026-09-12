@@ -1,5 +1,11 @@
 MIT License
 
+Scope: this license applies to repository-authored build, compatibility, test,
+documentation and selector code only. The recovered original src modules are
+not relicensed by this file; their original copyright notice is retained in
+runtime/source-LICENSE.md. Publication authority is recorded separately in
+runtime/source-authorization.json.
+
 Copyright (c) 2026 glide-the
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

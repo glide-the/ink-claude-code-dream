@@ -47,7 +47,8 @@ interface PatchManifest {
   };
   virtualModuleIds: Record<string, string>;
   sourceTarget: {
-    sourceRootEnvironment: string;
+    implementationRoot: string;
+    implementationSource: string;
     commit: string;
     packageVersion: string;
     classification: string;
@@ -60,8 +61,8 @@ interface PatchManifest {
 const moduleRoot = resolve(import.meta.dir, "..");
 const manifestText = await readFile(resolve(moduleRoot, "patch-manifest.json"), "utf8");
 const manifest = JSON.parse(manifestText) as PatchManifest;
-const authorizedSourceRoot = process.env.INK_AUTHORIZED_CORE_SOURCE_ROOT;
-const externalEvidenceTest = authorizedSourceRoot ? test : test.skip;
+const authorizedSourceRoot = resolve(moduleRoot, "../..");
+const externalEvidenceTest = test;
 
 describe("patch manifest", () => {
   test("is wired but can only be applied by a build artifact receipt", () => {
@@ -78,13 +79,14 @@ describe("patch manifest", () => {
     }));
     expect(manifest.virtualModuleIds).toEqual(MCP_COMPATIBILITY_VIRTUAL_MODULE_IDS);
     expect(manifestText).not.toMatch(/"applied"\s*:\s*true/);
-    expect(manifest.sourceTarget.classification).toBe("read-only-restored-target");
+    expect(manifest.sourceTarget.classification).toBe("canonical-original-module-target");
   });
 
   test("binds the reviewed restored source commit and package version", () => {
     expect(manifest.sourceTarget.commit).toBe("a8a678cb6244e6770e1e421767ff0987a1d95549");
     expect(manifest.sourceTarget.packageVersion).toBe("2.1.88");
-    expect(manifest.sourceTarget.sourceRootEnvironment).toBe("INK_AUTHORIZED_CORE_SOURCE_ROOT");
+    expect(manifest.sourceTarget.implementationRoot).toBe("src");
+    expect(manifest.sourceTarget.implementationSource).toBe("repository");
   });
 
   test("declares an exact headless reachability boundary", () => {

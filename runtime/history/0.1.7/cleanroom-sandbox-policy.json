@@ -1,0 +1,46 @@
+{
+  "historicalOnly": true,
+  "supersededBy": "runtime/source-layout.json",
+  "schema": "ink-cleanroom-sandbox-policy/v1",
+  "adapter": "@anthropic-ai/sandbox-runtime",
+  "version": "0.0.73",
+  "license": "Apache-2.0",
+  "platforms": ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"],
+  "osIsolation": { "darwin": "sandbox-exec", "linux": "bubblewrap" },
+  "filesystem": {
+    "writeRoots": ["workspace", "workspace/.claude-tmp"],
+    "sensitiveReadRootDenied": true,
+    "tmpdirContract": "exact-workspace-child-0700",
+    "notionHomeContract": "exact-canonical-workspace/.notion-home-real-0700",
+    "notionExecutableReadCarveOut": "canonical-owner-or-root-native-ntn-file-only"
+  },
+  "network": {
+    "default": "deny",
+    "allowedDomains": ["api.notion.com:443", "developers.notion.com:443", "ntn.dev:443"],
+    "conditionalOn": "validated-notion-home-and-native-ntn",
+    "strictAllowlist": true,
+    "localBinding": false,
+    "unixSockets": []
+  },
+  "process": {
+    "maxTimeoutMs": 120000,
+    "maxCombinedOutputBytes": 1048576,
+    "terminateProcessGroup": true,
+    "environmentAllowlist": ["LANG", "LC_ALL", "LC_CTYPE", "PATH", "TERM", "TMPDIR"],
+    "conditionalBashEnvironment": ["NOTION_API_TOKEN", "NOTION_HOME", "NOTION_KEYRING", "NOTION_WORKERS_CONFIG_FILE"],
+    "notionKeyring": "fixed-file-mode-0",
+    "notionToken": "optional-nonempty-single-line",
+    "notionWorkersConfig": "optional-existing-canonical-workspace/.notion-home/workers.json",
+    "otherSubprocesses": "NOTION_* projection removed from stdio MCP and provider helper children",
+    "sessionCache": false
+  },
+  "notionCli": {
+    "bundled": false,
+    "observedVersion": "0.15.1",
+    "observedDarwinArm64Format": "native-mach-o-no-interpreter",
+    "runtimeFormats": ["mach-o", "elf"],
+    "versionProbeAtRuntime": false,
+    "readOnlyHostUse": ["doctor-update-check", "public-api-spec", "public-api-identity"]
+  },
+  "fallback": "fail-closed"
+}

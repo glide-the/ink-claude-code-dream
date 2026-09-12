@@ -5,6 +5,11 @@
 
 # Claude Messages 请求参数恢复设计
 
+> Historical / retired implementation. Runtime 0.1.8 now builds canonical original
+> src modules, identical to restored-src/src, with no parallel cleanroom implementation.
+> Procedures, code paths and release/business receipts below describe the previous code,
+> not current qualification. See [current alignment](claude-sourcemap-package-contract-alignment.md).
+
 ## 1. 背景与问题
 
 当前 clean-room CLI 的 `protocol.ts` 在每次 Messages 请求处直接拼装 body。它始终保留 `stream: true`，但存在两类行为缺口：

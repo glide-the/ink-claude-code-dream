@@ -1,0 +1,92 @@
+{
+  "historicalOnly": true,
+  "supersededBy": "runtime/source-layout.json",
+  "schemaVersion": "ink-cleanroom-runtime-policy/v1",
+  "artifact": {
+    "name": "ink-claude-code-dream",
+    "version": "0.1.7",
+    "license": "MIT",
+    "entrypoint": "cli.js",
+    "supportedTargets": [
+      "darwin-arm64",
+      "darwin-x64",
+      "linux-arm64",
+      "linux-x64"
+    ]
+  },
+  "source": {
+    "ownership": "repository-authored-clean-room",
+    "root": "src/cleanroom",
+    "externalImplementationInputAllowed": false,
+    "restoredSourceAllowed": false,
+    "derivedAnthropicRuntimeAllowed": false,
+    "repositoryResearchSnapshot": "restored-src/source-snapshot.json",
+    "repositoryResearchSnapshotAllowed": true,
+    "repositoryResearchSnapshotIsBuildInput": false
+  },
+  "requiredCapabilities": [
+    "extensions.plugins",
+    "lifecycle.cancel",
+    "mcp.http",
+    "mcp.management.identity",
+    "mcp.oauth",
+    "mcp.stdio",
+    "protocol.control.bidirectional",
+    "protocol.streaming",
+    "sandbox",
+    "sandbox.notion-cli",
+    "session.resume",
+    "tmpdir.thread-local",
+    "transcript.jsonl",
+    "workspace.cwd"
+  ],
+  "publicationGate": {
+    "productionEligible": false,
+    "publicationAllowed": false,
+    "redistributionAllowed": false,
+    "reason": "Runtime 0.1.7 adds the checked research-source snapshot; the 0.1.5 digest-bound acceptance cannot authorize the new repository tree or generated package set.",
+    "businessAcceptance": {
+      "required": true,
+      "passed": false,
+      "receiptPath": null,
+      "receiptSha256": null,
+      "boundary": "Dream, Admin, Gateway, and the normal local PostgreSQL through public production entrypoints"
+    },
+    "targetHostQualification": {
+      "darwin-arm64": false,
+      "darwin-x64": false,
+      "linux-arm64": false,
+      "linux-x64": false
+    },
+    "targetQualificationBasis": {
+      "darwin-arm64": "pending-new-source-tree-qualification",
+      "darwin-x64": "pending-new-source-tree-qualification",
+      "linux-arm64": "pending-new-source-tree-qualification",
+      "linux-x64": "pending-new-source-tree-qualification"
+    },
+    "requiredEvidence": [
+      "repository-source-inventory",
+      "dependency-license-report",
+      "zero-restored-source-provenance",
+      "sdk-process-contract",
+      "mcp-stdio-http-oauth-resources-contract",
+      "workspace-sandbox-resume-contract",
+      "four-target-native-qualification",
+      "reproducible-five-package-verification",
+      "dream-real-business-acceptance",
+      "explicit-public-npm-release-authorization"
+    ],
+    "postPublicationEvidence": [
+      "registry-reinstall-smoke"
+    ]
+  },
+  "prohibitedArtifactPatterns": [
+    "*.map",
+    "**/*.map",
+    "**/transcript/**",
+    "**/.credentials.json",
+    "**/*oauth*token*",
+    "**/restored-src/**",
+    "**/core-package-local/**"
+  ]
+}

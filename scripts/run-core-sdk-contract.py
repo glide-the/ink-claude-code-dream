@@ -15,6 +15,7 @@ import asyncio
 import json
 import os
 import shlex
+import subprocess
 import tempfile
 import time
 from collections.abc import Iterator
@@ -418,12 +419,12 @@ async def _collect(client: ClaudeSDKClient) -> list[Any]:
     return [message async for message in client.receive_response()]
 
 
-async def run_contract(cli: Path) -> dict[str, Any]:
+async def run_contract(cli: Path, dream_compat: bool = False) -> dict[str, Any]:
     if not cli.is_absolute() or not cli.is_file():
         raise ValueError("--cli must be an existing absolute file")
 
     with tempfile.TemporaryDirectory(prefix="ink-core-sdk-contract-") as root_text:
-        root = Path(root_text)
+        root = Path(root_text).resolve()
         workspace = root / "workspace"
         config_dir = root / ".claude-home"
         tmpdir = workspace / ".claude-tmp"
@@ -470,6 +471,34 @@ async def run_contract(cli: Path) -> dict[str, Any]:
             "else printf 'credential-denied\\n' > sandbox-boundary.txt; fi; "
             "cat sdk-contract.txt"
         )
+        dream_environment: dict[str, str] = {}
+        command_hooks: dict[str, Any] = {}
+        if dream_compat:
+            native_bin = root / "native-bin"
+            native_bin.mkdir()
+            native_ntn = native_bin / "ntn"
+            subprocess.run(
+                ["cc", str(Path(__file__).resolve().parents[1] / "tests/fixtures/notion_env_native.c"), "-o", str(native_ntn)],
+                check=True, capture_output=True, text=True, timeout=30,
+            )
+            native_ntn.chmod(0o755)
+            notion_home = workspace / ".notion-home"
+            notion_home.mkdir(mode=0o700)
+            workers = notion_home / "workers.json"
+            workers.write_text("{}\n")
+            workers.chmod(0o600)
+            dream_environment = {
+                "PATH": str(native_bin) + os.pathsep + os.environ.get("PATH", ""),
+                "NOTION_HOME": str(notion_home),
+                "NOTION_API_TOKEN": "notion-process-fixture-not-a-secret",
+                "NOTION_KEYRING": "1",
+                "NOTION_WORKERS_CONFIG_FILE": str(workers),
+                "INK_CLAUDE_CODE_MODEL_MAX_OUTPUT_TOKENS": "1000",
+                "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "128000",
+                "CLAUDE_CODE_EFFORT_LEVEL": "xhigh",
+            }
+            bash_command = "ntn > notion-bash.json; " + bash_command
+            command_hooks = {"hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "ntn > " + shlex.quote(str(workspace / "notion-hook.json"))}]}]}}
         settings_path = workspace / ".claude" / "settings.json"
         reference_allows_unix_sockets = (
             os.environ.get("INK_CORE_REFERENCE_ALLOW_ALL_UNIX_SOCKETS") == "1"
@@ -477,6 +506,7 @@ async def run_contract(cli: Path) -> dict[str, Any]:
         settings_path.write_text(
             json.dumps(
                 {
+                    **command_hooks,
                     "sandbox": {
                         "enabled": True,
                         "failIfUnavailable": True,
@@ -534,7 +564,7 @@ async def run_contract(cli: Path) -> dict[str, Any]:
             common = {
                 "cli_path": str(cli),
                 "cwd": str(workspace),
-                "env": _safe_env(base_url, config_dir, tmpdir),
+                "env": {**_safe_env(base_url, config_dir, tmpdir), **dream_environment},
                 "model": "claude-contract-local",
                 "can_use_tool": allow_tool,
                 "permission_mode": "default",
@@ -681,7 +711,20 @@ async def run_contract(cli: Path) -> dict[str, Any]:
             interrupt_results = [
                 message for message in interrupted_messages if isinstance(message, ResultMessage)
             ]
+            dream_facts = None
+            if dream_compat:
+                bash_facts = json.loads((workspace / "notion-bash.json").read_text())
+                hook_facts = json.loads((workspace / "notion-hook.json").read_text())
+                if bash_facts != {"home": True, "token": True, "workers": True, "keyringDisabled": True}:
+                    raise AssertionError(f"Notion native Bash projection failed: {bash_facts}")
+                if any(hook_facts.values()):
+                    raise AssertionError("Notion credentials reached a generic command hook")
+                request = provider.requests[0]
+                if request.get("max_tokens") != 1000 or request.get("output_config", {}).get("effort") != "xhigh":
+                    raise AssertionError("Explicit Dream max-output/effort did not reach the provider request")
+                dream_facts = {"notionNativeBash": True, "notionHookExcluded": True, "explicitMaxOutput": 1000, "explicitEffort": "xhigh", "modelId": "claude-contract-local", "contextCarrier": 128000}
             return {
+                **({"dreamCompatibility": dream_facts} if dream_facts is not None else {}),
                 "contractVersion": 1,
                 "cliVersion": _cli_version(cli),
                 "initialize": {
@@ -757,8 +800,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--cli", type=Path, required=True)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--dream-compat", action="store_true")
     args = parser.parse_args()
-    receipt = asyncio.run(run_contract(args.cli.resolve()))
+    receipt = asyncio.run(run_contract(args.cli.resolve(), args.dream_compat))
     encoded = json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(encoded)

@@ -15,8 +15,9 @@ import {
   resolveMcpCompatibilityVirtualModule,
 } from "../src/patch-spec.ts";
 
-const authorizedSourceRoot = process.env.INK_AUTHORIZED_CORE_SOURCE_ROOT;
-const externalSourceTest = authorizedSourceRoot ? test : test.skip;
+// Read canonical implementation modules, never an environment-selected second src.
+const authorizedSourceRoot = resolve(import.meta.dir, "../../..");
+const externalSourceTest = test;
 
 describe("executable source transformer", () => {
   externalSourceTest("transforms every reviewed target and parses the resulting TS/TSX", async () => {

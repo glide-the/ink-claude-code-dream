@@ -1,0 +1,48 @@
+{
+  "historicalOnly": true,
+  "supersededBy": "runtime/source-layout.json",
+  "schemaVersion": "ink-entrypoint-policy/v1",
+  "wrapper": {
+    "name": "ink-claude-code-dream",
+    "entrypoint": "bin/ink-claude-code-dream",
+    "productClaim": "independent-supervisor-not-Claude-Code",
+    "protocolHandling": "opaque",
+    "shell": false
+  },
+  "child": {
+    "product": "Claude Code",
+    "version": "2.1.241",
+    "mustBeOfficialPublishedArtifact": true,
+    "mustBeUnmodified": true,
+    "argvPolicy": "validate-wrapper-contract-then-forward-exactly",
+    "stdioPolicy": "inherit-exactly",
+    "cwdPolicy": "inherit-exactly",
+    "authenticationPolicy": "preserve-all-built-in-methods-and-auth-environment",
+    "forbidden": [
+      "bundle-child",
+      "patch-child",
+      "rewrite-child-protocol",
+      "rewrite-child-version-output",
+      "disable-authentication-method",
+      "brand-wrapper-as-Claude-Code"
+    ]
+  },
+  "managementWithoutThreadTmpdir": [
+    "--help",
+    "--version",
+    "-h",
+    "-v",
+    "mcp *",
+    "auth *",
+    "setup-token"
+  ],
+  "bare": {
+    "default": "disabled",
+    "callerFlag": "--bare",
+    "optInEnvironment": "INK_CLAUDE_BARE_PROFILE",
+    "acceptedProfile": "dream-explicit-v1",
+    "automaticInjection": false,
+    "authenticationMutation": false,
+    "failureMode": "reject-before-child-start-when-explicit-input-carriers-are-missing"
+  }
+}

@@ -37,14 +37,13 @@ artifact builder 可把逐路径 transformer `appliedIds` 与 canonical reachabl
 bun test tests
 ```
 
-默认测试完全自包含，不假设本机存在 sibling checkout。若要复核外部只读恢复源码，必须显式授权其绝对根目录：
+默认测试直接读取本仓库 canonical src 原始模块，不假设存在 sibling checkout 或环境选择的另一套 src。52 项测试包含来源哈希、精确断言和实际内存变换：
 
 ```bash
-INK_AUTHORIZED_CORE_SOURCE_ROOT=/absolute/path/to/restored-src \
-  bun test tests
+bun test tests
 ```
 
-授权后，测试先要求根目录是 normalized absolute realpath，再逐段拒绝 symlink、验证 containment、计算每个目标的 sha256，并检查 exact source assertions 的出现次数；随后实际变换五个只读 fixture 的内存副本，用 Bun parser 检查生成的 TS/TSX，并断言关键顺序和旧 marker 已消失。未设置该变量时外部证据测试明确 skip；任一身份或内容不一致都必须重新审查，不能自动套用。
+来源检查拒绝 symlink、验证 containment、计算每个 canonical 原始目标的 sha256 和 exact assertions；随后变换五个实际模块的内存副本，用 Bun parser 检查 TS/TSX、关键顺序和旧 marker。默认不跳过这六项 source tests；任一身份或内容不一致都必须重新审查，不能自动套用。
 
 ## 证据边界
 

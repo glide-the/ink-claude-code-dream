@@ -5,6 +5,11 @@
 
 # Dream Clean-room Runtime 架构
 
+> Historical / retired implementation. Runtime 0.1.8 now builds canonical original
+> src modules, identical to restored-src/src, with no parallel cleanroom implementation.
+> Procedures, code paths and release/business receipts below describe the previous code,
+> not current qualification. See [current alignment](claude-sourcemap-package-contract-alignment.md).
+
 ## 1. 决策
 
 公共 npm 包不再使用 `restored-src`、`dist/core-local` 或

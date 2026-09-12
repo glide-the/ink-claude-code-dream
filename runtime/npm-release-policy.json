@@ -2,11 +2,16 @@
   "schemaVersion": "ink-npm-release-policy/v1",
   "repository": "glide-the/ink-claude-code-dream",
   "scope": "@glide-the",
-  "version": "0.1.4",
+  "version": "0.1.9",
   "metaPackage": "@glide-the/ink-claude-code-dream",
   "command": "ink-claude-code-dream",
   "runtimePackagePolicy": "runtime/local-artifact-policy.json",
   "runtimeVerifier": "scripts/verify-core-package-local.mjs",
+  "packageRequiredCapabilities": [
+    "extensions.plugins", "lifecycle.cancel", "mcp.http", "mcp.management.identity",
+    "mcp.oauth", "mcp.stdio", "protocol.control.bidirectional", "protocol.streaming",
+    "sandbox", "sandbox.notion-cli", "session.resume", "tmpdir.thread-local", "transcript.jsonl", "workspace.cwd"
+  ],
   "stagingDirectory": "dist/npm-stage",
   "tarballDirectory": "dist/npm-tarballs",
   "bun": {
@@ -75,7 +80,7 @@
   },
   "publish": {
     "access": "public",
-    "license": null,
+    "license": "SEE LICENSE IN runtime/manifest/source-LICENSE.md",
     "provenance": true,
     "trustedPublisher": {
       "repository": "glide-the/ink-claude-code-dream",

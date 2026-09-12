@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "ink-operator-source-authorization/v1",
+  "recordedAt": "2026-09-13",
+  "sourceCommit": "a8a678cb6244e6770e1e421767ff0987a1d95549",
+  "sourceVersion": "2.1.88",
+  "confirmation": "The repository operator explicitly confirmed existing source authorization and requested public npm publication through GitHub CI in this task.",
+  "evidenceKind": "operator-attestation-not-independent-license-verification",
+  "publicationAllowed": true,
+  "redistributionAllowed": true,
+  "copyrightNotice": "runtime/source-LICENSE.md",
+  "originalCopyrightRetained": true,
+  "relicensesOriginalSourceAsMIT": false,
+  "qualificationRequired": true
+}

@@ -3,6 +3,7 @@
 // [Output] An ignored full-runtime qualification receipt bound to the exact core bytes/source digest.
 // [Pos] Technical release gate before packaging and real Dream business acceptance; no user data is read.
 // [Sync] 2026-08-24: bind every qualification lane to the exact native Runtime target.
+// [Sync] 2026-09-13: bind new local qualification receipts to Runtime 0.1.9 only.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -20,6 +21,7 @@ const defaults = {
     repoRoot,
     "dist/core-local/qualification/mcp-management.json",
   ),
+  dreamReceipt: path.join(repoRoot, "dist/core-local/qualification/dream-runtime.json"),
   output: path.join(repoRoot, "dist/core-local/qualification/full-runtime-qualification.json"),
 };
 
@@ -32,6 +34,7 @@ const locations = {
     process.env.INK_CORE_MCP_MANAGEMENT_RECEIPT ?? defaults.managementReceipt,
   ),
   output: path.resolve(process.env.INK_CORE_FULL_RECEIPT ?? defaults.output),
+  dreamReceipt: path.resolve(process.env.INK_CORE_DREAM_RECEIPT ?? defaults.dreamReceipt),
 };
 
 function fail(message) {
@@ -144,12 +147,13 @@ function assertManagement(receipt, subject, cliCompatibilityVersion) {
   }
 }
 
-const [coreReceipt, coreBundle, sdkReceipt, mcpReceipt, managementReceipt] = await Promise.all([
+const [coreReceipt, coreBundle, sdkReceipt, mcpReceipt, managementReceipt, dreamReceipt] = await Promise.all([
   readJson(locations.coreReceipt, "core build receipt"),
   readFile(locations.coreBundle),
   readJson(locations.sdkReceipt, "SDK differential receipt"),
   readJson(locations.mcpReceipt, "MCP differential receipt"),
   readJson(locations.managementReceipt, "MCP management receipt"),
+  readJson(locations.dreamReceipt, "Dream Runtime contract receipt"),
 ]);
 
 if (
@@ -169,7 +173,7 @@ if (
 
 const subject = {
   runtime: "ink-claude-code-dream",
-  version: "0.1.4",
+  version: "0.1.9",
   coreBundleSha256: createHash("sha256").update(coreBundle).digest("hex"),
   sourceDigest: coreReceipt.sourceDigest.digest,
   runtimeTarget: coreReceipt.runtimeTarget,
@@ -177,6 +181,10 @@ const subject = {
 assertDifferential(sdkReceipt, "real-process-sdk-differential", subject, "SDK receipt");
 assertDifferential(mcpReceipt, "real-process-mcp-differential", subject, "MCP receipt");
 assertManagement(managementReceipt, subject, coreReceipt.cliCompatibilityVersion);
+assertDifferential(dreamReceipt, "real-process-dream-runtime-contract", subject, "Dream Runtime receipt");
+if (dreamReceipt.facts?.notionNativeBash !== true || dreamReceipt.facts?.notionHookExcluded !== true ||
+    dreamReceipt.facts?.notionStdioExcluded !== true || dreamReceipt.facts?.explicitMaxOutput !== 1000 ||
+    dreamReceipt.facts?.explicitEffort !== "xhigh") fail("Dream Runtime process receipt lacks child isolation/model projection evidence");
 
 const checks = [
   run("core verifier", process.execPath, ["scripts/verify-core-prune.mjs"]),
@@ -191,6 +199,7 @@ const checks = [
     "compat/mcp-auth",
     "test",
   ]),
+  run("Dream compatibility policy/source contracts", path.join(repoRoot, "node_modules/.bin/bun"), ["test", "compat/dream-runtime"]),
   run("official MCP SDK headless OAuth CLI contract", process.execPath, [
     "scripts/run-core-oauth-cli-contract.mjs",
   ]),
@@ -220,6 +229,7 @@ const receipt = {
     mcpManagementReceiptSha256: createHash("sha256")
       .update(await readFile(locations.managementReceipt))
       .digest("hex"),
+    dreamRuntimeReceiptSha256: createHash("sha256").update(await readFile(locations.dreamReceipt)).digest("hex"),
   },
   management: {
     evidenceType: managementReceipt.evidenceType,
@@ -231,6 +241,7 @@ const receipt = {
       managementReceipt.safeErrors.productionDreamRedactionUsed,
     oauthNoBrowserLogin: managementReceipt.oauth.noBrowserLogin,
   },
+  dreamCompatibility: { status: "passed", evidenceType: dreamReceipt.evidenceType, notionQualified: true, modelProjectionQualified: true },
   scope:
     "provider-boundary SDK/session-MCP protocol, MCP management process identity, and static Runtime artifact gates",
   businessAcceptanceIncluded: false,

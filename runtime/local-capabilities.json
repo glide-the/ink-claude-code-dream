@@ -2,7 +2,7 @@
   "schemaVersion": "ink-core-local-capabilities/v1",
   "runtime": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.4",
+    "version": "0.1.9",
     "mode": "headless-sdk-runtime",
     "sourceVersionEvidence": "2.1.88",
     "cliCompatibilityVersion": "2.1.241",
@@ -48,6 +48,10 @@
       "buildCapability": "sandbox"
     },
     {
+      "id": "sandbox.notion-cli",
+      "buildCapability": "sandbox.notion-cli"
+    },
+    {
       "id": "session.resume",
       "buildCapability": "session.transcript-resume"
     },
@@ -88,6 +92,10 @@
     {
       "id": "sandbox",
       "status": "retained-build-input"
+    },
+    {
+      "id": "sandbox.notion-cli",
+      "status": "source-bound-compatibility-patched"
     },
     {
       "id": "tmpdir.CLAUDE_CODE_TMPDIR",

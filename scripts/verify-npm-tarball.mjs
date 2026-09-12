@@ -105,7 +105,7 @@ function assertCommon(pkg, attestation, label) {
   if (
     pkg.version !== policy.version ||
     pkg.private === true ||
-    pkg.license !== policy.publish.license ||
+    pkg.license !== (pkg.name === policy.metaPackage ? "MIT" : policy.publish.license) ||
     pkg.publishConfig?.access !== "public" ||
     pkg.publishConfig?.provenance !== true ||
     attestation.repository !== policy.repository ||
@@ -144,6 +144,21 @@ function verifyPlatform(parsed, pkg, attestation, platform) {
   const core = parseJson(parsed.files, "runtime/manifest/core-build-receipt.json", platform.package);
   const qualificationBody = parsed.files.get("package/runtime/manifest/qualification-summary.json");
   if (!qualificationBody) fail(`${platform.package} missing qualification summary`);
+  const qualification = JSON.parse(qualificationBody.toString("utf8"));
+  const capabilities = parseJson(parsed.files, "runtime/manifest/capabilities.json", platform.package);
+  const capabilityIds = capabilities.capabilities?.map(value => value.id) ?? [];
+  const notion = capabilities.capabilities?.find(value => value.id === "sandbox.notion-cli");
+  if (policy.packageRequiredCapabilities.some(id => !capabilityIds.includes(id)) ||
+      notion?.status !== "qualified-process-contract" ||
+      capabilities.runtime?.productionEligible !== true || capabilities.runtime?.runtimeTarget !== target ||
+      qualification.productionEligible !== true ||
+      ["sdk", "mcp", "full"].some(id => qualification.gates?.[id]?.status !== "passed") ||
+      qualification.gates.full.dreamNotionQualified !== true ||
+      qualification.gates.full.dreamModelProjectionQualified !== true ||
+      core.dreamCompatibility?.originalSourceModified !== false ||
+      core.dreamCompatibility?.appliedSourcePaths?.length !== 6) {
+    fail(`${platform.package} lost qualified Dream Notion/model capability evidence`);
+  }
   const ripgrep = parsed.files.get(`package/runtime/${platform.ripgrepPath}`);
   if (!ripgrep) fail(`${platform.package} missing target ripgrep`);
   if (
@@ -171,6 +186,7 @@ function verifyPlatform(parsed, pkg, attestation, platform) {
   }
   return {
     kind: "platform",
+    capabilityIds: [...capabilityIds].sort(),
     package: pkg.name,
     version: pkg.version,
     target,
@@ -191,7 +207,7 @@ function verifyMeta(parsed, pkg, attestation) {
     pkg.name !== policy.metaPackage ||
     JSON.stringify(pkg.optionalDependencies) !== JSON.stringify(optionalDependencies) ||
     Object.hasOwn(pkg, "dependencies") ||
-    pkg.bin?.[policy.command] !== `bin/${policy.command}` ||
+    pkg.bin?.[policy.command] !== "cli.js" || pkg.bin?.claude !== "cli.js" ||
     pkg.scripts?.prepack !== "node scripts/prepack.mjs" ||
     attestation.schemaVersion !== "ink-npm-meta-publication-attestation/v1" ||
     Object.hasOwn(attestation, "runtimeTarget") ||
@@ -199,6 +215,16 @@ function verifyMeta(parsed, pkg, attestation) {
     attestation.platforms.length !== 4
   ) {
     fail("meta package selector/attestation contract mismatch");
+  }
+  const selector = parsed.files.get("package/cli.js");
+  const release = parseJson(parsed.files, "release-manifest.json", policy.metaPackage);
+  const capabilities = parseJson(parsed.files, "manifest/capabilities.json", policy.metaPackage);
+  const selectorDigest = selector ? sha256(selector) : null;
+  if (!selectorDigest || attestation.selectorSha256 !== selectorDigest ||
+      release.runtime?.version !== policy.version || release.runtime?.entrypoint !== "cli.js" ||
+      release.core?.entrypointSha256 !== selectorDigest || release.core?.productionEligible !== true ||
+      capabilities.artifact?.entrypointSha256 !== selectorDigest || capabilities.runtime?.productionEligible !== true) {
+    fail("package-root selector/manifest/capability digest binding mismatch");
   }
   return {
     kind: "meta",

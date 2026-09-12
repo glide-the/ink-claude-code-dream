@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "ink-license-report/v1",
+  "generatedFrom": "package manifests and official package LICENSE evidence observed 2026-08-23",
+  "project": {
+    "name": "ink-claude-code-dream",
+    "version": "0.1.5",
+    "license": "UNLICENSED",
+    "private": true
+  },
+  "components": [
+    {
+      "name": "@anthropic-ai/claude-code",
+      "version": "2.1.241",
+      "scope": "external-runtime-not-bundled",
+      "license": "LicenseRef-Anthropic-All-Rights-Reserved",
+      "redistribution": "blocked-without-separate-authorization"
+    },
+    { "name": "esbuild", "version": "0.25.9", "scope": "build-only", "license": "MIT" },
+    { "name": "@esbuild/<platform>", "version": "0.25.9", "scope": "build-only-optional", "license": "MIT" },
+    { "name": "@anthropic-ai/sdk", "version": "0.74.0", "scope": "core-clean-room-build-fallback", "license": "MIT", "treeSha256": "cf2d8ed6537156dfe1449b80c28b3a0e0dd1704ffb8137cc99decb6d54fa977a" },
+    { "name": "@grpc/grpc-js", "version": "1.14.0", "scope": "core-clean-room-build-fallback-only-not-runtime-capability", "license": "Apache-2.0", "treeSha256": "856761819f687d9af11659a943ea9d30f84d0a899f9c2df7a7924766a3da763b" },
+    { "name": "@protobufjs/codegen", "version": "2.0.5", "scope": "core-clean-room-build", "license": "BSD-3-Clause", "treeSha256": "ddf551a4274c7e4cd8314d0b06bd167c0d4aee7aa41c076cf78ad6d58f1b3e3a" },
+    { "name": "@protobufjs/fetch", "version": "1.1.1", "scope": "core-clean-room-build", "license": "BSD-3-Clause", "treeSha256": "cd45feb06602db07d4fd1018f71326e621b2f2682e110d5a660e9e97d17b12bc" },
+    { "name": "@protobufjs/path", "version": "1.1.2", "scope": "core-clean-room-build", "license": "BSD-3-Clause", "treeSha256": "8d18ddb568394e84f05eb93e72254c38f4e3f2ef8c4a8d0ce0ed9cdf59f45625" },
+    { "name": "ajv", "version": "8.17.1", "scope": "core-clean-room-build-fallback", "license": "MIT", "treeSha256": "f073e98787ed626f9e45208a274dd1154fa6d3bee46d74e41612de181b73e573" },
+    { "name": "ansi-styles", "version": "6.2.3", "scope": "core-clean-room-runtime-ansi-tokenize", "license": "MIT", "treeSha256": "e765538efb624eb2a736d4342849e993e7a11d238add5f8c01aff9d58aa6defc" },
+    { "name": "is-fullwidth-code-point", "version": "5.1.0", "scope": "core-clean-room-runtime-ansi-tokenize", "license": "MIT", "treeSha256": "8ab75ac9ee1db8f7000510a3ccd8a546c64d9aeb0aeef9f25edf728048f09e97" },
+    { "name": "signal-exit", "version": "4.1.0", "scope": "core-clean-room-runtime-esm-exit-hooks", "license": "ISC", "treeSha256": "f4ed3b0e4a7a3067c38a5bee3492584b444f47497f1a1b6979028d1eec962ae7" },
+    { "name": "ripgrep", "version": "14.1.1", "scope": "local-core-runtime-asset", "license": "MIT OR Unlicense", "sha256": "051d22c8d7f1139f2953c34ca82f216299f79955553158f8c5a215e99d66684f" },
+    { "name": "@anthropic-ai/sandbox-runtime", "version": "0.0.45", "scope": "local-core-linux-seccomp-bpf-runtime-asset", "license": "Apache-2.0", "assetSha256": ["29e0dc4080a3e5629f7d7cc4941f8a4be04ed60a68bd8a724b1acea44d824c27", "9f5a4bdf5539a9cdacc93cdb1dd2778de21b773db3ca20170c46b571e9b9b207"] },
+    { "name": "diff", "version": "8.0.2", "scope": "core-clean-room-build-fallback", "license": "BSD-3-Clause", "treeSha256": "01ff8e6984c275cfaa4a21c4f815b3342d837ab734ef3eb7bb358708f2d0fa73" },
+    { "name": "lodash.camelcase", "version": "4.3.0", "scope": "core-clean-room-build", "license": "MIT", "treeSha256": "bd158ab53ca5e85456e43af4fd0df8abe17439ae46be34677f3dbe0a0f4d67c5" },
+    { "name": "protobufjs", "version": "7.5.4", "scope": "core-clean-room-build", "license": "BSD-3-Clause", "treeSha256": "e16a446428719db8b7ad6916209598b3c049b40da656cd7a2271086d4a8afcd9" },
+    { "name": "sharp", "version": "0.34.5", "scope": "core-clean-room-runtime-image-processing", "license": "Apache-2.0", "treeSha256": "729bf8f0c137fe162e5159b0c83f0e3f6658ddb41171640f4b8a6223de1b3760" },
+    { "name": "zod-to-json-schema", "version": "3.25.2", "scope": "core-clean-room-build", "license": "ISC", "treeSha256": "9957e0ccf7f91ec9e5f313a202c567b898de95c063267d7561d990b01916e4c8" },
+    { "name": "zod", "version": "4.0.0", "scope": "core-clean-room-build-fallback", "license": "MIT", "treeSha256": "596327b4538cfdde7374b12b025a17f145a3de016025976813d0630f70e372ba" },
+    { "name": "tar-stream", "version": "3.1.7", "scope": "package-script-only", "license": "MIT" },
+    { "name": "b4a", "version": "1.8.1", "scope": "package-script-transitive", "license": "Apache-2.0" },
+    { "name": "bare-events", "version": "2.9.1", "scope": "package-script-transitive", "license": "Apache-2.0" },
+    { "name": "events-universal", "version": "1.0.1", "scope": "package-script-transitive", "license": "Apache-2.0" },
+    { "name": "fast-fifo", "version": "1.3.2", "scope": "package-script-transitive", "license": "MIT" },
+    { "name": "streamx", "version": "2.28.0", "scope": "package-script-transitive", "license": "MIT" },
+    { "name": "text-decoder", "version": "1.2.7", "scope": "package-script-transitive", "license": "Apache-2.0" }
+  ],
+  "legalGate": {
+    "officialBinaryMustBeUnmodified": true,
+    "officialBinaryMustRunAsPublished": true,
+    "builtInAuthenticationMustRemainAvailable": true,
+    "wrapperMayOnlySuperviseAndPassOfficialDocumentedFlags": true,
+    "vendorOrRestoredSourceMayBeCommitted": false,
+    "vendorBinaryMayBeCommitted": false,
+    "wrapperMayBeBrandedAsClaudeCode": false,
+    "source": "https://code.claude.com/docs/en/legal-and-compliance"
+  }
+}

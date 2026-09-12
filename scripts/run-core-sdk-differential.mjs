@@ -3,6 +3,7 @@
 // [Output] A fail-closed protocol-differential receipt for two real Runtime processes.
 // [Pos] Process-boundary release gate; it never substitutes an envelope or fake CLI.
 // [Sync] 2026-08-30: isolate the official nested-Docker Unix-socket exemption to the reference lane.
+// [Sync] 2026-09-13: require candidate identity Runtime 0.1.9 in new SDK evidence.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -93,7 +94,7 @@ async function qualificationSubject() {
   const bundle = await readFile(path.resolve(coreBundlePath));
   return {
     runtime: "ink-claude-code-dream",
-    version: "0.1.4",
+    version: "0.1.9",
     coreBundleSha256: createHash("sha256").update(bundle).digest("hex"),
     sourceDigest: coreReceipt.sourceDigest.digest,
     runtimeTarget: coreReceipt.runtimeTarget,

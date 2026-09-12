@@ -1,20 +1,34 @@
-# [Input] Main-branch clean-room source plus checked Dream business, target-host, redistribution, and publication gates.
-# [Output] One exact verified five-tarball clean-room release set bound to the dispatched commit.
-# [Pos] Manual predecessor of publish-npm.yml; it never reads restored source and never publishes.
-# [Sync] 2026-08-24: replace restored-core/native-runner qualification with the clean-room cross-target release set.
+# [Input] Canonical src, immutable recovered dependencies, official CLI/SDK fixtures and operator authority.
+# [Output] Fresh native process qualifications and an exact five-tarball release set; never publishes.
+# [Pos] Existing qualification lane, automatically run on main before publish-npm.yml.
+# [Sync] 2026-09-13: remove fail-only placeholder and retired cleanroom receipt reuse.
 
-name: Qualify clean-room npm Runtime
-
+name: Qualify npm Runtime
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
+concurrency:
+  group: qualify-npm-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  qualify:
-    runs-on: macos-15
-    timeout-minutes: 20
+  qualify-platform:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            runner: macos-15
+          - target: darwin-x64
+            runner: macos-15-intel
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - target: linux-x64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -22,41 +36,129 @@ jobs:
           node-version: 24.13.0
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: 1.2.20
-      - name: Require main and every checked external qualification gate
+          bun-version: 1.4.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: 3.12.9
+      - name: Install locked tooling and isolated public process fixtures
         shell: bash
         run: |
+          set -euo pipefail
           test "$GITHUB_REF_NAME" = main
-          node --input-type=module <<'EOF'
-          import { createHash } from "node:crypto";
-          import { readFileSync } from "node:fs";
-          const artifact = JSON.parse(readFileSync("runtime/cleanroom-artifact-policy.json", "utf8"));
-          const npmPolicy = JSON.parse(readFileSync("runtime/cleanroom-npm-policy.json", "utf8"));
-          const gate = artifact.publicationGate;
-          const hosts = Object.values(gate.targetHostQualification ?? {});
-          const receiptBody = readFileSync(gate.businessAcceptance?.receiptPath);
-          const receiptSha256 = createHash("sha256").update(receiptBody).digest("hex");
-          if (
-            gate.productionEligible !== true ||
-            gate.publicationAllowed !== true ||
-            gate.redistributionAllowed !== true ||
-            gate.businessAcceptance?.passed !== true ||
-            gate.businessAcceptance?.receiptSha256 !== receiptSha256 ||
-            hosts.length !== 4 || hosts.some(value => value !== true) ||
-            npmPolicy.publication?.npmPublishAllowed !== true
-          ) throw new Error("checked Dream business, four-host, redistribution, or npm publication gate is closed");
-          EOF
-      - run: bun install --frozen-lockfile
-      - run: npm run lint
-      - run: npm test
-      - name: Build and verify exact five-package release set
+          bun install --frozen-lockfile
+          npm run source:verify
+          npm run lint
+          npm run npm:legal
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y bubblewrap socat
+          fi
+          git clone --filter=blob:none --no-checkout https://github.com/glide-the/claude-code-sourcemap.git "$RUNNER_TEMP/recovered-dependencies"
+          git -C "$RUNNER_TEMP/recovered-dependencies" sparse-checkout set --no-cone '/restored-src/node_modules/' '/restored-src/vendor/' '/package/vendor/' '/package/LICENSE.md'
+          git -C "$RUNNER_TEMP/recovered-dependencies" checkout a8a678cb6244e6770e1e421767ff0987a1d95549
+          git clone --depth 1 --branch v2.0.0 https://github.com/modelcontextprotocol/python-sdk.git "$RUNNER_TEMP/mcp-sdk"
+          test "$(git -C "$RUNNER_TEMP/mcp-sdk" rev-parse HEAD)" = 6f69a3758ebf2ee55ce050f58b470ce11af71133
+          git clone --filter=blob:none --no-checkout https://github.com/glide-the/im-dream.git "$RUNNER_TEMP/dream-contract"
+          git -C "$RUNNER_TEMP/dream-contract" checkout b989f973ca0d69be0448f7a3cb7e6e073eaae9dc
+          python -m venv "$RUNNER_TEMP/sdk-python"
+          "$RUNNER_TEMP/sdk-python/bin/python" -m pip install 'ink-claude-dream-agent-sdk==0.2.145' 'mcp==1.27.1' 'python-dotenv==1.2.3'
+          python -m venv "$RUNNER_TEMP/mcp-python"
+          "$RUNNER_TEMP/mcp-python/bin/python" -m pip install 'mcp==2.0.0' 'pydantic-settings==2.10.1'
+          npm install --prefix "$RUNNER_TEMP/official-cli" --no-audit --no-fund '@anthropic-ai/claude-code@2.1.241'
+          python3 - <<'PY'
+          import os
+          pairs = {
+              "INK_AUTHORIZED_CORE_SOURCE_ROOT": "recovered-dependencies/restored-src",
+              "INK_AUTHORIZED_CORE_PACKAGE_ROOT": "recovered-dependencies/package",
+              "INK_DREAM_ROOT": "dream-contract",
+              "INK_DREAM_PYTHON": "sdk-python/bin/python",
+              "INK_MCP_FIXTURE_PYTHON": "mcp-python/bin/python",
+              "INK_MCP_OAUTH_FIXTURE_PYTHON": "mcp-python/bin/python",
+              "INK_MCP_OAUTH_FIXTURE_ROOT": "mcp-sdk/examples/servers/simple-auth",
+              "INK_TEST_REFERENCE_CLI": "official-cli/node_modules/.bin/claude",
+          }
+          with open(os.environ["GITHUB_ENV"], "a") as output:
+              for name, suffix in pairs.items():
+                  # Keep venv launcher paths; canonicalize directory ancestors only.
+                  value = os.path.join(os.path.realpath(os.environ["RUNNER_TEMP"]), suffix)
+                  output.write(f"{name}={value}\n")
+          PY
+      - name: Build and verify the actual native source bundle
+        env:
+          INK_CLAUDE_CODE_BUILD_TARGET: ${{ matrix.target }}
         run: |
-          npm run cleanroom:build:targets
-          npm run cleanroom:npm:package
-          npm run cleanroom:npm:verify
+          npm test
+          npm run test:mcp-auth-compat
+          npm run test:dream-compat
+          npm run build
+          node scripts/verify-core-prune.mjs
+          mkdir -p dist/core-local/bin dist/core-local/qualification
+          printf '%s\n' '#!/bin/sh' 'set -eu' 'exec "'"$PWD"'/node_modules/.bin/bun" "'"$PWD"'/dist/core-local/bundle/cli.js" "$@"' > dist/core-local/bin/ink-claude-code-dream
+          chmod 0755 dist/core-local/bin/ink-claude-code-dream
+      - name: Real official/candidate SDK, MCP and Dream management process contracts
+        run: |
+          node scripts/run-unified-sdk-contract.mjs --differential
+          node scripts/run-unified-sdk-contract.mjs --dream-compat
+          node scripts/run-unified-sdk-contract.mjs --mcp --differential
+          "$INK_DREAM_PYTHON" scripts/run-core-mcp-management-contract.py \
+            --cli "$PWD/dist/core-local/bin/ink-claude-code-dream" \
+            --output "$PWD/dist/core-local/qualification/mcp-management.json" \
+            --dream-backend "$INK_DREAM_ROOT/backend" --mode candidate \
+            --bun "$PWD/node_modules/.bin/bun" \
+            --core-receipt "$PWD/dist/core-local/build-receipt.json" \
+            --core-bundle "$PWD/dist/core-local/bundle/cli.js"
+      - name: Aggregate fresh qualification, package, stage and smoke exact native bytes
+        env:
+          INK_REQUIRE_CORE_OAUTH_FIXTURE: "1"
+        run: |
+          node scripts/qualify-core-local.mjs
+          node scripts/package-core-local.mjs
+          artifact=$(node -p "require('./runtime/local-artifact-policy.json').artifact.directory")
+          node scripts/verify-core-package-local.mjs --package-root "$artifact"
+          node scripts/npm-release.mjs stage --target ${{ matrix.target }} --package-root "$artifact"
+          node scripts/smoke-npm-release.mjs dist/npm-stage/${{ matrix.target }}
+          mkdir -p dist/npm-tarballs
+          npm pack --json --pack-destination dist/npm-tarballs ./dist/npm-stage/${{ matrix.target }}/platform
+          node scripts/verify-npm-tarball.mjs dist/npm-tarballs/*.tgz
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: cleanroom-npm-${{ github.sha }}
-          path: dist/cleanroom-npm/tarballs
+          name: npm-platform-${{ matrix.target }}
+          path: dist/npm-tarballs/*.tgz
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7
+      - name: Retain diagnostic qualifications, not user data or dependency trees
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qualification-diagnostics-${{ matrix.target }}
+          path: dist/core-local/qualification/*.json
+          if-no-files-found: ignore
+          retention-days: 7
+  aggregate-release:
+    needs: qualify-platform
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.13.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: npm-platform-*
+          path: dist/npm-release-set
+          merge-multiple: true
+      - name: Qualify package-root selector against all four exact platform archives
+        run: |
+          node scripts/npm-release.mjs aggregate-meta --tarball-dir dist/npm-release-set
+          npm pack --json --pack-destination dist/npm-release-set ./dist/npm-stage/meta
+          node scripts/verify-npm-tarball.mjs dist/npm-release-set/*.tgz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qualified-npm-${{ github.sha }}
+          path: dist/npm-release-set/*.tgz
+          if-no-files-found: error
+          retention-days: 7

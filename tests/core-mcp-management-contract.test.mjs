@@ -2,6 +2,7 @@
 // [Output] Prove exact driver reuse, candidate colon lifecycle, secret-safe receipts, identity isolation, and official reference calibration.
 // [Pos] Real process-boundary management contract; it performs no OAuth, provider, model, Dream business, or persistent user operation.
 // [Sync] 2026-08-24: aggregate qualification binds source provenance separately from the Dream-facing CLI version.
+// [Sync] 2026-09-13: bind candidate management evidence to Runtime 0.1.9 and honor explicit isolated-worktree Python selection.
 
 import assert from "node:assert/strict";
 import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -24,7 +25,7 @@ const dreamRoot = path.resolve(
   process.env.INK_DREAM_ROOT ?? path.join(repositoryRoot, "..", "ink-dream-memory"),
 );
 const dreamBackend = path.join(dreamRoot, "backend");
-const dreamPython = path.join(dreamBackend, ".venv", "bin", "python");
+const dreamPython = process.env.INK_DREAM_PYTHON ?? path.join(dreamBackend, ".venv", "bin", "python");
 const officialCli = path.resolve(
   process.env.INK_OFFICIAL_CLAUDE_2_1_241 ??
     "/tmp/claude-code-2.1.241.KpY24a/native/package/claude",
@@ -155,7 +156,7 @@ test("provider-free candidate fixture passes colon lifecycle, isolation, and pro
     assert.equal(receipt.status, "passed");
     assert.equal(receipt.calibrationOnly, false);
     assert.equal(receipt.subject.runtime, "ink-claude-code-dream");
-    assert.equal(receipt.subject.version, "0.1.4");
+    assert.equal(receipt.subject.version, "0.1.9");
     assert.match(receipt.subject.coreBundleSha256, /^[a-f0-9]{64}$/);
     assert.equal(receipt.subject.sourceDigest, "4".repeat(64));
     assert.equal(receipt.subject.runtimeTarget, `${process.platform}-${process.arch}`);

@@ -3,6 +3,7 @@
 // [Pos] Provider-free local artifact contract tests; fixtures contain no restored/vendor implementation or Dream business state.
 // [Sync] 2026-08-24: bind packages and all qualification receipts to one native Runtime target.
 // [Sync] 2026-08-30: treat a sibling Dream still pinned to 0.1.3 as an explicit external candidate-version skip.
+// [Sync] 2026-09-13: require local-core Runtime 0.1.9 and reuse an explicitly selected Dream Python for isolated worktree verification.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -17,7 +18,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const packageScript = path.join(repositoryRoot, "scripts", "package-core-local.mjs");
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-core-package-local.mjs");
 const installScript = path.join(repositoryRoot, "scripts", "install-core-local.mjs");
-const artifactId = "ink-claude-code-dream-0.1.4";
+const artifactId = "ink-claude-code-dream-0.1.9";
 const sourceDigest = "4".repeat(64);
 const runtimeTarget = `${process.platform}-${process.arch}`;
 
@@ -133,7 +134,7 @@ async function runDreamManifestGate(executable) {
     process.env.INK_DREAM_ROOT ?? path.join(repositoryRoot, "..", "ink-dream-memory"),
   );
   const backendRoot = path.join(dreamRoot, "backend");
-  const python = path.join(backendRoot, ".venv", "bin", "python");
+  const python = process.env.INK_DREAM_PYTHON ?? path.join(backendRoot, ".venv", "bin", "python");
   try {
     await access(path.join(backendRoot, "libs", "claude_agent_kit", "server", "sdk_env.py"));
     await access(python);
@@ -186,7 +187,7 @@ async function writeQualification(context, id, evidenceType, overrides = {}) {
     evidenceType,
     subject: {
       runtime: "ink-claude-code-dream",
-      version: "0.1.4",
+      version: "0.1.9",
       coreBundleSha256: context.coreDigest,
       sourceDigest,
       runtimeTarget,
@@ -194,7 +195,8 @@ async function writeQualification(context, id, evidenceType, overrides = {}) {
     ...overrides,
   };
   if (id === "full" && !Object.hasOwn(overrides, "management")) {
-    receipt.inputs = { mcpManagementReceiptSha256: "7".repeat(64) };
+    receipt.inputs = { mcpManagementReceiptSha256: "7".repeat(64), dreamRuntimeReceiptSha256: "8".repeat(64) };
+    receipt.dreamCompatibility = { status: "passed", evidenceType: "real-process-dream-runtime-contract", notionQualified: true, modelProjectionQualified: true };
     receipt.management = {
       evidenceType: "real-process-mcp-management-contract",
       status: "passed",
@@ -205,7 +207,7 @@ async function writeQualification(context, id, evidenceType, overrides = {}) {
   return file;
 }
 
-test("packages a reproducible local candidate with closed production/publication gates", async () => {
+test("operator-authorized candidate remains unqualified without all production receipts", async () => {
   const context = await fixture();
   try {
     const actorConfig = path.join(context.root, "actor-config");
@@ -220,8 +222,8 @@ test("packages a reproducible local candidate with closed production/publication
     assert.equal(result.status, 0, result.stderr);
     const output = JSON.parse(result.stdout.trim());
     assert.equal(output.productionEligible, false);
-    assert.equal(output.publicationAllowed, false);
-    assert.equal(output.redistributionAllowed, false);
+    assert.equal(output.publicationAllowed, true);
+    assert.equal(output.redistributionAllowed, true);
     assert.equal(output.reproduciblePasses, 2);
 
     const verification = runVerify(context.artifactRoot);
@@ -285,7 +287,7 @@ test("Dream's real production manifest gate rejects an unqualified artifact and 
     assert.equal(qualified.status, 0, qualified.stderr);
     const accepted = await runDreamManifestGate(executable);
     const dreamVersion = JSON.parse(accepted.stdout.trim().split("\n")[0]).expectedVersion;
-    if (dreamVersion !== "0.1.4") {
+    if (dreamVersion !== "0.1.9") {
       assert.notEqual(accepted.status, 0);
       assert.match(accepted.stderr, /not production-qualified/);
       t.skip(`sibling Dream production manifest gate remains pinned to ${dreamVersion}`);
@@ -341,7 +343,7 @@ test("qualification evidence bound to another bundle is rejected", async () => {
     const sdk = await writeQualification(context, "sdk", "real-process-sdk-differential", {
       subject: {
         runtime: "ink-claude-code-dream",
-        version: "0.1.4",
+        version: "0.1.9",
         coreBundleSha256: "9".repeat(64),
         sourceDigest,
         runtimeTarget,

@@ -2,7 +2,9 @@
   "schemaVersion": "ink-core-prune-profile/v1",
   "sourceVersionEvidence": "2.1.88",
   "cliCompatibilityVersion": "2.1.241",
-  "sourceRootEnvironment": "INK_AUTHORIZED_CORE_SOURCE_ROOT",
+  "sourceDirectory": "src",
+  "recoveredDependencyRootEnvironment": "INK_AUTHORIZED_CORE_SOURCE_ROOT",
+  "repositoryDependencyRootEnvironment": "INK_CORE_TOOLCHAIN_ROOT",
   "packageRootEnvironment": "INK_AUTHORIZED_CORE_PACKAGE_ROOT",
   "targetEnvironment": "INK_CLAUDE_CODE_BUILD_TARGET",
   "outputDirectory": "dist/core-local",
@@ -214,6 +216,7 @@
     "tools.permissions",
     "workspace.cwd",
     "sandbox",
+    "sandbox.notion-cli",
     "tmpdir.CLAUDE_CODE_TMPDIR",
     "mcp.stdio-http-oauth-resources",
     "extensions.plugins-skills-hooks",
@@ -245,6 +248,12 @@
     ],
     "sandbox": [
       "src/utils/sandbox/sandbox-adapter.ts"
+    ],
+    "sandbox.notion-cli": [
+      "src/utils/Shell.ts",
+      "src/utils/subprocessEnv.ts",
+      "src/utils/sandbox/sandbox-adapter.ts",
+      "compat/dream-runtime/policy.ts"
     ],
     "tmpdir.CLAUDE_CODE_TMPDIR": [
       "src/utils/permissions/filesystem.ts"

@@ -3,17 +3,20 @@
 <!-- [Pos] Canonical 20-section design for the locally built ink-claude-code-dream Runtime. -->
 <!-- [Sync] 2026-08-24: add native-target qualification and fail-closed scoped npm publication architecture. -->
 <!-- [Sync] 2026-08-24: mark the restored-source build as local historical evidence after the public npm path moved to a clean-room core. -->
+<!-- [Sync] 2026-09-13: preserve historical core receipts while admitting only the exact checked research snapshot outside public build graphs. -->
 
 # Claude Code Runtime minimalization
 
-> 当前决策：本文记录的恢复源码裁剪 Runtime 仅保留为本地历史研究、差分和回滚证据，
-> 不再作为公共 npm 包的实现输入。公共发布目标已迁移到
-> [`cleanroom-runtime-architecture.md`](./cleanroom-runtime-architecture.md)，该路径必须完全
-> 排除恢复源码与旧衍生 bundle，并独立通过 Dream 的 13 项能力门。
+> 当前 0.1.9 决策：恢复源码是唯一实际 `src` 实现，不是旁路快照。
+> 重复 `restored-src` 已删除；原始目录、模块、字节/权限保持不变，默认编译 `src/entrypoints/cli.tsx`。
+> 旧平行 cleanroom 已退出。本文 2026-08-24 的资格/制品摘要仍只证明历史字节；
+> 当前结果见 [0.1.9 notes](../build/runtime-0.1.9-release-notes.md)。公共发布按用户已确认的来源授权走 CI。
 
 Evidence date: 2026-08-24.
 
-Decision status: **technical implementation and qualification complete for the current local artifact**. The user-authorized Claude Code `2.1.88` restored tree is a read-only local reference and build input. Bun `1.4.0` compile-time features remove IM-irrelevant branches into Git-ignored `dist/core-local/`. The repository stores only replayable repository-authored build/patch code, capability profiles, manifests, resolution metadata, tests, and documentation; it does not store the restored tree or the derived artifact. These are technical provenance claims, not a finding of redistribution permission.
+Structure correction on 2026-09-13: Runtime 0.1.8 compiles its canonical original src modules, byte-identical to restored-src/src (1,902 files/35 directories). External roots supply recovered dependencies/assets only. Existing source-bound headless/MCP transforms remain the build layer; no second Agent/MCP implementation is kept. See [alignment](claude-sourcemap-package-contract-alignment.md). Historical digests/production receipts below are not rebound; generated artifacts remain ignored and current release gates closed.
+
+Decision status: **historical technical implementation and qualification complete for the recorded local artifact**. The user-authorized Claude Code `2.1.88` complete restored tree was a read-only local reference/build input. Bun `1.4.0` feature DCE emitted only Git-ignored `dist/core-local/` outputs. The repository now additionally preserves the exact research-source-only subtree, but never the generated artifact or recovered dependency/vendor tree. These are technical provenance claims, not redistribution permission.
 
 The exact artifact has source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5`. Its sanitized graph contains 1,989 inputs and 48 outputs with zero resolution gaps; feature-DCE and required-input assertions pass. SDK real-process, stdio/HTTP MCP tools/resources, MCP management lifecycle, and aggregate qualification all exit 0 and bind those same hashes. The build and release manifests keep `sourceVersionEvidence=2.1.88` distinct from the qualified Dream-facing `cliCompatibilityVersion=2.1.241`. The reproducible package has 62 files, 61 checksum entries, artifact-tree SHA-256 `b674fb04734cde23c3821ae7796f3125e96e110392f6be353c30e1e7f59b0f5b`, two byte-identical passes, and records `productionEligible=true`, `publicationAllowed=false`, and `redistributionAllowed=false`. Local installation copies the qualified Runtime and exact Bun `1.4.0` into separate content-addressed user-prefix directories, exposes versioned PATH links, and leaves the user's ambient Bun unchanged.
 
@@ -34,7 +37,7 @@ The task is to produce a separately named SDK distribution and a locally package
 | SDK bundled CLI baseline | `2.1.241` | Current SDK/official CLI compatibility comparator |
 | Core builder | Bun `1.4.0` | Required for `bun:bundle` compile-time `feature()` DCE |
 | Existing envelope build | Bun `1.2.20`, Node-target wrapper | Historical process-boundary baseline; not the pruned core |
-| Core entrypoint | `${INK_AUTHORIZED_CORE_SOURCE_ROOT}/src/entrypoints/cli.tsx` → external `src/main.tsx` → external `src/cli/print.ts` | Recovered headless build graph; these are not this repository's `src/` files |
+| Current core entrypoint | repository `src/entrypoints/cli.tsx` → `src/main.tsx` → `src/cli/print.ts` | Actual canonical original modules; external root supplies recovered dependencies only |
 | Core output | `dist/core-local/` and `dist/core-package-local/` | Local, generated, Git-ignored, technically qualified, and not publishable or redistributable |
 
 Official `2.1.241` package metadata and behavior remain primary evidence for current external compatibility. Restored `2.1.88` code is primary evidence only for its own source graph. Recent MCP behaviors are maintained as separate, source-hash-bound compatibility patches rather than being assumed present in the old source.
@@ -200,7 +203,7 @@ dist/core-package-local/         # reproducible local-only package; Git-ignored
     manifest/                    # checksums, SBOM, licenses, policy, qualification summary
 ```
 
-Git may contain replayable repository-authored builders, patches, profiles, resolution maps, manifests, contract tests, and documentation. It must not contain the read-only restored/vendor source input or generated artifact. Public releases also exclude source maps with vendor content, user data, credentials, and tokens.
+Git may contain repository-authored tooling/tests/docs and the exact immutable research `restored-src/src` snapshot. Recovered dependencies/vendor artifacts, generated derived artifacts, user data, credentials, and tokens remain excluded. Public releases additionally exclude restored source and source-derived artifacts; the research snapshot is not covered by MIT.
 
 ## 12. Transcript, workspace, and plugin metadata lifecycle
 
@@ -246,7 +249,7 @@ The current build moved through `blocked` → `built` → `verified` → `qualif
 
 ## 15. Security and license boundary
 
-The user has explicitly authorized local read-only use of the recovered `2.1.88` source as a reference/build input. That resolves the local task boundary; it does not establish public redistribution rights. The target repository records only replayable repository-authored builders, patches, manifests, tests, and documentation, while both the restored source and derived artifact stay out of Git. No Anthropic redistribution authorization has been obtained, so neither restored source nor derived artifact may be publicly published or redistributed. Private repository visibility is not treated as a license grant.
+The user requested the original directories and modules be the actual implementation. Canonical src and restored-src/src are now identical original trees, with Anthropic copyright/provenance retained; recovered dependencies/vendor artifacts and generated outputs stay out of Git. The private root is UNLICENSED. Repository-authored selector/compatibility tooling licenses do not relicense original modules; old cleanroom code is retired. Local compilation/integration is technically supported together, while public redistribution/publication still requires separate authority.
 
 No secret, OAuth token, complete environment, transcript body, Workspace body, user config, or materialized plugin content may enter Git, receipts, logs, or artifacts. Source-root absolute paths are sanitized from receipts.
 
@@ -295,7 +298,7 @@ The final command `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun r
 | Second Agent/MCP state machine introduced? | No. |
 | Python SDK over-rewritten? | No; distribution rename/build flow only, public namespace and upstream launcher retained. |
 | User data packaged? | No; output and receipts exclude it. |
-| License boundary explicit? | Yes: restored source is read-only/local, source and artifacts stay out of Git, and no Anthropic public redistribution authorization exists. |
+| License boundary explicit? | Yes: exact restored source is immutable research material, not MIT; derived artifacts stay ignored, public builds exclude both, and no Anthropic redistribution authorization exists. |
 | Replayable and independently reversible? | Yes for the current native target: exact digests/manifests, two byte-identical package passes, and the official CLI path provide replay and rollback evidence. Other npm targets require their own replay and qualification. |
 | Minimal implementation? | Yes: delete proven non-IM surfaces first; defer telemetry/diagnostics/shared updater logic. |
 

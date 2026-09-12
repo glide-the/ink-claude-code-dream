@@ -3,6 +3,7 @@
 // [Output] A real-process stdio/HTTP MCP differential receipt.
 // [Pos] Protocol release gate for handshake, tools, resources, inventory, and colon names.
 // [Sync] 2026-08-24: bind MCP differential evidence to the exact native Runtime target.
+// [Sync] 2026-09-13: require candidate identity Runtime 0.1.9 in new MCP evidence.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -15,6 +16,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const contractScript = path.join(repoRoot, "scripts", "run-core-mcp-contract.py");
 const python = process.env.INK_SDK_PYTHON;
+const fixturePython = process.env.INK_MCP_FIXTURE_PYTHON || python;
 const referenceCli = process.env.INK_TEST_REFERENCE_CLI;
 const candidateCli = process.env.INK_TEST_CANDIDATE_CLI;
 const coreBuildReceiptPath = process.env.INK_CORE_BUILD_RECEIPT;
@@ -22,6 +24,7 @@ const coreBundlePath = process.env.INK_CORE_BUNDLE_PATH;
 
 for (const [name, value] of Object.entries({
   INK_SDK_PYTHON: python,
+  INK_MCP_FIXTURE_PYTHON: fixturePython,
   INK_TEST_REFERENCE_CLI: referenceCli,
   INK_TEST_CANDIDATE_CLI: candidateCli,
 })) {
@@ -44,7 +47,7 @@ function runLane(label, cli, transport) {
       "--cli",
       cli,
       "--python",
-      python,
+      fixturePython,
       "--transport",
       transport,
       "--output",
@@ -113,7 +116,7 @@ async function qualificationSubject() {
   const bundle = await readFile(path.resolve(coreBundlePath));
   return {
     runtime: "ink-claude-code-dream",
-    version: "0.1.4",
+    version: "0.1.9",
     coreBundleSha256: createHash("sha256").update(bundle).digest("hex"),
     sourceDigest: coreReceipt.sourceDigest.digest,
     runtimeTarget: coreReceipt.runtimeTarget,

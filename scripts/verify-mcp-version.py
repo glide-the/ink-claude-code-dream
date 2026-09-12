@@ -1,6 +1,7 @@
-"""[Input] Isolated environment containing public claude-agent-sdk 0.2.144 and one expected mcp release.
+"""[Input] Isolated environment containing public claude-agent-sdk 0.2.145 and one expected mcp release.
 [Output] Exercise real in-memory MCP initialize/ping/tools/resources/prompts/audio/structuredContent forwarding.
 [Pos] Network-free matrix payload; the runner creates disposable environments and never changes Dream/SDK repos.
+[Sync] 2026-09-13: pair MCP matrix evidence with Runtime 0.1.9 diagnostics.
 """
 
 from __future__ import annotations
@@ -21,12 +22,12 @@ from claude_agent_sdk._internal.sdk_mcp_bridge import SdkMcpBridge
 INITIALIZE = {
     "protocolVersion": "2025-06-18",
     "capabilities": {},
-    "clientInfo": {"name": "ink-runtime-matrix", "version": "0.1.4"},
+    "clientInfo": {"name": "ink-runtime-matrix", "version": "0.1.9"},
 }
 
 
 def server() -> Server:
-    instance = Server("ink-matrix", version="0.1.4")
+    instance = Server("ink-matrix", version="0.1.9")
     tools = [
         mcp.types.Tool.model_validate(
             {
@@ -74,7 +75,7 @@ def server() -> Server:
 async def exercise(expected: str) -> dict[str, object]:
     actual_sdk = package_version("claude-agent-sdk")
     actual_mcp = package_version("mcp")
-    if actual_sdk != "0.2.144" or actual_mcp != expected or MCP_MAJOR != 1:
+    if actual_sdk != "0.2.145" or actual_mcp != expected or MCP_MAJOR != 1:
         raise AssertionError(
             f"unexpected matrix environment sdk={actual_sdk} mcp={actual_mcp} major={MCP_MAJOR}"
         )

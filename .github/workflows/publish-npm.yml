@@ -1,86 +1,50 @@
-# [Input] One successful same-SHA clean-room qualification run plus checked publication gates and an approved npm authentication mode.
-# [Output] Four platform packages followed by the selector package through npm OIDC, with an explicit Environment-secret token fallback.
-# [Pos] Main-only manual publisher; checked acceptance and same-SHA qualification are mandatory.
-# [Sync] 2026-08-26: token mode removes OIDC carriers and passes an explicit CLI provenance override without changing qualified tarballs.
+# [Input] Successful same-repository/main qualification and the unchanged exact five-tarball release set.
+# [Output] Four native packages then package-root selector via existing npm environment credentials/OIDC.
+# [Pos] Automatic successor of qualification; never builds or substitutes retired artifacts.
+# [Sync] 2026-09-13: restore real CI publishing, immutable retries and public integrity verification.
 
-name: Publish clean-room npm Runtime
-
+name: Publish npm Runtime
 on:
+  workflow_run:
+    workflows: [Qualify npm Runtime]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       qualification_run_id:
-        description: Successful qualify-npm-runtime workflow run ID for this exact main commit
+        description: Successful qualification run ID for the current main commit
         required: true
         type: string
-      trusted_publishers_configured:
-        description: Confirm all five names were bootstrapped with 2FA and Trusted Publishers are configured
-        required: true
-        default: false
-        type: boolean
-      npm_access_token_configured:
-        description: Confirm the npm Environment contains a scoped, short-lived NPM_TOKEN fallback
-        required: true
-        default: false
-        type: boolean
-
 permissions:
   actions: read
   contents: read
-
+concurrency:
+  group: publish-npm-runtime
+  cancel-in-progress: false
 jobs:
   validate:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     outputs:
-      version: ${{ steps.policy.outputs.version }}
+      source_sha: ${{ steps.run.outputs.source_sha }}
+      run_id: ${{ steps.run.outputs.run_id }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24.13.0
-      - name: Require main, npm bootstrap, and checked publication gates
-        id: policy
-        shell: bash
-        run: |
-          test "$GITHUB_REF_NAME" = main
-          if [[ '${{ inputs.trusted_publishers_configured }}' != true && \
-                '${{ inputs.npm_access_token_configured }}' != true ]]; then
-            echo '::error::configure Trusted Publisher or the npm Environment NPM_TOKEN fallback'
-            exit 1
-          fi
-          node --input-type=module <<'EOF'
-          import { createHash } from "node:crypto";
-          import { appendFileSync, readFileSync } from "node:fs";
-          const artifact = JSON.parse(readFileSync("runtime/cleanroom-artifact-policy.json", "utf8"));
-          const npmPolicy = JSON.parse(readFileSync("runtime/cleanroom-npm-policy.json", "utf8"));
-          const gate = artifact.publicationGate;
-          const hosts = Object.values(gate.targetHostQualification ?? {});
-          const receiptBody = readFileSync(gate.businessAcceptance?.receiptPath);
-          const receiptSha256 = createHash("sha256").update(receiptBody).digest("hex");
-          if (
-            gate.productionEligible !== true || gate.publicationAllowed !== true ||
-            gate.redistributionAllowed !== true || gate.businessAcceptance?.passed !== true ||
-            gate.businessAcceptance?.receiptSha256 !== receiptSha256 ||
-            hosts.length !== 4 || hosts.some(value => value !== true) ||
-            npmPolicy.publication?.npmPublishAllowed !== true
-          ) throw new Error("checked clean-room publication gate is closed");
-          appendFileSync(process.env.GITHUB_OUTPUT, `version=${npmPolicy.version}\n`);
-          EOF
-      - name: Validate exact qualification run provenance
+      - name: Bind successful qualification to this repository and current main
+        id: run
         env:
           GH_TOKEN: ${{ github.token }}
-          QUALIFICATION_RUN_ID: ${{ inputs.qualification_run_id }}
-        shell: bash
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id || inputs.qualification_run_id }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QUALIFICATION_RUN_ID" > "$RUNNER_TEMP/qualification.json"
-          jq -e \
-            --arg repository "$GITHUB_REPOSITORY" \
-            --arg sha "$GITHUB_SHA" \
-            '.head_repository.full_name == $repository and
-             .path == ".github/workflows/qualify-npm-runtime.yml" and
-             .head_sha == $sha and .head_branch == "main" and
-             .status == "completed" and .conclusion == "success"' \
-            "$RUNNER_TEMP/qualification.json"
-
+          set -euo pipefail
+          main_sha=$(gh api "repos/$GH_REPO/commits/main" --jq .sha)
+          gh api "repos/$GH_REPO/actions/runs/$RUN_ID" --jq . > "$RUNNER_TEMP/run.json"
+          jq -e --arg repo "$GH_REPO" --arg sha "$main_sha" \
+            '.head_repository.full_name == $repo and .head_sha == $sha and
+             .head_branch == "main" and .path == ".github/workflows/qualify-npm-runtime.yml" and
+             .status == "completed" and .conclusion == "success"' "$RUNNER_TEMP/run.json"
+          echo "source_sha=$main_sha" >> "$GITHUB_OUTPUT"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
   publish:
     needs: validate
     runs-on: ubuntu-24.04
@@ -91,47 +55,26 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.validate.outputs.source_sha }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.13.0
           registry-url: https://registry.npmjs.org
-      - name: Verify the explicit npm access-token fallback
-        if: inputs.npm_access_token_configured
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        shell: bash
-        run: |
-          test -n "$NODE_AUTH_TOKEN"
-          npm whoami --registry=https://registry.npmjs.org/
-      - run: npm install --ignore-scripts --no-audit --no-fund
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile
+      - run: npm run npm:legal
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: cleanroom-npm-${{ github.sha }}
+          name: qualified-npm-${{ needs.validate.outputs.source_sha }}
           path: dist/npm-publish
-          run-id: ${{ inputs.qualification_run_id }}
+          run-id: ${{ needs.validate.outputs.run_id }}
           github-token: ${{ github.token }}
-      - name: Re-verify and publish platforms before selector
+      - name: Re-verify unchanged five-package set
+        run: node scripts/verify-npm-tarball.mjs dist/npm-publish/*.tgz
+      - name: Publish platforms before selector and verify immutable public bytes
         env:
-          NPM_ACCESS_TOKEN_MODE: ${{ inputs.npm_access_token_configured }}
-          NODE_AUTH_TOKEN: ${{ inputs.npm_access_token_configured && secrets.NPM_TOKEN || '' }}
-          NPM_CONFIG_PROVENANCE: ${{ inputs.npm_access_token_configured && 'false' || '' }}
-        shell: bash
-        run: |
-          if [[ "$NPM_ACCESS_TOKEN_MODE" = true ]]; then
-            unset ACTIONS_ID_TOKEN_REQUEST_URL ACTIONS_ID_TOKEN_REQUEST_TOKEN
-            publish_args=(--access public --provenance=false)
-          else
-            publish_args=(--access public)
-          fi
-          shopt -s nullglob
-          archives=(dist/npm-publish/*.tgz)
-          test "${#archives[@]}" -eq 5
-          node scripts/verify-cleanroom-npm.mjs "${archives[@]}"
-          for target in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
-            matches=(dist/npm-publish/*-"$target"-${{ needs.validate.outputs.version }}.tgz)
-            test "${#matches[@]}" -eq 1
-            npm publish "${matches[0]}" "${publish_args[@]}"
-          done
-          meta=(dist/npm-publish/glide-the-ink-claude-code-dream-${{ needs.validate.outputs.version }}.tgz)
-          test "${#meta[@]}" -eq 1
-          npm publish "${meta[0]}" "${publish_args[@]}"
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node scripts/publish-qualified-npm.mjs dist/npm-publish
