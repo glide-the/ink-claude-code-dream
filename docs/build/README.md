@@ -1,12 +1,12 @@
 <!-- [Input] Canonical original src modules, locked tooling, recovered dependencies/assets and current policy. -->
 <!-- [Output] Actual original-module build and verification commands with explicit release boundaries. -->
 <!-- [Pos] Current build guide; previous envelope/cleanroom procedures are historical only. -->
-<!-- [Sync] 2026-09-13: compile original src by default at Runtime 0.1.8. -->
+<!-- [Sync] 2026-09-13: compile unique original src at Runtime 0.1.9 and retain Dream contract deltas. -->
 
 # Build and package
 
-There is one active Runtime implementation: original `src`, identical to
-`restored-src/src`. The default build enters `src/entrypoints/cli.tsx`.
+There is one active Runtime implementation: original `src`, verified against
+`runtime/source-provenance.json`. The default build enters `src/entrypoints/cli.tsx`.
 `src/cleanroom` and the envelope/fake-core builders are removed, recoverable at
 Git commit `38fdd3c`, not alternative current build products.
 
@@ -19,7 +19,7 @@ only; its src is never compiled.
 
 ```sh
 bun install --frozen-lockfile
-node scripts/sync-restored-source.mjs verify
+npm run source:verify
 
 INK_AUTHORIZED_CORE_SOURCE_ROOT=/absolute/path/to/claude-code-sourcemap/restored-src \
 INK_AUTHORIZED_CORE_PACKAGE_ROOT=/absolute/path/to/claude-code-sourcemap/package \
@@ -36,7 +36,7 @@ source digest, build receipt, graph gaps and DCE assertions remain checked.
 The implementation root is hardwired to this repository.
 
 The builder applies existing `runtime/core-prune-profile.json` headless transforms
-and `compat/mcp-auth` deltas without editing original src. It writes only Git-ignored
+and `compat/mcp-auth` / `compat/dream-runtime` deltas without editing original src. It writes only Git-ignored
 `dist/core-local`. Receipt sourceLayout must prove repository src input and no parallel
 implementation. Verifier rejects restored-src/cleanroom build paths.
 
@@ -50,13 +50,14 @@ SHA-256 `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`.
 digests. It does not change archive/ZIP policy.
 
 `npm run package` uses the current local original-core packager after build verification.
-Candidate receipts remain unqualified. The installer still requires exact digest-bound
-production eligibility; this correction does not install or deploy a candidate.
-Four native targets plus package-root selector are a future source-derived qualification
+Production eligibility is computed from fresh digest-bound receipts, not hardcoded.
+The current Darwin ARM64 base local-core package is qualified; installation still requires
+its exact manifest. npm capability qualification and all four native hosts remain separate.
+Four native targets plus package-root selector are the source-derived CI qualification
 plan in `runtime/npm-release-policy.json`, not an already-passing five-native fixture lane.
 
 Original source copyright is retained; root is private UNLICENSED and public release
-authority remains closed. Old cleanroom MIT qualification/publishing workflows cannot
-be reused, and current placeholders fail closed without publication/token steps.
-See [0.1.8 results](runtime-0.1.8-release-notes.md), [test guide](../test/README.md) and
+authority is recorded from the operator confirmation. Old cleanroom MIT receipts cannot
+qualify these bytes; real four-host CI now feeds exact archives to automatic publishing.
+See [0.1.9 results](runtime-0.1.9-release-notes.md), [test guide](../test/README.md) and
 [alignment decision](../design/claude-sourcemap-package-contract-alignment.md).

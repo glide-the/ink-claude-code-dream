@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // [Input] One legally authorized generated native platform package stage.
 // [Output] Reviewed Bun postinstall, dry-run/real pack, strict tgz verification, clean install, and executable smoke evidence.
-// [Pos] Pre-publish npm acceptance; current closed legal gate prevents stage creation and therefore prevents this smoke.
+// [Pos] Pre-publish npm acceptance for exactly qualified original-source platform artifacts.
+// [Sync] 2026-09-13: preserve the upstream CLI version banner instead of expecting the retired cleanroom format.
 
 import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
@@ -66,7 +67,7 @@ try {
     ["--version"],
     installRoot,
   ).trim();
-  if (cliVersion !== "2.1.241") {
+  if (!/^2\.1\.241(?: \(Claude Code\))?$/.test(cliVersion)) {
     throw new Error(`[npm-smoke] expected CLI compatibility version 2.1.241, received ${cliVersion}`);
   }
   process.stdout.write(`${JSON.stringify({ status: "npm-smoke-passed", platformPackage: platformPackage.name, bunVersion, cliVersion, tarballs: 1, sourceMaps: 0 })}\n`);

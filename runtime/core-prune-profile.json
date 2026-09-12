@@ -216,6 +216,7 @@
     "tools.permissions",
     "workspace.cwd",
     "sandbox",
+    "sandbox.notion-cli",
     "tmpdir.CLAUDE_CODE_TMPDIR",
     "mcp.stdio-http-oauth-resources",
     "extensions.plugins-skills-hooks",
@@ -247,6 +248,12 @@
     ],
     "sandbox": [
       "src/utils/sandbox/sandbox-adapter.ts"
+    ],
+    "sandbox.notion-cli": [
+      "src/utils/Shell.ts",
+      "src/utils/subprocessEnv.ts",
+      "src/utils/sandbox/sandbox-adapter.ts",
+      "compat/dream-runtime/policy.ts"
     ],
     "tmpdir.CLAUDE_CODE_TMPDIR": [
       "src/utils/permissions/filesystem.ts"

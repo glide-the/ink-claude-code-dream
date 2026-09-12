@@ -138,6 +138,7 @@ test("required Dream capability roots remain explicit", () => {
       "tools.permissions",
       "workspace.cwd",
       "sandbox",
+      "sandbox.notion-cli",
       "tmpdir.CLAUDE_CODE_TMPDIR",
       "mcp.stdio-http-oauth-resources",
       "extensions.plugins-skills-hooks",

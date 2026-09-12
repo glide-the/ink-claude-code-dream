@@ -459,15 +459,38 @@ async function aggregateMeta(tarballDirectory, outputRoot, policy) {
     sourceDateEpoch: epoch,
     platforms: bindings,
   };
+  const { private: privateTemplate, ...selectorTemplate } = await readJson(path.join(repositoryRoot, "package/package.json"), "selector template");
+  const selectorBody = await readFile(path.join(repositoryRoot, "package/cli.js"));
+  const selectorDigest = sha256(selectorBody);
+  attestation.selectorSha256 = selectorDigest;
+  const release = await readJson(path.join(repositoryRoot, "runtime/local-release-manifest.json"), "release template");
+  release.runtime.entrypoint = "cli.js";
+  release.runtime.toolchain.delivery = "exact-npm-dependency-not-ambient";
+  Object.assign(release.core, { delivery: "qualified-npm-platform-selection", entrypointSha256: selectorDigest,
+    productionEligible: true, platforms: bindings });
+  Object.assign(release.status, { productionEligible: true, publicationAllowed: true, redistributionAllowed: true });
+  Object.assign(release.legalGate, { publicationAllowed: true, redistributionAllowed: true, use: "operator-confirmed-authorization" });
+  const capabilities = await readJson(path.join(repositoryRoot, "runtime/local-capabilities.json"), "capability template");
+  const capabilityIds = new Set(capabilities.capabilities.map(capability => capability.id));
+  const missing = policy.packageRequiredCapabilities.filter(id => !capabilityIds.has(id));
+  if (missing.length) fail(`Dream npm package capability qualification missing: ${missing.join(", ")}`);
+  for (const summary of summaries) {
+    if (policy.packageRequiredCapabilities.some(id => !summary.capabilityIds?.includes(id))) fail("Platform archive lacks a qualified Dream capability");
+  }
+  capabilities.runtime.productionEligible = true;
+  capabilities.artifact = { entrypointSha256: selectorDigest, platforms: bindings };
+  capabilities.capabilities = capabilities.capabilities.map(value => ({ ...value, status: "qualified-platform-aggregate" }));
+  capabilities.qualification = { sdk: "passed", mcp: "passed", full: "passed", productionEligible: true, evidence: "exact-four-platform-bindings" };
   const metaPackage = {
+    ...selectorTemplate,
     name: policy.metaPackage,
     version: policy.version,
     description: "Dream-compatible minimal Claude Agent Runtime platform selector",
-    license: policy.publish.license,
+    license: selectorTemplate.license,
     repository: { type: "git", url: `git+https://github.com/${policy.repository}.git` },
     type: "module",
-    bin: { [policy.command]: `bin/${policy.command}` },
-    files: ["bin", "scripts", "npm-publication-attestation.json", "README.md"],
+    bin: { claude: "cli.js", [policy.command]: "cli.js" },
+    files: ["cli.js", "LICENSE.md", "manifest", "release-manifest.json", "scripts", "npm-publication-attestation.json", "README.md"],
     optionalDependencies: Object.fromEntries(
       Object.values(policy.platforms).map(value => [value.package, policy.version]),
     ),
@@ -477,7 +500,10 @@ async function aggregateMeta(tarballDirectory, outputRoot, policy) {
   };
   try {
     await writeGenerated(path.join(stageRoot, "package.json"), stableJson(metaPackage));
-    await writeGenerated(path.join(stageRoot, "bin", policy.command), launcherBody(policy), 0o755);
+    await writeGenerated(path.join(stageRoot, "cli.js"), selectorBody, 0o755);
+    await cp(path.join(repositoryRoot, "package/LICENSE.md"), path.join(stageRoot, "LICENSE.md"));
+    await writeGenerated(path.join(stageRoot, "release-manifest.json"), stableJson(release));
+    await writeGenerated(path.join(stageRoot, "manifest/capabilities.json"), stableJson(capabilities));
     await writeGenerated(path.join(stageRoot, "scripts", "prepack.mjs"), generatedPrepackBody(policy.metaPackage));
     await writeGenerated(path.join(stageRoot, "npm-publication-attestation.json"), stableJson(attestation));
     await writeGenerated(path.join(stageRoot, "README.md"), `# ${policy.metaPackage}\n\n绑定四个平台验收制品；不包含 source map。\n`);

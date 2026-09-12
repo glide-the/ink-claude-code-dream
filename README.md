@@ -5,8 +5,8 @@
 
 # ink-claude-code-dream
 
-Runtime `0.1.8` uses the original `claude-code-sourcemap` modules directly.
-`src` and `restored-src/src` have identical directories, module paths, permissions and
+Runtime `0.1.9` uses the original `claude-code-sourcemap` modules directly.
+`src` is the only implementation and preserves original directories, module paths, permissions and
 initial bytes: **1,902 files, 35 module directories, 30,382,832 bytes**.
 The default build compiles `src/entrypoints/cli.tsx`, not a wrapper or a side snapshot.
 The separate `src/cleanroom` implementation is removed. Its previous code is recoverable
@@ -15,7 +15,7 @@ from Git commit `38fdd3c`; it is not a second active Runtime.
 The [source-layout contract](runtime/source-layout.json) and
 [alignment decision](docs/design/claude-sourcemap-package-contract-alignment.md) describe
 this correction. The reference is from commit
-`a8a678cb6244e6770e1e421767ff0987a1d95549`; both original source trees have inventory SHA-256
+`a8a678cb6244e6770e1e421767ff0987a1d95549`; the unique source tree has inventory SHA-256
 `40269454cd690c74d129a31699935d6db713f2958aabe4787e01617e1c92a906`.
 Original source headers and module names are not rewritten.
 
@@ -25,7 +25,7 @@ Use Node `24.13.0` and the locked Bun `1.4.0`:
 
 ```sh
 bun install --frozen-lockfile
-node scripts/sync-restored-source.mjs verify
+npm run source:verify
 
 INK_AUTHORIZED_CORE_SOURCE_ROOT=/absolute/path/to/claude-code-sourcemap/restored-src \
 INK_AUTHORIZED_CORE_PACKAGE_ROOT=/absolute/path/to/claude-code-sourcemap/package \
@@ -64,14 +64,18 @@ The MCP fixture can use a separate interpreter; Dream's MCP 1.x environment is u
 The smoke checks version, empty MCP inventory and explicit interactive-mode rejection.
 This build is headless; restoring the original UI modules does not mean they are enabled.
 Current results and remaining qualification boundaries are in
-[0.1.8 notes](docs/build/runtime-0.1.8-release-notes.md).
+[0.1.9 notes](docs/build/runtime-0.1.9-release-notes.md).
 
 ## Module and capability boundary
 
 All 35 original directories, including `assistant`, `bootstrap`, `bridge`, `buddy`,
 `cli`, `components`, `entrypoints`, `services`, `tools`, `ink` and `voice`, remain
-physically intact in both source trees. The synchronizer and tests reject extra, missing,
+physically intact in the unique `src` tree. The read-only verifier and tests reject extra, missing,
 renamed or byte-modified modules, including extra empty directories.
+
+Source-bound build deltas preserve Dream's Notion-only native Bash projection,
+exclude its credentials from generic/hooks/stdio MCP children, and honor explicit
+server-owned model max-output/context and global effort without model-ID guessing.
 
 The build profile retains headless SDK JSON/JSONL, control/cancel, session/resume,
 tool use and permissions, Workspace/files/sandbox, MCP transports/OAuth/resources,
@@ -86,8 +90,8 @@ The private root package is the build workspace, not the npm selector.
 `cli.js`. Both command aliases select an exact native optional package. The selector is
 repository-authored; its MIT license does not relicense the original Runtime modules.
 
-Runtime project, selector and native expectations are `0.1.8`.
-Dream's resolver, Docker, AutoDL and fixtures pin the same version; Dream metadata is
+Runtime project, selector and native expectations are `0.1.9`.
+Dream adoption is pending successful publication and verified installation; current Dream metadata is
 backend `0.1.2` / frontend `0.0.2`. Python SDK stays `0.2.145`, source provenance
 `2.1.88`, and Dream-facing CLI compatibility `2.1.241`; API schema stays `2.0.0`.
 
@@ -105,10 +109,10 @@ MCP Apps UI hosting. See [the Host design](docs/design/mcp-apps-marketplace-and-
 Original modules retain Anthropic copyright and research-only provenance. The mixed-source
 root is private and `UNLICENSED`. Combining these modules into the actual implementation
 is technically supported; public redistribution/publication is a separate authority gate
-and remains closed. No credentials, user data, generated artifacts or source maps are
+and is recorded in runtime/source-authorization.json based on the operator confirmation. No credentials, user data, generated artifacts or source maps are
 added to packages or Git by this correction. CI checks source consistency and static
-contracts; publishing workflows are fail-closed and contain no publish step.
+contracts; main qualification now builds on four native hosts and automatically feeds the exact artifacts to publishing.
 
-No push, npm publication, production installation/deployment, API, database or ZIP-policy
-change is part of this source integration. See [build](docs/build/README.md),
+Release and local adoption follow the [current design](docs/design/single-source-release-and-dream-adoption.md).
+No API, database or ZIP-policy change is planned. See [build](docs/build/README.md),
 [test](docs/test/README.md), and [historical 0.1.7 notes](docs/build/runtime-0.1.7-release-notes.md).

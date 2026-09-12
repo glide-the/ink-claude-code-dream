@@ -3,7 +3,7 @@
 // [Output] Build a byte-reproducible, local-only Bun Runtime artifact with manifest, checksums, SBOM, license, and qualification evidence.
 // [Pos] Fail-closed local derived-artifact packager; it never reads or copies restored source or mutable user Runtime data.
 // [Sync] 2026-08-24: bind package and qualification evidence to one native darwin/linux target.
-// [Sync] 2026-09-13: package the separately gated local-core Runtime 0.1.8 candidate and checked research snapshot boundary.
+// [Sync] 2026-09-13: package the separately gated local-core Runtime 0.1.9 candidate and checked research snapshot boundary.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -152,7 +152,7 @@ function validatePolicy(policy) {
   if (policy.schemaVersion !== "ink-core-local-artifact-policy/v1") fail("unsupported local artifact policy");
   if (
     policy.artifact?.name !== "ink-claude-code-dream" ||
-    policy.artifact?.version !== "0.1.8" ||
+    policy.artifact?.version !== "0.1.9" ||
     policy.artifact?.entrypoint !== "bin/ink-claude-code-dream" ||
     policy.artifact?.coreEntrypoint !== "lib/core/cli.js" ||
     policy.artifact?.bunVersion !== "1.4.0" ||
@@ -184,7 +184,7 @@ function validatePolicy(policy) {
     publicationAllowed !== redistributionAllowed ||
     policy.legalGate?.restoredSourceMayBeCommitted !== true ||
     policy.legalGate?.restoredSourceUse !== "checked-research-and-local-qualification-only" ||
-    policy.legalGate?.restoredSourceSnapshot !== "restored-src/source-snapshot.json" ||
+    policy.legalGate?.restoredSourceSnapshot !== "runtime/source-provenance.json" ||
     policy.legalGate?.restoredSourceMayBePublished !== false ||
     typeof policy.legalGate?.derivedBundleMayBeCommitted !== "boolean"
   ) {
@@ -324,6 +324,17 @@ async function collectQualifications({ policy, arguments_, coreDigest, sourceDig
         mcpManagementReceiptSha256: managementDigest,
         mcpManagementEvidenceType: value.management.evidenceType,
       };
+      if (value.dreamCompatibility?.status !== "passed" || value.dreamCompatibility?.notionQualified !== true ||
+          value.dreamCompatibility?.modelProjectionQualified !== true ||
+          value.dreamCompatibility?.evidenceType !== "real-process-dream-runtime-contract" ||
+          !/^[a-f0-9]{64}$/.test(value.inputs?.dreamRuntimeReceiptSha256 ?? "")) {
+        if (explicit) fail("full qualification lacks bound Dream Notion/model process evidence");
+        results[gate.id] = { status: "missing", evidenceType: null, receiptSha256: null };
+        continue;
+      }
+      embeddedEvidence.dreamNotionQualified = true;
+      embeddedEvidence.dreamModelProjectionQualified = true;
+      embeddedEvidence.dreamRuntimeReceiptSha256 = value.inputs.dreamRuntimeReceiptSha256;
     }
     results[gate.id] = {
       status: "passed",
@@ -451,7 +462,7 @@ function cyclonedx(receipt, policy, coreDigest, licenses) {
     name: component.name,
     version: String(component.version),
     "bom-ref": `pkg:generic/${encodeURIComponent(component.name)}@${encodeURIComponent(String(component.version))}`,
-    licenses: [{ license: component.license.startsWith("LicenseRef-") || component.license === "UNLICENSED"
+    licenses: [{ license: component.license.startsWith("LicenseRef-") || component.license.startsWith("SEE LICENSE IN ") || component.license === "UNLICENSED"
       ? { name: component.license }
       : { id: component.license } }],
     properties: [
@@ -495,6 +506,9 @@ async function buildArtifact({ destination, inputRoot, policy, releaseTemplate, 
   await mkdir(path.join(destination, "bin"), { recursive: true });
   await mkdir(path.join(destination, "lib", "core"), { recursive: true });
   await mkdir(path.join(destination, "manifest"), { recursive: true });
+  // Preserve the original notice in the immutable checksummed payload.
+  await copyFile(path.join(repositoryRoot, "runtime/source-LICENSE.md"), path.join(destination, "manifest/source-LICENSE.md"));
+  await chmod(path.join(destination, "manifest/source-LICENSE.md"), 0o644);
   const runtimeAssetModes = new Map(
     (receipt.runtimeAssets ?? []).map(asset => [asset.output, asset.mode]),
   );
@@ -567,7 +581,9 @@ async function buildArtifact({ destination, inputRoot, policy, releaseTemplate, 
     return {
       ...capability,
       status:
-        capability.id === "mcp.management.identity"
+        capability.id === "sandbox.notion-cli"
+          ? qualifications.full?.dreamNotionQualified === true ? "qualified-process-contract" : "unqualified"
+          : capability.id === "mcp.management.identity"
           ? managementQualified
             ? "qualified-process-contract"
             : "unqualified"

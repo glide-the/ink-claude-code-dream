@@ -29,5 +29,6 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run test:mcp-auth-compat
-      - name: Verify original implementation and reference are identical
-        run: npm run restored-source:verify
+      - run: npm run test:dream-compat
+      - name: Verify unique original implementation
+        run: npm run source:verify

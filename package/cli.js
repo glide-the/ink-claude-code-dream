@@ -51,9 +51,8 @@ if (
 
 const executable = path.join(
   path.dirname(platformPackageJson),
-  "runtime",
   "bin",
-  "ink-claude-code-dream",
+  "ink-claude-code-dream-platform",
 );
 const child = spawn(executable, process.argv.slice(2), {
   stdio: "inherit",

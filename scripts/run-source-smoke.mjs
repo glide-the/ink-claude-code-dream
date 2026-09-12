@@ -34,7 +34,7 @@ try {
   if (interactive.status !== 2 || !interactive.stderr.includes("accepts only print")) {
     throw new Error("headless interactive-mode rejection failed");
   }
-  console.log(JSON.stringify({ ok: true, runtime: "0.1.8", implementationRoot: "src",
+  console.log(JSON.stringify({ ok: true, runtime: "0.1.9", implementationRoot: "src",
     version: version.stdout.trim(), mcpInventory: true, interactiveMode: "rejected",
     providerRequests: 0, fakeCore: false }));
 } finally { await rm(fixture, { recursive: true, force: true }); }

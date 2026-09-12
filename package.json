@@ -1,6 +1,6 @@
 {
   "name": "ink-claude-code-dream",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "private": true,
   "license": "UNLICENSED",
   "type": "module",
@@ -22,7 +22,7 @@
   },
   "scripts": {
     "lint": "node scripts/lint.mjs",
-    "restored-source:verify": "node scripts/sync-restored-source.mjs verify",
+    "source:verify": "node scripts/verify-original-source.mjs",
     "build": "./node_modules/.bin/bun scripts/build.ts",
     "test": "node --test --test-concurrency=1 tests/*.test.mjs",
     "test:upstream-sdk": "node scripts/run-unified-sdk-contract.mjs",
@@ -30,6 +30,7 @@
     "test:acceptance": "node scripts/run-source-smoke.mjs",
     "test:mcp-matrix": "node scripts/run-mcp-matrix.mjs",
     "test:mcp-auth-compat": "./node_modules/.bin/bun --cwd compat/mcp-auth test",
+    "test:dream-compat": "./node_modules/.bin/bun test compat/dream-runtime",
     "test:core-oauth": "node scripts/run-core-oauth-cli-contract.mjs",
     "test:pruning-evidence": "node scripts/verify-core-prune.mjs",
     "build:core-local": "./node_modules/.bin/bun scripts/build-core-prune.ts",

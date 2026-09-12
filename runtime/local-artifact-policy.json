@@ -2,8 +2,8 @@
   "schemaVersion": "ink-core-local-artifact-policy/v1",
   "artifact": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.8",
-    "directory": "dist/core-package-local/ink-claude-code-dream-0.1.8",
+    "version": "0.1.9",
+    "directory": "dist/core-package-local/ink-claude-code-dream-0.1.9",
     "entrypoint": "bin/ink-claude-code-dream",
     "coreEntrypoint": "lib/core/cli.js",
     "bunVersion": "1.4.0",
@@ -40,6 +40,7 @@
       "protocol.control.bidirectional",
       "protocol.streaming",
       "sandbox",
+      "sandbox.notion-cli",
       "session.resume",
       "tmpdir.thread-local",
       "transcript.jsonl",
@@ -79,7 +80,7 @@
     "schemaVersion": 1,
     "status": "passed",
     "subjectRuntime": "ink-claude-code-dream",
-    "subjectVersion": "0.1.8",
+    "subjectVersion": "0.1.9",
     "requireCoreBundleSha256": true,
     "requireSourceDigest": true
   },
@@ -114,14 +115,14 @@
   },
   "legalGate": {
     "localDerivedArtifact": true,
-    "publicationAllowed": false,
-    "redistributionAllowed": false,
-    "redistributionStatus": "blocked-without-separate-written-authorization",
-    "publicationLicense": null,
-    "authorizationReference": null,
+    "publicationAllowed": true,
+    "redistributionAllowed": true,
+    "redistributionStatus": "operator-confirmed-existing-source-authorization",
+    "publicationLicense": "SEE LICENSE IN runtime/manifest/source-LICENSE.md",
+    "authorizationReference": "runtime/source-authorization.json",
     "restoredSourceMayBeCommitted": true,
     "restoredSourceUse": "checked-research-and-local-qualification-only",
-    "restoredSourceSnapshot": "restored-src/source-snapshot.json",
+    "restoredSourceSnapshot": "runtime/source-provenance.json",
     "restoredSourceMayBePublished": false,
     "derivedBundleMayBeCommitted": false
   }

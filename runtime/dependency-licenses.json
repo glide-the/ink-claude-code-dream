@@ -3,7 +3,7 @@
   "generatedFrom": "package manifests and official package LICENSE evidence observed 2026-08-23",
   "project": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.8",
+    "version": "0.1.9",
     "license": "UNLICENSED",
     "private": true
   },
@@ -49,7 +49,7 @@
     "wrapperMayOnlySuperviseAndPassOfficialDocumentedFlags": true,
     "vendorSourceMayBeCommitted": false,
     "restoredResearchSnapshotMayBeCommitted": true,
-    "restoredResearchSnapshot": "restored-src/source-snapshot.json",
+    "restoredResearchSnapshot": "runtime/source-provenance.json",
     "restoredResearchSnapshotMayBePublished": false,
     "vendorBinaryMayBeCommitted": false,
     "wrapperMayBeBrandedAsClaudeCode": false,

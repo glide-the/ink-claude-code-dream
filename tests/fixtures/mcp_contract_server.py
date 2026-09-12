@@ -34,6 +34,7 @@ async def audit_middleware(
         entry = {
             "method": ctx.method,
             "notification": ctx.request_id is None,
+            "notionPresent": any(name in os.environ for name in ("NOTION_HOME", "NOTION_API_TOKEN", "NOTION_KEYRING", "NOTION_WORKERS_CONFIG_FILE")),
         }
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(entry, separators=(",", ":")) + "\n")

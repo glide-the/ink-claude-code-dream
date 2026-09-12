@@ -34,6 +34,7 @@ import {
   getMcpCompatibilityTransformsForArtifact,
   MCP_COMPATIBILITY_VIRTUAL_MODULE_RESOLUTIONS,
 } from "../compat/mcp-auth/src/patch-spec.ts";
+import { applyDreamSourceTransform, DREAM_SOURCE_TARGETS } from "../compat/dream-runtime/source-transforms.ts";
 
 type JsonObject = Record<string, unknown>;
 
@@ -540,6 +541,20 @@ for (const emptyModule of profile.emptyModuleAllowlist) {
   }
 }
 const sourceTransforms = new Map(profile.sourceTransforms.map(entry => [entry.path, entry]));
+const dreamSourceTransforms = new Map(DREAM_SOURCE_TARGETS.map(entry => [entry.path, entry]));
+const dreamHelperPath = join(repositoryRoot, "compat/dream-runtime/policy.ts");
+const dreamTransformerPath = join(repositoryRoot, "compat/dream-runtime/source-transforms.ts");
+for (const target of DREAM_SOURCE_TARGETS) {
+  const body = await readFile(sourcePath(target.path));
+  if (createHash("sha256").update(body).digest("hex") !== target.sha256) {
+    fail(`Dream compatibility original-source digest drift: ${target.path}`);
+  }
+}
+for (const file of [dreamHelperPath, dreamTransformerPath]) {
+  if (await realpath(file) !== file || !(await lstat(file)).isFile()) fail("Dream compatibility source must be a regular canonical file");
+}
+const dreamHelperSha256 = createHash("sha256").update(await readFile(dreamHelperPath)).digest("hex");
+const dreamTransformerSha256 = createHash("sha256").update(await readFile(dreamTransformerPath)).digest("hex");
 if (sourceTransforms.size !== profile.sourceTransforms.length) {
   fail("source transforms must have unique paths");
 }
@@ -591,6 +606,7 @@ const secureStorageSelectorTransformsByPath = new Map(
 );
 const gaps = new Map<string, ResolutionGap>();
 const appliedTransforms = new Set<string>();
+const appliedDreamSourceTransforms = new Set<string>();
 let appliedHeadlessManualOAuthTransform = false;
 const appliedSecureStorageSelectorTransforms = new Set<string>();
 const appliedMcpCompatibilityIds = new Set<string>();
@@ -3600,12 +3616,14 @@ const resolverPlugin = {
       const secureStorageSelectorTransform = secureStorageSelectorTransformsByPath.get(path);
       const mcpTransformIds = mcpTransformsByPath.get(path);
       const dependencyTransform = dependencyTransformsByPath.get(args.path);
+      const dreamTransform = dreamSourceTransforms.get(path);
       if (
         !transform &&
         !applyHeadlessManualOAuth &&
         !secureStorageSelectorTransform &&
         !mcpTransformIds &&
-        !dependencyTransform
+        !dependencyTransform &&
+        !dreamTransform
       ) {
         return undefined;
       }
@@ -3631,6 +3649,10 @@ const resolverPlugin = {
       if (dependencyTransform) {
         contents = transformDependencySource(contents, dependencyTransform);
       }
+      if (dreamTransform) {
+        contents = applyDreamSourceTransform(path, contents);
+        appliedDreamSourceTransforms.add(path);
+      }
       const loader = path.endsWith(".tsx") ? "tsx" : path.endsWith(".ts") ? "ts" : "js";
       try {
         new Bun.Transpiler({ loader }).transformSync(contents);
@@ -3653,6 +3675,11 @@ const resolverPlugin = {
       contents: await readFile(args.path, "utf8"),
       loader: "ts",
       resolveDir: dirname(args.path),
+    }));
+    build.onLoad({ filter: /.*/, namespace: "ink-dream-compat" }, async () => ({
+      contents: await readFile(dreamHelperPath, "utf8"),
+      loader: "ts",
+      resolveDir: dirname(dreamHelperPath),
     }));
     build.onLoad({ filter: /.*/, namespace: "ink-facade" }, (args: { path: string }) => {
       const facade = resolutionMap.virtualFacades[args.path];
@@ -3696,6 +3723,7 @@ const resolverPlugin = {
       if (!resolved) fail(`unknown MCP compatibility virtual module: ${args.path}`);
       return { path: resolved, namespace: "ink-mcp-compat" };
     });
+    build.onResolve({ filter: /^ink:dream-compat$/ }, () => ({ path: dreamHelperPath, namespace: "ink-dream-compat" }));
     build.onResolve(
       { filter: /^\.{1,2}\//, namespace: "ink-mcp-compat" },
       async (args: { path: string; importer: string }) => {
@@ -3987,6 +4015,9 @@ const dceViolations = [
   ...profile.sourceTransforms
     .filter(transform => !appliedTransforms.has(transform.path))
     .map(transform => `source transform was not applied: ${transform.path}`),
+  ...DREAM_SOURCE_TARGETS
+    .filter(transform => !appliedDreamSourceTransforms.has(transform.path))
+    .map(transform => `Dream compatibility transform was not applied: ${transform.path}`),
   ...resolutionMap.dependencyTransforms
     .filter(
       transform =>
@@ -4068,7 +4099,8 @@ const receipt = {
   sourceLayout: {
     implementationRoot: "src",
     entrypoint: "src/entrypoints/cli.tsx",
-    referenceRoot: "restored-src/src",
+    provenance: "runtime/source-provenance.json",
+    singleSource: true,
     implementationSource: "repository",
     externalRootUse: "recovered-dependencies-only",
     parallelImplementation: false,
@@ -4127,6 +4159,15 @@ const receipt = {
     appliedTransformIds: [...appliedMcpCompatibilityIds].sort(),
     assertions: mcpCompatibilityAssertions,
     virtualModules: Object.keys(MCP_COMPATIBILITY_VIRTUAL_MODULE_RESOLUTIONS).sort(),
+  },
+  dreamCompatibility: {
+    requiredTargets: DREAM_SOURCE_TARGETS,
+    appliedSourcePaths: [...appliedDreamSourceTransforms].sort(),
+    helper: "compat/dream-runtime/policy.ts",
+    helperSha256: dreamHelperSha256,
+    transformerSha256: dreamTransformerSha256,
+    virtualModule: "ink:dream-compat",
+    originalSourceModified: false,
   },
   sourceTransforms: profile.sourceTransforms.map(({ path, sha256, transform }) => ({
     path,

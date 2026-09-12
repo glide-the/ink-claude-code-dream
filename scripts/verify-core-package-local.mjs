@@ -3,7 +3,7 @@
 // [Output] Fail closed on checksum, provenance, qualification, reproducibility, SBOM/license, executable, or mutable-data boundary drift.
 // [Pos] Read-only verifier for dist/core-package-local; it never reads restored source or executes the candidate core.
 // [Sync] 2026-08-24: require native target identity across core, qualifications, manifests, and assets.
-// [Sync] 2026-09-13: verify only local-core Runtime 0.1.8 candidate artifacts.
+// [Sync] 2026-09-13: verify only local-core Runtime 0.1.9 candidate artifacts.
 
 import { createHash } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
@@ -16,7 +16,7 @@ const defaultPackageRoot = path.join(
   repositoryRoot,
   "dist",
   "core-package-local",
-  "ink-claude-code-dream-0.1.8",
+  "ink-claude-code-dream-0.1.9",
 );
 
 function fail(message) {
@@ -267,6 +267,8 @@ for (const gate of policy.qualificationGates) {
       ) {
         fail(`${gate.id} qualification lost MCP management evidence`);
       }
+      if (evidence.dreamNotionQualified !== true || evidence.dreamModelProjectionQualified !== true ||
+          !/^[a-f0-9]{64}$/.test(evidence.dreamRuntimeReceiptSha256 ?? "")) fail("full qualification lost Dream Notion/model evidence");
     }
   } else if (evidence.evidenceType !== null || evidence.receiptSha256 !== null) {
     fail(`${gate.id} missing qualification must not carry evidence`);
@@ -345,7 +347,9 @@ for (const capability of capabilities.requiredCapabilities) {
 }
 for (const capability of capabilities.capabilities) {
   const expectedStatus =
-    capability.id === "mcp.management.identity"
+    capability.id === "sandbox.notion-cli"
+      ? qualifications.gates.full?.dreamNotionQualified === true ? "qualified-process-contract" : "unqualified"
+      : capability.id === "mcp.management.identity"
       ? qualifications.gates.full?.mcpManagementIdentityQualified === true
         ? "qualified-process-contract"
         : "unqualified"

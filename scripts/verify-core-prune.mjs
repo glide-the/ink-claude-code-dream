@@ -6,6 +6,8 @@
 
 import { opendir, readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
+import { createHash } from "node:crypto";
+import { DREAM_SOURCE_TARGETS } from "../compat/dream-runtime/source-transforms.ts";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const outputRoot = join(repositoryRoot, "dist", "core-local");
@@ -50,6 +52,8 @@ if (profile.builder?.version !== "1.4.0" || receipt.builder?.version !== "1.4.0"
 }
 if (receipt.status !== "built" || receipt.build?.success !== true) fail("build is not successful");
 if (profile.sourceDirectory !== "src" || receipt.sourceLayout?.implementationRoot !== "src" ||
+    receipt.sourceLayout?.provenance !== "runtime/source-provenance.json" ||
+    receipt.sourceLayout?.singleSource !== true ||
     receipt.sourceLayout?.entrypoint !== "src/entrypoints/cli.tsx" ||
     receipt.sourceLayout?.implementationSource !== "repository" ||
     receipt.sourceLayout?.externalRootUse !== "recovered-dependencies-only" ||
@@ -71,6 +75,19 @@ if (
 if (profile.features.enabled.some(feature => profile.features.disabled.includes(feature))) {
   fail("enabled and disabled features overlap");
 }
+const dream = receipt.dreamCompatibility;
+if (JSON.stringify(dream?.requiredTargets) !== JSON.stringify(DREAM_SOURCE_TARGETS) ||
+    JSON.stringify(dream?.appliedSourcePaths) !== JSON.stringify(DREAM_SOURCE_TARGETS.map(entry => entry.path).sort()) ||
+    dream?.originalSourceModified !== false || dream?.virtualModule !== "ink:dream-compat" ||
+    dream?.helper !== "compat/dream-runtime/policy.ts") fail("Dream compatibility target/application receipt drift");
+for (const [file, digest] of [
+  [dream.helper, dream.helperSha256],
+  ["compat/dream-runtime/source-transforms.ts", dream.transformerSha256],
+]) {
+  if (createHash("sha256").update(await readFile(join(repositoryRoot, file))).digest("hex") !== digest) {
+    fail("Dream compatibility helper/transformer changed after the build");
+  }
+}
 if (receipt.dceAssertions?.status !== "passed" || receipt.dceAssertions.violations.length !== 0) {
   fail("DCE assertions did not pass");
 }
@@ -89,6 +106,10 @@ if (logicalInputs.some(path => path.includes("restored-src/") || path.includes("
   fail("the build read a second implementation tree");
 }
 if (!logicalInputs.includes("src/entrypoints/cli.tsx")) fail("canonical CLI entrypoint is absent");
+if (!metafileInputs.some(path => path.endsWith("compat/dream-runtime/policy.ts"))) fail("Dream compatibility helper is not reachable");
+for (const target of DREAM_SOURCE_TARGETS) {
+  if (!metafileInputs.some(path => path.endsWith(target.path))) fail(`Dream source target is not reachable: ${target.path}`);
+}
 const supportedRuntimeTargets = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
 if (!supportedRuntimeTargets.includes(receipt.runtimeTarget)) fail("unsupported Runtime target receipt");
 if (receipt.runtimeTarget !== `${process.platform}-${process.arch}`) {

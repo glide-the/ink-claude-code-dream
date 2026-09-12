@@ -385,7 +385,7 @@ async def _wait_failure_count(path: Path, expected: int, timeout: float = 30) ->
     raise TimeoutError(f"HTTP MCP failure count did not reach {expected}: {last}")
 
 
-async def run_contract(cli: Path, python: Path, transport: str) -> dict[str, Any]:
+async def run_contract(cli: Path, python: Path, transport: str, dream_compat: bool = False) -> dict[str, Any]:
     repo_root = Path(__file__).resolve().parents[1]
     fixture = repo_root / "tests" / "fixtures" / "mcp_contract_server.py"
     with tempfile.TemporaryDirectory(prefix=f"ink-core-mcp-{transport}-") as root_text:
@@ -404,7 +404,7 @@ async def run_contract(cli: Path, python: Path, transport: str) -> dict[str, Any
                 "type": "stdio",
                 "command": str(python),
                 "args": [str(fixture), "--transport", "stdio"],
-                "env": {"INK_MCP_AUDIT_PATH": str(audit)},
+                "env": {"INK_MCP_AUDIT_PATH": str(audit), **({"NOTION_API_TOKEN": "mcp-overlay-fixture-not-a-secret"} if dream_compat else {})},
             }
             http_context = nullcontext(None)
         else:
@@ -438,7 +438,7 @@ async def run_contract(cli: Path, python: Path, transport: str) -> dict[str, Any
                 options = ClaudeAgentOptions(
                     cli_path=str(cli),
                     cwd=str(workspace),
-                    env=_runtime_env(base_url, config, tmpdir),
+                    env={**_runtime_env(base_url, config, tmpdir), **({"NOTION_HOME": str(workspace / ".notion-home"), "NOTION_API_TOKEN": "mcp-parent-fixture-not-a-secret", "NOTION_KEYRING": "1", "NOTION_WORKERS_CONFIG_FILE": str(workspace / ".notion-home/workers.json")} if dream_compat else {})},
                     model="claude-contract-local",
                     can_use_tool=allow_tool,
                     permission_mode="default",
@@ -614,7 +614,11 @@ async def run_contract(cli: Path, python: Path, transport: str) -> dict[str, Any
         if disabled.get("status") != "disabled":
             raise AssertionError("MCP server did not enter disabled inventory state")
 
+        if dream_compat:
+            if transport != "stdio" or any(json.loads(line).get("notionPresent") is not False for line in audit.read_text().splitlines() if line):
+                raise AssertionError("Notion parent/explicit server credentials reached stdio MCP")
         return {
+            **({"notionStdioExcluded": True} if dream_compat else {}),
             "contractVersion": 1,
             "transport": transport,
             "serverName": SERVER_NAME,
@@ -648,9 +652,10 @@ def main() -> int:
     parser.add_argument("--python", type=Path, required=True)
     parser.add_argument("--transport", choices=("stdio", "http"), required=True)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--dream-compat", action="store_true")
     args = parser.parse_args()
     receipt = asyncio.run(
-        run_contract(args.cli.resolve(), args.python.absolute(), args.transport)
+        run_contract(args.cli.resolve(), args.python.absolute(), args.transport, args.dream_compat)
     )
     encoded = json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if args.output:

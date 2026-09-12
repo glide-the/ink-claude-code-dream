@@ -7,10 +7,10 @@
 
 # Claude Code Runtime minimalization
 
-> 当前 0.1.8 决策：恢复源码是实际实现，不是旁路快照。canonical `src` 与
-> `restored-src/src` 同目录、同模块、同初始字节/权限，默认编译 `src/entrypoints/cli.tsx`。
+> 当前 0.1.9 决策：恢复源码是唯一实际 `src` 实现，不是旁路快照。
+> 重复 `restored-src` 已删除；原始目录、模块、字节/权限保持不变，默认编译 `src/entrypoints/cli.tsx`。
 > 旧平行 cleanroom 已退出。本文 2026-08-24 的资格/制品摘要仍只证明历史字节；
-> 当前结果见 [0.1.8 notes](../build/runtime-0.1.8-release-notes.md)。公共发布另需授权。
+> 当前结果见 [0.1.9 notes](../build/runtime-0.1.9-release-notes.md)。公共发布按用户已确认的来源授权走 CI。
 
 Evidence date: 2026-08-24.
 

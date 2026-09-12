@@ -15,24 +15,26 @@ test("original source, selector and local package have one Runtime version", asy
  const selector = await json("package/package.json");
  const local = await json("runtime/local-artifact-policy.json");
  const npm = await json("runtime/npm-release-policy.json");
- assert.equal(pkg.version, "0.1.8");
+ assert.equal(pkg.version, "0.1.9");
  assert.equal(selector.version, pkg.version);
  assert.equal(local.artifact.version, pkg.version);
  assert.equal(npm.version, pkg.version);
  assert.deepEqual(selector.bin, { claude: "cli.js", "ink-claude-code-dream": "cli.js" });
  assert.deepEqual(Object.values(selector.optionalDependencies), Array(4).fill(pkg.version));
- assert.equal(local.legalGate.publicationAllowed, false);
- assert.equal(local.legalGate.redistributionAllowed, false);
- assert.equal(npm.publish.license, null);
+ assert.equal(local.legalGate.publicationAllowed, true);
+ assert.equal(local.legalGate.redistributionAllowed, true);
+ assert.equal(npm.publish.license, local.legalGate.publicationLicense);
 });
-test("npm layout planning remains readable, publication remains fail closed", () => {
+test("operator authority opens legal gate but does not qualify runtime artifacts", () => {
  const plan = spawnSync(process.execPath, ["scripts/npm-release.mjs", "plan"], { cwd: root, encoding: "utf8" });
  assert.equal(plan.status, 0, plan.stderr);
- assert.equal(JSON.parse(plan.stdout).version, "0.1.8");
+ assert.equal(JSON.parse(plan.stdout).version, "0.1.9");
  const gate = spawnSync(process.execPath, ["scripts/npm-release.mjs", "legal"], { cwd: root, encoding: "utf8",
   env: { ...process.env, INK_NPM_PUBLICATION_ALLOWED: "true" } });
- assert.notEqual(gate.status, 0);
- assert.match(gate.stderr, /publication blocked by checked policy/);
+ assert.equal(gate.status, 0, gate.stderr);
+ assert.equal(JSON.parse(gate.stdout).status, "checked-policy-authorized");
+ const stage = spawnSync(process.execPath, ["scripts/npm-release.mjs", "gate", "--package-root", "dist/nonexistent-release"], { cwd: root, encoding: "utf8" });
+ assert.notEqual(stage.status, 0);
 });
 test("private repository root cannot be packed or published", () => {
  const result = spawnSync(process.execPath, ["scripts/npm-root-guard.mjs"], { cwd: root, encoding: "utf8" });

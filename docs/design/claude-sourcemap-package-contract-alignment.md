@@ -7,9 +7,9 @@
 
 ## Decision
 
-`src` is the original implementation. `restored-src/src` is its identical reference:
-same directories, modules, paths, permissions and initial bytes. These are one Runtime,
-not an original snapshot beside an independently designed implementation.
+`src` is the unique original implementation: original directories, modules, paths,
+permissions and initial bytes. Source provenance is recorded in
+`runtime/source-provenance.json`; the redundant `restored-src` tree is removed.
 The default compiler starts at `src/entrypoints/cli.tsx` and resolves original
 `src/main.tsx`, `src/cli/print.ts`, `src/services/mcp/client.ts` and the rest of this
 repository's module graph.
@@ -27,7 +27,7 @@ the redesigned implementation. Neither fulfilled the requested same-module build
 
 Reference commit: `a8a678cb6244e6770e1e421767ff0987a1d95549`.
 Original Git subtree: `7640f58ea271eb60952ebdbe0dfa173fc96ebe30`.
-Each tree contains 1,902 regular files, 30,382,832 bytes and these 35 directories:
+The unique tree contains 1,902 regular files, 30,382,832 bytes and these 35 directories:
 
 ```text
 assistant bootstrap bridge buddy cli commands components constants context coordinator
@@ -42,8 +42,8 @@ No per-module folder contract is inserted into either byte-exact tree.
 
 ASCII-path content/mode inventory SHA-256:
 `40269454cd690c74d129a31699935d6db713f2958aabe4787e01617e1c92a906`.
-`node scripts/sync-restored-source.mjs verify`, lint and regression tests compare
-both complete file inventories and complete directory lists, including empty directories.
+`npm run source:verify`, lint and regression tests compare
+the unique source inventory and complete directory list, including empty directories.
 
 ## Actual build and compatibility
 
@@ -75,8 +75,8 @@ The private mixed-source root package orchestrates builds and has no bin/publish
 `ink-claude-code-dream` aliases, and four exact native optional package versions.
 The selector's MIT license does not relicense original modules.
 
-Runtime root, selector, target expectations, local receipts, Dream resolver, Docker and
-AutoDL move together to 0.1.8. Dream backend/frontend metadata moves to 0.1.2/0.0.2;
+Runtime root, selector and target expectations are 0.1.9. Dream adoption remains pending
+publication/installation; its current backend/frontend metadata is 0.1.2/0.0.2;
 SDK stays 0.2.145, source provenance 2.1.88, CLI compatibility 2.1.241, API schema 2.0.0.
 npm package-root and local nested-bin layout checks remain distinct distribution
 contracts for the same implementation, not permission for a second source architecture.
@@ -85,15 +85,14 @@ contracts for the same implementation, not permission for a second source archit
 
 The original-module Darwin ARM64 build verifies 1,989 inputs, 48 outputs, zero resolution
 gaps and all DCE assertions. Two complete output inventories have the same digest.
-Current fixture results are in [0.1.8 notes](../build/runtime-0.1.8-release-notes.md).
+Current fixture results are in [0.1.9 notes](../build/runtime-0.1.9-release-notes.md).
 
 Original modules retain Anthropic copyright/research provenance. Compilation and local
 integration are technically supported together; redistribution/publication require
-separate authority. Current source-derived production, publication, redistribution and
-four-target qualification gates remain closed. The old MIT Runtime 0.1.4 release and
+operator authority, recorded without MIT relicensing. Darwin ARM64 base local-core
+qualification passed; all four native hosts and npm package capabilities remain mandatory. The old MIT Runtime 0.1.4 release and
 immutable 0.1.5 acceptance cannot qualify these bytes.
 
-CI no longer bans restored source or builds a removed implementation. Old qualification
-and publish workflows explicitly fail closed and have no publish/token/artifact-reuse
-steps. This change does not push, publish, install production software, deploy, alter
-database/API contracts or change Dream's separately owned ZIP policy.
+CI no longer bans restored source or builds a removed implementation. Qualification and publishing workflows now execute the real same-SHA source-derived
+release chain. No database/API or Dream ZIP-policy change is planned. See the current
+release/adoption design for completed and pending states.

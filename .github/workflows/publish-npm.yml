@@ -1,31 +1,80 @@
-# [Input] Current original-source implementation and explicit source-derived publication gate.
-# [Output] Fail closed without downloading old artifacts, accessing tokens or publishing packages.
-# [Pos] Existing workflow name retained; retired cleanroom publication lane is disabled.
-# [Sync] 2026-09-13: original-module Runtime cannot inherit the previous implementation's MIT release authority.
+# [Input] Successful same-repository/main qualification and the unchanged exact five-tarball release set.
+# [Output] Four native packages then package-root selector via existing npm environment credentials/OIDC.
+# [Pos] Automatic successor of qualification; never builds or substitutes retired artifacts.
+# [Sync] 2026-09-13: restore real CI publishing, immutable retries and public integrity verification.
 
 name: Publish npm Runtime
 on:
+  workflow_run:
+    workflows: [Qualify npm Runtime]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      qualification_run_id:
+        description: Successful qualification run ID for the current main commit
+        required: true
+        type: string
 permissions:
+  actions: read
   contents: read
+concurrency:
+  group: publish-npm-runtime
+  cancel-in-progress: false
 jobs:
-  publication-gate:
-    runs-on: ubuntu-latest
+  validate:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    outputs:
+      source_sha: ${{ steps.run.outputs.source_sha }}
+      run_id: ${{ steps.run.outputs.run_id }}
+    steps:
+      - name: Bind successful qualification to this repository and current main
+        id: run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id || inputs.qualification_run_id }}
+        run: |
+          set -euo pipefail
+          main_sha=$(gh api "repos/$GH_REPO/commits/main" --jq .sha)
+          gh api "repos/$GH_REPO/actions/runs/$RUN_ID" --jq . > "$RUNNER_TEMP/run.json"
+          jq -e --arg repo "$GH_REPO" --arg sha "$main_sha" \
+            '.head_repository.full_name == $repo and .head_sha == $sha and
+             .head_branch == "main" and .path == ".github/workflows/qualify-npm-runtime.yml" and
+             .status == "completed" and .conclusion == "success"' "$RUNNER_TEMP/run.json"
+          echo "source_sha=$main_sha" >> "$GITHUB_OUTPUT"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+  publish:
+    needs: validate
+    runs-on: ubuntu-24.04
+    environment: npm
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Original-source publication is not authorized
-        run: |
-          node --input-type=module - <<'NODE'
-          import { readFileSync } from "node:fs";
-          const layout = JSON.parse(readFileSync("runtime/source-layout.json", "utf8"));
-          const policy = JSON.parse(readFileSync("runtime/npm-release-policy.json", "utf8"));
-          console.error(JSON.stringify({
-            blocked: true,
-            version: layout.version,
-            implementationRoot: layout.implementationRoot,
-            publicationAllowed: layout.publicationAllowed,
-            license: policy.publish.license,
-            reason: "No source-derived redistribution/publication grant or same-byte native qualification."
-          }));
-          process.exit(1);
-          NODE
+        with:
+          ref: ${{ needs.validate.outputs.source_sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.13.0
+          registry-url: https://registry.npmjs.org
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.0
+      - run: bun install --frozen-lockfile
+      - run: npm run npm:legal
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: qualified-npm-${{ needs.validate.outputs.source_sha }}
+          path: dist/npm-publish
+          run-id: ${{ needs.validate.outputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Re-verify unchanged five-package set
+        run: node scripts/verify-npm-tarball.mjs dist/npm-publish/*.tgz
+      - name: Publish platforms before selector and verify immutable public bytes
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node scripts/publish-qualified-npm.mjs dist/npm-publish

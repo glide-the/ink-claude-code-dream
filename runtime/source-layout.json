@@ -1,8 +1,9 @@
 {
   "schemaVersion": "ink-original-source-layout/v1",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "implementationRoot": "src",
-  "referenceRoot": "restored-src/src",
+  "provenance": "runtime/source-provenance.json",
+  "singleSource": true,
   "entrypoint": "src/entrypoints/cli.tsx",
   "sameModulePaths": true,
   "sameInitialBytes": true,
@@ -11,7 +12,8 @@
   "compatibilityTransforms": "compat/mcp-auth and runtime/core-prune-profile.json",
   "externalRootUse": "recovered-dependencies-and-platform-assets-only",
   "sourceLicense": "Anthropic-all-rights-reserved-research-only",
-  "publicationAllowed": false,
-  "redistributionAllowed": false,
+  "publicationAllowed": true,
+  "redistributionAllowed": true,
+  "authorization": "runtime/source-authorization.json",
   "supersedes": "0.1.7-side-snapshot-with-parallel-src-cleanroom"
 }
