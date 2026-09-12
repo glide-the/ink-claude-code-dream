@@ -1,41 +1,37 @@
-// [Input] Consume the repository source, Bun lock, deterministic builder/packer, and fixed SOURCE_DATE_EPOCH.
-// [Output] Build and pack twice, then fail if either release inventory or archive SHA-256 changes.
-// [Pos] Reproducibility acceptance gate.
-// [Sync] 2026-09-13: bind reproducibility paths to the Runtime 0.1.7 candidate.
+#!/usr/bin/env node
+// [Input] The one original-source build, explicit recovered dependencies, and fixed build policy.
+// [Output] Compile twice and compare every actual bundle/asset byte, without changing ZIP/publication policy.
+// [Pos] Canonical source Runtime reproducibility gate, not legacy envelope qualification.
+// [Sync] 2026-09-13: validate src-based outputs after removing the independent implementation.
 
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
-import { resolve } from "node:path";
-
-const environment = { ...process.env, SOURCE_DATE_EPOCH: "1787443200" };
-const archive = resolve("dist/ink-claude-code-dream-0.1.7.tar.gz");
-const checksums = resolve(
-  "dist/release/ink-claude-code-dream-0.1.7/manifest/checksums.sha256",
-);
-
-function command(executable, args) {
-  const result = spawnSync(executable, args, { env: environment, encoding: "utf8" });
-  if (result.status !== 0) {
-    process.stderr.write(result.stdout || "");
-    process.stderr.write(result.stderr || "");
-    throw new Error(`${executable} ${args.join(" ")} failed with ${result.status}`);
+import { join, resolve, relative } from "node:path";
+const root = resolve(import.meta.dirname, "..");
+const bun = join(process.env.INK_CORE_TOOLCHAIN_ROOT || root, "node_modules/.bin/bun");
+async function inventory(directory) {
+ const files = [];
+ async function visit(dir) {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+   const file = join(dir, entry.name);
+   if (entry.isSymbolicLink()) throw new Error("unexpected bundle symlink");
+   if (entry.isDirectory()) await visit(file);
+   else files.push({ path: relative(directory, file), sha256: createHash("sha256").update(await readFile(file)).digest("hex") });
   }
+ }
+ await visit(directory);
+ files.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+ return { fileCount: files.length, sha256: createHash("sha256").update(JSON.stringify(files)).digest("hex") };
 }
-
-async function buildReceipt() {
-  command("bun", ["run", "build"]);
-  command(process.execPath, ["scripts/verify-release.mjs"]);
-  command(process.execPath, ["scripts/pack-release.mjs"]);
-  return {
-    archive: createHash("sha256").update(await readFile(archive)).digest("hex"),
-    inventory: createHash("sha256").update(await readFile(checksums)).digest("hex"),
-  };
+async function build() {
+ for (const [executable, args] of [[bun, ["scripts/build.ts"]], [process.execPath, ["scripts/verify-core-prune.mjs"]]]) {
+  const result = spawnSync(executable, args, { cwd: root, env: process.env, encoding: "utf8" });
+  if (result.status !== 0) throw new Error(result.stderr || result.stdout || "source build failed");
+ }
+ return inventory(join(root, "dist/core-local/bundle"));
 }
-
-const first = await buildReceipt();
-const second = await buildReceipt();
-if (first.archive !== second.archive || first.inventory !== second.inventory) {
-  throw new Error(`reproducibility mismatch: ${JSON.stringify({ first, second })}`);
-}
-process.stdout.write(`${JSON.stringify({ ok: true, first, second })}\n`);
+const first = await build();
+const second = await build();
+if (JSON.stringify(first) !== JSON.stringify(second)) throw new Error("canonical bundle reproducibility mismatch");
+console.log(JSON.stringify({ ok: true, implementationRoot: "src", first, second }));

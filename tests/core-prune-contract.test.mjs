@@ -37,13 +37,15 @@ const seccompPassthrough = resolve(
   "runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh",
 );
 
-test("core-prune build is pinned, local-only, and requires an explicit source root", () => {
+test("core-prune builds project src; explicit external roots supply dependencies and assets only", () => {
   assert.equal(profile.builder.version, "1.4.0");
   assert.equal(profile.sourceVersionEvidence, "2.1.88");
   assert.equal(profile.cliCompatibilityVersion, "2.1.241");
   assert.equal(profile.defines["MACRO.VERSION"], profile.cliCompatibilityVersion);
   assert.equal(profile.outputDirectory, "dist/core-local");
-  assert.equal(profile.sourceRootEnvironment, "INK_AUTHORIZED_CORE_SOURCE_ROOT");
+  assert.equal(profile.sourceDirectory, "src");
+  assert.equal(profile.recoveredDependencyRootEnvironment, "INK_AUTHORIZED_CORE_SOURCE_ROOT");
+  assert.equal(profile.repositoryDependencyRootEnvironment, "INK_CORE_TOOLCHAIN_ROOT");
   assert.equal(profile.packageRootEnvironment, "INK_AUTHORIZED_CORE_PACKAGE_ROOT");
   assert.equal(profile.targetEnvironment, "INK_CLAUDE_CODE_BUILD_TARGET");
   assert.deepEqual(profile.entrypoints, ["src/entrypoints/cli.tsx"]);
@@ -52,8 +54,10 @@ test("core-prune build is pinned, local-only, and requires an explicit source ro
   assert.match(builder, /must not traverse a symlink/);
   assert.match(builder, /git[\s\S]*check-ignore/);
   assert.match(builder, /cross-target core build is forbidden/);
-  assert.doesNotMatch(builder, /claude-code-sourcemap|restored-src/);
-  assert.doesNotMatch(verifier, /claude-code-sourcemap|restored-src/);
+  assert.match(builder, /const sourceRoot = repositoryRoot/);
+  assert.match(builder, /normalized\.startsWith\(`src/);
+  assert.match(builder, /implementationSource: "repository"/);
+  assert.match(verifier, /canonical CLI entrypoint is absent/);
   const ignored = spawnSync("git", ["check-ignore", "-q", "dist/core-local/.probe"], {
     cwd: repositoryRoot,
   });
@@ -106,7 +110,7 @@ test("runtime asset matrix covers four native targets and restores Linux seccomp
     packageJson.devDependencies["@anthropic-ai/sandbox-runtime-legacy"],
     "npm:@anthropic-ai/sandbox-runtime@0.0.45",
   );
-  assert.match(builder, /sourceRoot === "repository" \? repositoryRoot : packageRoot/);
+  assert.match(builder, /asset\.source\.startsWith\("node_modules\/"\) \? toolchainRoot : repositoryRoot/);
 });
 
 test("2.1.88 seccomp passthrough removes only the leading BPF argument", () => {

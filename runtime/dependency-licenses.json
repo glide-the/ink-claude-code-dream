@@ -3,7 +3,7 @@
   "generatedFrom": "package manifests and official package LICENSE evidence observed 2026-08-23",
   "project": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "license": "UNLICENSED",
     "private": true
   },

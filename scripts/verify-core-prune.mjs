@@ -2,6 +2,7 @@
 // [Output] Fail unless Bun/source digest/feature-DCE/output-path/resolution evidence is internally consistent and built.
 // [Pos] Read-only verifier for dist/core-local; it neither builds nor reads external restored source.
 // [Sync] 2026-08-30: gate restored 2.1.88 seccomp asset provenance, digest, path, and mode.
+// [Sync] 2026-09-13: require the actual Runtime build to use repository src, not a parallel implementation or external src.
 
 import { opendir, readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
@@ -48,6 +49,11 @@ if (profile.builder?.version !== "1.4.0" || receipt.builder?.version !== "1.4.0"
   fail("Bun 1.4.0 receipt is required");
 }
 if (receipt.status !== "built" || receipt.build?.success !== true) fail("build is not successful");
+if (profile.sourceDirectory !== "src" || receipt.sourceLayout?.implementationRoot !== "src" ||
+    receipt.sourceLayout?.entrypoint !== "src/entrypoints/cli.tsx" ||
+    receipt.sourceLayout?.implementationSource !== "repository" ||
+    receipt.sourceLayout?.externalRootUse !== "recovered-dependencies-only" ||
+    receipt.sourceLayout?.parallelImplementation !== false) fail("canonical source layout drift");
 if (!/^[a-f0-9]{64}$/.test(receipt.sourceDigest?.digest ?? "")) fail("invalid source digest");
 if (!Number.isSafeInteger(receipt.sourceDigest?.fileCount) || receipt.sourceDigest.fileCount < 1) {
   fail("invalid source file count");
@@ -79,6 +85,10 @@ if (
 
 const metafileInputs = Object.keys(metafile.inputs ?? {}).map(path => path.replaceAll("\\", "/"));
 const logicalInputs = metafileInputs.map(path => path.replace(/^<SOURCE_ROOT>\//, ""));
+if (logicalInputs.some(path => path.includes("restored-src/") || path.includes("src/cleanroom/"))) {
+  fail("the build read a second implementation tree");
+}
+if (!logicalInputs.includes("src/entrypoints/cli.tsx")) fail("canonical CLI entrypoint is absent");
 const supportedRuntimeTargets = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
 if (!supportedRuntimeTargets.includes(receipt.runtimeTarget)) fail("unsupported Runtime target receipt");
 if (receipt.runtimeTarget !== `${process.platform}-${process.arch}`) {

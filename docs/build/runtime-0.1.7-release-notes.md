@@ -5,6 +5,10 @@
 
 # Runtime 0.1.7 source-structure candidate
 
+> Superseded by [0.1.8](runtime-0.1.8-release-notes.md). This historical candidate
+> restored only a side snapshot while retaining a separate Runtime implementation;
+> it did not satisfy the required identical-directory/identical-module build contract.
+
 `0.1.7` restores the complete `claude-code-sourcemap/restored-src/src` subtree: 1,902 files,
 30,382,832 bytes, 35 original top-level module directories, and the original root modules.
 No source file is renamed, reformatted, or given Ink headers. The reference checkout remains read-only.

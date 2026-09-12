@@ -96,22 +96,20 @@
 ```mermaid
 flowchart LR
   A["外部 Claude Code / Dream 安装流程"] -->|"解析 Marketplace，物化插件目录"| B["mcp-apps Skills"]
-  B -->|"--plugin-dir"| C["clean-room Runtime Skill catalog"]
-  D["Dream 生成的 MCP config"] --> E["McpRegistry"]
+  B -->|"--plugin-dir"| C["原始 Runtime Skill loader"]
+  D["Dream 生成的 MCP config"] --> E["src/services/mcp/client.ts"]
   E -->|"initialize / tools / resources"| F["MCP server"]
   E -->|"普通 tool 定义与 JSON 结果"| G["Claude turn"]
   E -. "当前没有 UI DTO/桥接" .-> H["Dream MCP Apps Host"]
   H -. "尚未实现" .-> I["隔离 iframe / AppBridge"]
 ```
 
-- 外部安装边界：Runtime argv 只接受 `--plugin-dir` 和 `--mcp-config`；不实现 `plugin marketplace add/install`。外部工具负责安装，本 Runtime 只读取物化后的 Skills。
-- MCP client：`src/cleanroom/mcp/registry.ts:630-644` 使用 `@modelcontextprotocol/sdk` Client 建连，但 client capabilities 是空对象。
-- discovery：`src/cleanroom/mcp/registry.ts:861-899` 发现 tools/resources/prompts；`src/cleanroom/mcp/types.ts:66-85` 的开放字段让内部对象保留 `_meta`。
-- model projection：`src/cleanroom/mcp/registry.ts:732-750` 只投影 tool 名称、描述和 input schema，且没有按 Apps visibility 隐藏 app-only tool。
-- 结果与资源：`src/cleanroom/mcp/registry.ts:753-802` 保留原始 result/resource；`src/cleanroom/protocol.ts:990-1017` 仅把它们 JSON 序列化给模型。
-- 对外状态：`src/cleanroom/protocol.ts:131-155` 的安全状态 DTO 不输出 Apps `_meta`；没有供前端渲染的专用 UI DTO。
-- 插件读取：`src/cleanroom/protocol.ts:762-780` 初始化 filesystem/plugin Skills；没有 Marketplace 管理状态。
-- 有意边界：`runtime/core-prune-profile.json:278-284,413-417` 明确关闭 interactive MCP rich output，保留 headless MCP transport、tools、resources 和结构化协议。
+- 0.1.8 的实际实现是原始 canonical src，旧 `src/cleanroom` 已删除；本节不再引用已退出的 registry/protocol 模块。
+- MCP client：`src/services/mcp/client.ts` 使用 SDK 的 stdio 和 Streamable HTTP transport，声明普通 roots/elicitation capabilities，不声明 `io.modelcontextprotocol/ui`。
+- discovery/资源：该 client 保留 tools/resources 列表；`src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts` 使用 `resources/read` 和 ReadResourceResultSchema。原始模块 stdio/HTTP fixture 已验证普通 tool/resource 通路。
+- 插件/Skills：原始 loader 经 SDK --plugin-dir 路径加载，实际 SDK fixture 已验证 local plugin/project Skill 和 hooks；Marketplace catalog 的官方开发 Skills pin 不变。
+- 有意边界：现有 `runtime/core-prune-profile.json` 关闭 interactive MCP rich output，保留 headless transports/tools/resources。原始模块物理恢复不意味着新增 UI Host。
+- Apps visibility/metadata/UI DTO/AppBridge 仍需独立合同与真实 Host 运行证据；旧实现的内部 metadata 测试不能被当作当前原始模块的 Apps 支持。
 
 ### 5.2 Marketplace 内容事实
 
@@ -125,6 +123,11 @@ flowchart LR
 它没有 MCP server manifest 或运行入口。版本升级策略是人工核对新的上游 commit、manifest 和 Skills 差异后更新 SHA 与回归测试；不得跟随浮动分支自动升级。
 
 ## 6. 兼容性矩阵
+
+以下 Marketplace/Apps 扩展 fixture 运行结果是本设计编写时的历史证据。
+0.1.8 当前已复核 Marketplace pin、原始 MCP source 非 UI Host，以及真实原始模块
+普通 stdio/HTTP tool/resource；旧 registry、empty-capabilities 或 Apps metadata
+运行结果不自动覆盖新实现。当前 capabilities 是普通 roots/elicitation，非 Apps UI。
 
 | 要求 | 代码/静态证据 | 运行证据 | 结论 | 缺口 |
 | --- | --- | --- | --- | --- |

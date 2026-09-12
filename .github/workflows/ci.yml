@@ -1,22 +1,18 @@
-# [Input] Repository-authored clean-room source, locked dependencies, and provider-free fixtures.
-# [Output] Lint, full tests, clean four-target/five-package verification, and restricted-material evidence.
-# [Pos] Required pull-request/main CI; it never qualifies production or publishes npm packages.
-# [Sync] 2026-08-24: verify the formal receipt-bound clean-room release set without publication authority.
+# [Input] Canonical original source inventory, locked tooling and provider-free static contracts.
+# [Output] Verify one source layout and regression tests without fetching restricted recovered dependencies.
+# [Pos] Pull-request/main CI; full source compilation requires separately supplied dependency/assets roots.
+# [Sync] 2026-09-13: remove retired cleanroom builds and the incorrect ban on checked original source.
 
 name: Runtime CI
-
 on:
   pull_request:
   push:
     branches: [main]
-
 permissions:
   contents: read
-
 concurrency:
   group: runtime-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   verify:
     runs-on: macos-15
@@ -28,20 +24,10 @@ jobs:
           node-version: 24.13.0
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: 1.2.20
+          bun-version: 1.4.0
       - run: bun install --frozen-lockfile
       - run: npm run lint
       - run: npm test
-      - name: Rebuild the formal receipt-bound release set from clean outputs
-        run: |
-          npm run cleanroom:build:targets
-          npm run cleanroom:npm:package
-          npm run cleanroom:npm:verify
-      - name: Assert zero maps and zero restored implementation inventory
-        shell: bash
-        run: |
-          test -z "$(find dist/cleanroom-targets dist/cleanroom-npm -type f -name '*.map' -print -quit)"
-          test -z "$(git ls-files | awk -F/ '$1 == "restored-src" || $1 == "vendor" { print; exit }')"
-          if grep -R -E -n 'restored-src|core-package-local|claude-code-sourcemap|LicenseRef-Anthropic-All-Rights-Reserved' src/cleanroom; then
-            exit 1
-          fi
+      - run: npm run test:mcp-auth-compat
+      - name: Verify original implementation and reference are identical
+        run: npm run restored-source:verify

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "ink-original-source-layout/v1",
+  "version": "0.1.8",
+  "implementationRoot": "src",
+  "referenceRoot": "restored-src/src",
+  "entrypoint": "src/entrypoints/cli.tsx",
+  "sameModulePaths": true,
+  "sameInitialBytes": true,
+  "buildUsesImplementation": true,
+  "parallelImplementation": false,
+  "compatibilityTransforms": "compat/mcp-auth and runtime/core-prune-profile.json",
+  "externalRootUse": "recovered-dependencies-and-platform-assets-only",
+  "sourceLicense": "Anthropic-all-rights-reserved-research-only",
+  "publicationAllowed": false,
+  "redistributionAllowed": false,
+  "supersedes": "0.1.7-side-snapshot-with-parallel-src-cleanroom"
+}

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// [Input] `sync` with one explicit claude-code-sourcemap/restored-src path, or the checked local snapshot for `verify`.
-// [Output] A byte-exact restored-src/src tree plus a deterministic provenance and content-inventory receipt.
-// [Pos] Research-source structure synchronizer; it never makes restored code a clean-room npm input or publication material.
-// [Sync] 2026-09-13: restore the complete 2.1.88 sourcemap source layout without renaming or rewriting its files.
+// [Input] Checked original source, explicit sync reference, and canonical project src.
+// [Output] Verify one identical original module layout in restored-src/src and the actual build input src.
+// [Pos] Original-source synchronizer; there is no independently designed parallel Runtime.
+// [Sync] 2026-09-13: align the actual implementation, not just a side-by-side snapshot.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -22,6 +22,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const restoredRoot = path.join(repositoryRoot, "restored-src");
 const destination = path.join(restoredRoot, "src");
 const receiptPath = path.join(restoredRoot, "source-snapshot.json");
+const implementationRoot = path.join(repositoryRoot, "src");
 const command = process.argv[2] ?? "verify";
 const expectedSnapshot = {
   fileCount: 1902,
@@ -46,6 +47,7 @@ function sha256(body) {
 
 async function inventory(root) {
   const entries = [];
+  const directories = [];
   async function walk(directory) {
     const children = await readdir(directory, { withFileTypes: true });
     children.sort((left, right) => left.name < right.name ? -1 : left.name > right.name ? 1 : 0);
@@ -54,6 +56,7 @@ async function inventory(root) {
       const info = await lstat(absolute);
       if (info.isSymbolicLink()) fail(`symlink is forbidden: ${absolute}`);
       if (info.isDirectory()) {
+        directories.push(path.relative(root, absolute).split(path.sep).join("/"));
         await walk(absolute);
         continue;
       }
@@ -80,6 +83,7 @@ async function inventory(root) {
     .sort();
   return {
     entries,
+    directories: directories.sort(),
     fileCount: entries.length,
     totalBytes: entries.reduce((sum, entry) => sum + entry.bytes, 0),
     contentInventorySha256: sha256(serialized),
@@ -164,7 +168,7 @@ async function sync(sourceRootArgument) {
   await verify();
 }
 
-async function verify() {
+async function verify(checkImplementation = true) {
   const receipt = JSON.parse(await readFile(receiptPath, "utf8"));
   const current = await inventory(destination);
   if (
@@ -192,6 +196,13 @@ async function verify() {
   ) {
     fail("restored source provenance, structure, or byte inventory drift");
   }
+  if (checkImplementation) {
+    const implementation = await inventory(implementationRoot);
+    if (JSON.stringify(implementation.entries) !== JSON.stringify(current.entries) ||
+        JSON.stringify(implementation.directories) !== JSON.stringify(current.directories)) {
+      fail("src must contain the same original directories, modules, paths, modes and bytes as restored-src/src");
+    }
+  }
   process.stdout.write(`${JSON.stringify({
     status: "restored-source-verified",
     version: receipt.source.version,
@@ -200,14 +211,39 @@ async function verify() {
     files: current.fileCount,
     bytes: current.totalBytes,
     contentInventorySha256: current.contentInventorySha256,
+    implementationRoot: checkImplementation ? "src" : null,
+    sameModules: checkImplementation,
     topLevelDirectories: current.topLevelDirectories,
   })}\n`);
+}
+
+async function alignImplementation() {
+  await verify(false);
+  // Refuse to merge with a different architecture or overwrite any user source.
+  const existing = await readdir(implementationRoot).catch(error => {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  });
+  // Empty directories left by the reviewed deletion patch contain no implementation.
+  if (existing.length && (await inventory(implementationRoot)).fileCount) {
+    fail("src is not empty; refusing to overwrite implementation files");
+  }
+  const reference = await inventory(destination);
+  for (const entry of reference.entries) {
+    const target = path.join(implementationRoot, ...entry.path.split("/"));
+    await mkdir(path.dirname(target), { recursive: true });
+    await copyFile(path.join(destination, ...entry.path.split("/")), target);
+    await chmod(target, entry.mode === "0755" ? 0o755 : 0o644);
+  }
+  await verify();
 }
 
 if (command === "sync") {
   await sync(process.argv[3]);
 } else if (command === "verify") {
   await verify();
+} else if (command === "align") {
+  await alignImplementation();
 } else {
   fail(`unsupported command: ${command}`);
 }

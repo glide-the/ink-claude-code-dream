@@ -33,10 +33,11 @@
   },
   "sourceTarget": {
     "repository": "claude-code-sourcemap",
-    "sourceRootEnvironment": "INK_AUTHORIZED_CORE_SOURCE_ROOT",
+    "implementationRoot": "src",
+    "implementationSource": "repository",
     "commit": "a8a678cb6244e6770e1e421767ff0987a1d95549",
     "packageVersion": "2.1.88",
-    "classification": "read-only-restored-target",
+    "classification": "canonical-original-module-target",
     "files": [
       {
         "path": "src/services/mcp/headersHelper.ts",

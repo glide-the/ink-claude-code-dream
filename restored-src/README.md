@@ -1,21 +1,27 @@
-<!-- [Input] Byte-exact source-map reconstruction synchronized from claude-code-sourcemap 2.1.88. -->
-<!-- [Output] Explain provenance, license, immutability, build use, and publication exclusion for restored-src/src. -->
-<!-- [Pos] Legal and operational boundary for the checked research-source snapshot. -->
-<!-- [Sync] 2026-09-13: restore the complete sourcemap repository source layout without claiming clean-room or MIT ownership. -->
+<!-- [Input] Byte-exact original source-map reconstruction and canonical Runtime src. -->
+<!-- [Output] Explain original reference provenance, identical actual implementation and retained copyright. -->
+<!-- [Pos] Source reference boundary; not a separate Runtime architecture. -->
+<!-- [Sync] 2026-09-13: actual src uses identical original modules; remove the previous build-exclusion claim. -->
 
-# Restored source snapshot
+# Original source reference
 
-`src/` is a byte-exact copy of `/Users/dmeck/project/claude-code-sourcemap/restored-src/src`
-at commit `a8a678cb6244e6770e1e421767ff0987a1d95549`, reconstructed from the public
-`@anthropic-ai/claude-code@2.1.88` source map. It contains 1,902 source files across 35 top-level
-module directories and preserves
-the source repository's names and directory structure; files are not renamed, reformatted,
-or given repository-specific headers.
+`restored-src/src` and repository `src` have identical directories, module paths,
+file modes and initial bytes: 1,902 files, 35 module directories, 30,382,832 bytes.
+Repository `src` is the actual build input, entering `src/entrypoints/cli.tsx`.
+This reference is not a side implementation beside a redesigned cleanroom Runtime.
 
-This material is unofficial research source. Copyright remains with Anthropic PBC and use is
-subject to Anthropic's legal agreements. The repository's MIT license applies to the independent
-clean-room implementation and packaging code, not to `restored-src/src`.
+Reference: `claude-code-sourcemap` commit
+`a8a678cb6244e6770e1e421767ff0987a1d95549`, reconstructed from the public
+`@anthropic-ai/claude-code@2.1.88` source map. Original names, bytes and permissions
+are preserved without Ink headers. `source-snapshot.json` retains immutable provenance;
+the current actual-build contract lives in `runtime/source-layout.json`.
+Its historical `cleanroomNpmInput=false` field describes the former implementation,
+not a prohibition on building the canonical original src now.
 
-The snapshot may be used only as an explicit local research/qualification input. It is excluded
-from clean-room npm staging, tarballs, SBOM claims, and publication. `source-snapshot.json` binds
-the exact source commit, Git subtree, paths, byte count, and deterministic content inventory.
+Original source is unofficial research material copyrighted by Anthropic PBC, not MIT.
+Repository-authored selector/tooling licenses do not relicense these modules.
+Source-derived artifacts honestly retain this provenance; public publication and
+redistribution remain closed. Recovered dependencies/vendor, maps and generated bundles
+are not checked into Git.
+
+Run `node scripts/sync-restored-source.mjs verify` to check both complete trees.

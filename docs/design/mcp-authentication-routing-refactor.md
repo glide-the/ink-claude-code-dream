@@ -5,6 +5,11 @@
 
 # MCP 认证路由最小重构设计
 
+> Historical / retired implementation. Runtime 0.1.8 now builds canonical original
+> src modules, identical to restored-src/src, with no parallel cleanroom implementation.
+> Procedures, code paths and release/business receipts below describe the previous code,
+> not current qualification. See [current alignment](claude-sourcemap-package-contract-alignment.md).
+
 ## 1. 本轮记录
 
 | 项目 | 值 |

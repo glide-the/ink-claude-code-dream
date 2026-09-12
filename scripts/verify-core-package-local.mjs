@@ -3,7 +3,7 @@
 // [Output] Fail closed on checksum, provenance, qualification, reproducibility, SBOM/license, executable, or mutable-data boundary drift.
 // [Pos] Read-only verifier for dist/core-package-local; it never reads restored source or executes the candidate core.
 // [Sync] 2026-08-24: require native target identity across core, qualifications, manifests, and assets.
-// [Sync] 2026-09-13: verify only local-core Runtime 0.1.7 candidate artifacts.
+// [Sync] 2026-09-13: verify only local-core Runtime 0.1.8 candidate artifacts.
 
 import { createHash } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
@@ -16,7 +16,7 @@ const defaultPackageRoot = path.join(
   repositoryRoot,
   "dist",
   "core-package-local",
-  "ink-claude-code-dream-0.1.7",
+  "ink-claude-code-dream-0.1.8",
 );
 
 function fail(message) {

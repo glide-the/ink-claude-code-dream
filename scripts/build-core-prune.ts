@@ -1,7 +1,8 @@
-// [Input] Explicit authorized restored-source/package roots, reviewed prune profile/resolution map, and Bun 1.4.0.
+// [Input] Canonical repository src, explicit recovered dependency/package assets, reviewed transforms, and Bun 1.4.0.
 // [Output] Write only local ignored bundle/assets, source digest, sanitized metafile, resolution gaps, and DCE receipt under dist/core-local.
-// [Pos] Fail-closed, read-only external-source core-prune builder; never copies source into the repository or release.
+// [Pos] The single Runtime compiler reads original project modules from src; external roots supply dependencies/assets only.
 // [Sync] 2026-08-30: restore the 2.1.88 Linux sandbox-runtime seccomp assets from an exact locked Apache dependency.
+// [Sync] 2026-09-13: remove the parallel implementation and compile the aligned project module tree.
 
 import { createHash } from "node:crypto";
 import { builtinModules } from "node:module";
@@ -40,7 +41,9 @@ type CorePruneProfile = {
   schemaVersion: string;
   sourceVersionEvidence: string;
   cliCompatibilityVersion: string;
-  sourceRootEnvironment: string;
+  sourceDirectory: string;
+  recoveredDependencyRootEnvironment: string;
+  repositoryDependencyRootEnvironment: string;
   packageRootEnvironment: string;
   targetEnvironment: string;
   outputDirectory: string;
@@ -364,16 +367,32 @@ for (const emptyModule of profile.emptyModuleAllowlist) {
   }
 }
 
-const sourceRootRaw = process.env[profile.sourceRootEnvironment]?.trim();
+if (profile.sourceDirectory !== "src") fail("the implementation must be repository src");
+const sourceRoot = repositoryRoot;
+const sourceRootRaw = process.env[profile.recoveredDependencyRootEnvironment]?.trim();
 if (!sourceRootRaw || !isAbsolute(sourceRootRaw)) {
-  fail(`${profile.sourceRootEnvironment} must be an explicit absolute path`);
+  fail(`${profile.recoveredDependencyRootEnvironment} must be an explicit absolute path for recovered dependencies, not implementation source`);
 }
 if (resolve(sourceRootRaw) !== sourceRootRaw) {
-  fail(`${profile.sourceRootEnvironment} must be normalized`);
+  fail(`${profile.recoveredDependencyRootEnvironment} must be normalized`);
 }
-const sourceRoot = await realpath(sourceRootRaw);
-if (sourceRoot !== sourceRootRaw) {
-  fail(`${profile.sourceRootEnvironment} must not traverse a symlink`);
+const dependencySourceRoot = await realpath(sourceRootRaw);
+if (dependencySourceRoot !== sourceRootRaw) {
+  fail(`${profile.recoveredDependencyRootEnvironment} must not traverse a symlink`);
+}
+const toolchainRootRaw = process.env[profile.repositoryDependencyRootEnvironment]?.trim() || repositoryRoot;
+if (!isAbsolute(toolchainRootRaw) || resolve(toolchainRootRaw) !== toolchainRootRaw) {
+  fail(`${profile.repositoryDependencyRootEnvironment} must be a normalized absolute path`);
+}
+const toolchainRoot = await realpath(toolchainRootRaw);
+if (toolchainRoot !== toolchainRootRaw) fail("toolchain root must not traverse a symlink");
+function sourcePath(logicalPath: string): string {
+  if (isAbsolute(logicalPath)) return logicalPath;
+  const normalized = normalize(logicalPath).replace(/^\.\//, "");
+  if (normalized === "src" || normalized.startsWith(`src${sep}`)) return join(repositoryRoot, normalized);
+  if (normalized === "node_modules" || normalized.startsWith(`node_modules${sep}`) ||
+      normalized === "vendor" || normalized.startsWith(`vendor${sep}`)) return join(dependencySourceRoot, normalized);
+  fail(`logical source path is outside the original module/dependency layout: ${logicalPath}`);
 }
 
 const packageRootRaw = process.env[profile.packageRootEnvironment]?.trim();
@@ -398,7 +417,7 @@ for (const asset of selectedRuntimeAssets) {
   ) {
     fail(`invalid runtime asset metadata: ${asset.output}`);
   }
-  const source = join(sourceRoot === "repository" ? repositoryRoot : packageRoot, asset.source);
+  const source = join(sourceRoot === "repository" ? (asset.source.startsWith("node_modules/") ? toolchainRoot : repositoryRoot) : packageRoot, asset.source);
   if ((await realpath(source)) !== source || !(await stat(source)).isFile()) {
     fail(`runtime asset must be a real regular file: ${asset.source}`);
   }
@@ -406,9 +425,8 @@ for (const asset of selectedRuntimeAssets) {
   if (digest !== asset.sha256) fail(`runtime asset digest drift: ${asset.source}`);
   runtimeAssetSourcePaths.set(asset, source);
 }
-if (!(await stat(sourceRoot)).isDirectory()) fail("source root is not a directory");
-for (const requiredDirectory of ["src", "node_modules"]) {
-  if (!(await stat(join(sourceRoot, requiredDirectory))).isDirectory()) {
+for (const requiredDirectory of ["src", "node_modules", "vendor"]) {
+  if (!(await stat(sourcePath(requiredDirectory))).isDirectory()) {
     fail(`source root is missing ${requiredDirectory}/`);
   }
 }
@@ -436,12 +454,16 @@ function portablePath(value: string): string {
 function sourceRelative(value: string): string {
   if (!value) return "<entry>";
   const absolute = isAbsolute(value) ? value : resolve(value);
-  const candidate = relative(sourceRoot, absolute);
-  if (candidate && !candidate.startsWith("..") && !isAbsolute(candidate)) {
+  const candidate = relative(repositoryRoot, absolute);
+  if (candidate.startsWith(`src${sep}`)) {
     return portablePath(candidate);
   }
+  const dependencyCandidate = relative(dependencySourceRoot, absolute);
+  if (!dependencyCandidate.startsWith("..") && !isAbsolute(dependencyCandidate)) return portablePath(dependencyCandidate);
+  const toolchainCandidate = relative(toolchainRoot, absolute);
+  if (toolchainCandidate.startsWith(`node_modules${sep}`)) return `<TOOLCHAIN_ROOT>/${portablePath(toolchainCandidate)}`;
   if (absolute === sourceRoot) return ".";
-  return value.replaceAll(sourceRoot, "<SOURCE_ROOT>").replaceAll(outputRoot, "<CORE_OUTPUT>");
+  return value.replaceAll(dependencySourceRoot, "<DEPENDENCY_ROOT>").replaceAll(outputRoot, "<CORE_OUTPUT>").replaceAll(sourceRoot, "<SOURCE_ROOT>");
 }
 
 async function filesUnder(root: string): Promise<string[]> {
@@ -468,11 +490,14 @@ async function digestSourceTree(): Promise<{
   bytes: number;
 }> {
   const hash = createHash("sha256");
-  const files = await filesUnder(sourceRoot);
+  // The exact original logical tree is reconstructed without reading external src or
+  // any other repository files, and without materializing a second implementation.
+  const files = (await Promise.all(["src", "node_modules", "vendor"].map(directory => filesUnder(sourcePath(directory)))))
+    .flat().sort((left, right) => sourceRelative(left).localeCompare(sourceRelative(right)));
   let bytes = 0;
   for (const file of files) {
     const body = await readFile(file);
-    const rel = portablePath(relative(sourceRoot, file));
+    const rel = sourceRelative(file);
     hash.update(`${rel}\0${body.byteLength}\0`);
     hash.update(body);
     bytes += body.byteLength;
@@ -483,7 +508,7 @@ async function digestSourceTree(): Promise<{
 const sourceDigest = await digestSourceTree();
 const runtimeFacadeIdsByTarget = new Map<string, string>();
 for (const [id, facade] of Object.entries(resolutionMap.runtimeFacades)) {
-  const target = join(sourceRoot, facade.target);
+  const target = sourcePath(facade.target);
   const body = await readFile(target);
   if (createHash("sha256").update(body).digest("hex") !== facade.sha256) {
     fail(`runtime facade target digest drift: ${id}`);
@@ -496,7 +521,7 @@ for (const [specifier, facade] of Object.entries(resolutionMap.virtualFacades)) 
     fail(`virtual facade source digest drift: ${specifier}`);
   }
   for (const [exportName, target] of Object.entries(facade.exports)) {
-    const file = join(sourceRoot, target.target);
+    const file = sourcePath(target.target);
     const body = await readFile(file);
     if (createHash("sha256").update(body).digest("hex") !== target.sha256) {
       fail(`virtual facade target digest drift: ${specifier}.${exportName}`);
@@ -508,7 +533,7 @@ for (const emptyModule of profile.emptyModuleAllowlist) {
     fail(`empty module source digest drift: ${emptyModule.target}`);
   }
   for (const importer of emptyModule.importers) {
-    const body = await readFile(join(sourceRoot, importer.path));
+    const body = await readFile(sourcePath(importer.path));
     if (createHash("sha256").update(body).digest("hex") !== importer.sha256) {
       fail(`empty module importer digest drift: ${importer.path}`);
     }
@@ -523,7 +548,7 @@ for (const sourceTransform of profile.sourceTransforms) {
   if (!sourceTransform.reason || !/^[a-f0-9]{64}$/.test(sourceTransform.sha256)) {
     fail(`invalid source transform metadata: ${sourceTransform.path}`);
   }
-  const body = await readFile(join(sourceRoot, sourceTransform.path));
+  const body = await readFile(sourcePath(sourceTransform.path));
   if (createHash("sha256").update(body).digest("hex") !== sourceTransform.sha256) {
     fail(`source transform target digest drift: ${sourceTransform.path}`);
   }
@@ -533,7 +558,7 @@ const headlessManualOAuthTransform = {
   sha256: "fce615a24470f433b43976917a83db8ff388caeeb75a50ac543c48a70ea4a2e8",
 };
 const headlessManualOAuthBody = await readFile(
-  join(sourceRoot, headlessManualOAuthTransform.path),
+  sourcePath(headlessManualOAuthTransform.path),
 );
 if (
   createHash("sha256").update(headlessManualOAuthBody).digest("hex") !==
@@ -556,7 +581,7 @@ const secureStorageSelectorTransforms = [
   },
 ];
 for (const transform of secureStorageSelectorTransforms) {
-  const body = await readFile(join(sourceRoot, transform.path));
+  const body = await readFile(sourcePath(transform.path));
   if (createHash("sha256").update(body).digest("hex") !== transform.sha256) {
     fail(`secure-storage selector transform target digest drift: ${transform.path}`);
   }
@@ -579,8 +604,10 @@ function recordGap(gap: ResolutionGap): void {
 }
 
 function isInsideSourceRoot(path: string): boolean {
-  const rel = relative(sourceRoot, path);
-  return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+  return [sourcePath("src"), sourcePath("node_modules"), sourcePath("vendor")].some(root => {
+    const rel = relative(root, path);
+    return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+  });
 }
 
 const dependencyRootPaths = new Map<string, string>();
@@ -593,7 +620,7 @@ const dependencyLicenseReport = JSON.parse(
   await readFile(dependencyLicensesPath, "utf8"),
 ) as { components?: Array<Record<string, unknown>> };
 for (const [name, dependency] of Object.entries(resolutionMap.dependencyRoots)) {
-  const configuredRoot = join(repositoryRoot, dependency.root);
+  const configuredRoot = join(toolchainRoot, dependency.root);
   const root = await realpath(configuredRoot);
   if (root !== configuredRoot || !(await stat(root)).isDirectory()) {
     fail(`dependency root must be a real directory without symlink traversal: ${name}`);
@@ -751,7 +778,7 @@ function dependencyTargetForSpecifier(specifier: string): string | null {
 }
 
 async function resolveDependencyFallback(base: string): Promise<string | null> {
-  const sourceNodeModules = join(sourceRoot, "node_modules");
+  const sourceNodeModules = sourcePath("node_modules");
   const rel = relative(sourceNodeModules, base);
   if (rel.startsWith("..") || isAbsolute(rel)) return null;
   for (const [name, root] of dependencyRootPaths) {
@@ -3654,7 +3681,7 @@ const resolverPlugin = {
         // Facade source is synthetic, so dirname(args.importer) is not a source-tree
         // directory. Its reviewed targets are source-root-relative and covered by
         // the full-tree SHA-256 above; resolve descendants from that same root.
-        const base = resolve(sourceRoot, args.path);
+        const base = sourcePath(args.path);
         if (!isInsideSourceRoot(base)) fail(`facade resolver escaped source root: ${args.path}`);
         const resolved = await resolveSourceFile(base);
         if (resolved) return { path: resolved };
@@ -3684,7 +3711,7 @@ const resolverPlugin = {
       },
     );
     build.onResolve({ filter: /^src\// }, async (args: { path: string; importer: string }) => {
-      const base = join(sourceRoot, args.path);
+      const base = sourcePath(args.path);
       const runtimeFacade = runtimeFacadeForBase(base);
       if (runtimeFacade) return { path: runtimeFacade, namespace: "ink-runtime-facade" };
       const resolved = await resolveSourceFile(base);
@@ -3721,17 +3748,14 @@ const resolverPlugin = {
       }
       const syntheticFacadeImporter =
         args.namespace === "ink-facade" || Boolean(resolutionMap.virtualFacades[args.importer]);
-      const base = resolve(
-        syntheticFacadeImporter ? sourceRoot : dirname(args.importer),
-        args.path,
-      );
+      const base = syntheticFacadeImporter ? sourcePath(args.path) : resolve(dirname(args.importer), args.path);
       const runtimeFacade = runtimeFacadeForBase(base);
       if (runtimeFacade) return { path: runtimeFacade, namespace: "ink-runtime-facade" };
       const resolved = await resolveSourceFile(base);
       if (resolved) return { path: resolved };
       const dependencyFallback = await resolveDependencyFallback(base);
       if (dependencyFallback) return { path: dependencyFallback };
-      const target = portablePath(relative(sourceRoot, base));
+      const target = sourceRelative(base);
       const emptyModule = emptyModules.get(target);
       if (
         emptyModule &&
@@ -3758,7 +3782,7 @@ const resolverPlugin = {
       ) {
         // proper-lockfile consumes the v3 CommonJS callable export; Runtime and
         // execa consume the reviewed v4 named ESM API from dependencyRoots.
-        return { path: join(sourceRoot, "node_modules/signal-exit/index.js") };
+        return { path: sourcePath("node_modules/signal-exit/index.js") };
       }
       if (resolutionMap.virtualFacades[args.path]) {
         return { path: args.path, namespace: "ink-facade" };
@@ -3780,7 +3804,7 @@ const resolverPlugin = {
         recordGap({ kind: "unmapped-bare", specifier: args.path, importer: args.importer });
         return undefined;
       }
-      const mappedBase = join(sourceRoot, mapped);
+      const mappedBase = sourcePath(mapped);
       const runtimeFacade = runtimeFacadeForBase(mappedBase);
       if (runtimeFacade) return { path: runtimeFacade, namespace: "ink-runtime-facade" };
       const resolved = await resolveSourceFile(mappedBase);
@@ -3799,7 +3823,7 @@ const resolverPlugin = {
 const define = Object.fromEntries(
   Object.entries(profile.defines).map(([key, value]) => [key, JSON.stringify(value)]),
 );
-const entrypoints = profile.entrypoints.map(entrypoint => join(sourceRoot, entrypoint));
+const entrypoints = profile.entrypoints.map(entrypoint => sourcePath(entrypoint));
 
 let buildResult: Awaited<ReturnType<typeof Bun.build>> | undefined;
 let thrownError: unknown;
@@ -3823,14 +3847,18 @@ try {
 }
 
 const externalModuleCommentPrefixes = [
-  `// ${portablePath(relative(repositoryRoot, sourceRoot))}/`,
+  "// src/",
+  `// ${portablePath(relative(repositoryRoot, dependencySourceRoot))}/`,
+  `// ${portablePath(relative(repositoryRoot, toolchainRoot))}/`,
   `// ${portablePath(sourceRoot)}/`,
 ];
 const forbiddenOutputIdentities = [
   portablePath(sourceRoot),
-  portablePath(repositoryRoot),
-  portablePath(relative(repositoryRoot, sourceRoot)),
-];
+  portablePath(dependencySourceRoot),
+  portablePath(toolchainRoot),
+  portablePath(relative(repositoryRoot, dependencySourceRoot)),
+  portablePath(relative(repositoryRoot, toolchainRoot)),
+].filter(Boolean);
 const outputPathScrub = { filesScanned: 0, filesChanged: 0, commentsRemoved: 0 };
 const forbiddenOutputMatches = new Set<string>();
 if (buildResult?.success) {
@@ -3904,12 +3932,17 @@ function sanitize(value: unknown): unknown {
       (value.startsWith("../") || value.startsWith(`..${sep}`)) &&
       isInsideSourceRoot(repositoryRelativeCandidate)
     ) {
-      return `<SOURCE_ROOT>/${portablePath(relative(sourceRoot, repositoryRelativeCandidate))}`;
+      return `<SOURCE_ROOT>/${sourceRelative(repositoryRelativeCandidate)}`;
+    }
+    if (!value.startsWith("<") && (value.startsWith("../") || isAbsolute(value))) {
+      const dependency = dependencyForPath(repositoryRelativeCandidate);
+      if (dependency) return sourceRelative(repositoryRelativeCandidate);
     }
     return value
-      .replaceAll(sourceRoot, "<SOURCE_ROOT>")
       .replaceAll(outputRoot, "<CORE_OUTPUT>")
-      .replaceAll(repositoryRoot, "<REPOSITORY_ROOT>");
+      .replaceAll(dependencySourceRoot, "<SOURCE_ROOT>")
+      .replaceAll(toolchainRoot, "<TOOLCHAIN_ROOT>")
+      .replaceAll(repositoryRoot, "<SOURCE_ROOT>");
   }
   if (Array.isArray(value)) return value.map(sanitize);
   if (value && typeof value === "object") {
@@ -4032,6 +4065,14 @@ const receipt = {
   cliCompatibilityVersion: profile.cliCompatibilityVersion,
   runtimeTarget,
   sourceDigest,
+  sourceLayout: {
+    implementationRoot: "src",
+    entrypoint: "src/entrypoints/cli.tsx",
+    referenceRoot: "restored-src/src",
+    implementationSource: "repository",
+    externalRootUse: "recovered-dependencies-only",
+    parallelImplementation: false,
+  },
   builder: {
     runtime: "bun",
     version: Bun.version,

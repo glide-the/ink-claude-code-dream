@@ -6,6 +6,11 @@
 
 # Clean-room Runtime 技术验证
 
+> Historical / retired implementation. Runtime 0.1.8 now builds canonical original
+> src modules, identical to restored-src/src, with no parallel cleanroom implementation.
+> Procedures, code paths and release/business receipts below describe the previous code,
+> not current qualification. See [current alignment](claude-sourcemap-package-contract-alignment.md).
+
 ## 结论边界
 
 本文后续摘要和业务回执是其对应历史版本的证据。当前 `0.1.7` 已原样恢复
