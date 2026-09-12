@@ -2,6 +2,7 @@
 # [Output] Fresh native process qualifications and an exact five-tarball release set; never publishes.
 # [Pos] Existing qualification lane, automatically run on main before publish-npm.yml.
 # [Sync] 2026-09-13: remove fail-only placeholder and retired cleanroom receipt reuse.
+# [Sync] 2026-09-13: build before fixture-enabled tests; install Dream's pinned YAML import dependency.
 
 name: Qualify npm Runtime
 on:
@@ -61,7 +62,7 @@ jobs:
           git clone --filter=blob:none --no-checkout https://github.com/glide-the/im-dream.git "$RUNNER_TEMP/dream-contract"
           git -C "$RUNNER_TEMP/dream-contract" checkout b989f973ca0d69be0448f7a3cb7e6e073eaae9dc
           python -m venv "$RUNNER_TEMP/sdk-python"
-          "$RUNNER_TEMP/sdk-python/bin/python" -m pip install 'ink-claude-dream-agent-sdk==0.2.145' 'mcp==1.27.1' 'python-dotenv==1.2.3'
+          "$RUNNER_TEMP/sdk-python/bin/python" -m pip install 'ink-claude-dream-agent-sdk==0.2.145' 'mcp==1.27.1' 'python-dotenv==1.2.3' 'PyYAML==6.0.3'
           python -m venv "$RUNNER_TEMP/mcp-python"
           "$RUNNER_TEMP/mcp-python/bin/python" -m pip install 'mcp==2.0.0' 'pydantic-settings==2.10.1'
           npm install --prefix "$RUNNER_TEMP/official-cli" --no-audit --no-fund '@anthropic-ai/claude-code@2.1.241'
@@ -87,11 +88,11 @@ jobs:
         env:
           INK_CLAUDE_CODE_BUILD_TARGET: ${{ matrix.target }}
         run: |
-          npm test
           npm run test:mcp-auth-compat
           npm run test:dream-compat
           npm run build
           node scripts/verify-core-prune.mjs
+          npm test
           mkdir -p dist/core-local/bin dist/core-local/qualification
           printf '%s\n' '#!/bin/sh' 'set -eu' 'exec "'"$PWD"'/node_modules/.bin/bun" "'"$PWD"'/dist/core-local/bundle/cli.js" "$@"' > dist/core-local/bin/ink-claude-code-dream
           chmod 0755 dist/core-local/bin/ink-claude-code-dream
