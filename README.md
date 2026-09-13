@@ -1,16 +1,16 @@
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
 <!-- [Output] Explain the one Runtime implementation, actual build, verification and local integration boundaries. -->
 <!-- [Pos] Operator entry point for ink-claude-code-dream. -->
-<!-- [Sync] 2026-09-13: record completed 0.1.9 publication/local adoption and bounded registry visibility verification. -->
+<!-- [Sync] 2026-09-13: link AGENTS governance alongside completed 0.1.9 publication/local adoption and registry verification. -->
 
 # ink-claude-code-dream
+
+Repository maintenance rules: [AGENTS.md](AGENTS.md) and the affected folder contracts.
 
 Runtime `0.1.9` uses the original `claude-code-sourcemap` modules directly.
 `src` is the only implementation and preserves original directories, module paths, permissions and
 initial bytes: **1,902 files, 35 module directories, 30,382,832 bytes**.
 The default build compiles `src/entrypoints/cli.tsx`, not a wrapper or a side snapshot.
-The separate `src/cleanroom` implementation is removed. Its previous code is recoverable
-from Git commit `38fdd3c`; it is not a second active Runtime.
 
 The [source-layout contract](runtime/source-layout.json) and
 [alignment decision](docs/design/claude-sourcemap-package-contract-alignment.md) describe

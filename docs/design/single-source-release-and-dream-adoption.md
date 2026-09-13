@@ -27,7 +27,7 @@ Runtime 已将原始恢复模块作为实际 `src` 实现。重复保存的
 使用现有四个平台包和选择器拓扑，平台先发布，选择器最后发布。
 构建依赖与平台资源可以来自明确校验的恢复仓库，但源码始终来自 Runtime 仓库根目录 `src`，删除的也是同仓库根目录 `restored-src`。
 CI 必须执行真实构建和对应制品验证，不能禁用质量门或伪造通过收据。
-Ubuntu hosted CI 的 userns 宿主前提只在一次性 trusted-main job 临时准备并恢复，
+Ubuntu hosted CI 的 userns 宿主前提只在默认分支受保护的临时 job 准备并恢复，
 先执行真实 bwrap preflight；不改变 Runtime sandbox 或本机/生产安全配置。
 
 ## 实施与交互
@@ -56,7 +56,7 @@ packager、resolver 和部署入口；只更换失效的双树职责和发布占
 ## 验收与回退
 
 实施核对发现 npm/Dream 还要求 `sandbox.notion-cli`，而原始 local-core 的
-13 项基础能力不承诺旧 cleanroom 专用隔离行为；聚合必须拒绝缺失能力。
+13 项基础能力不包含 Notion 原生 Bash 凭据隔离；聚合必须拒绝缺失能力。
 不能以修改 manifest 或使用旧业务收据消除此阻塞。采用前也必须核对当前
 server-owned 模型 max output 投影，必要兼容应位于既有 source-bound build
 层，不修改原始模块库存、不新增平行实现。

@@ -2,23 +2,12 @@
 <!-- [Output] Define the local minimal Runtime architecture, capability boundary, build/publish gate, compatibility layers, and three-level acceptance contract. -->
 <!-- [Pos] Canonical 20-section design for the locally built ink-claude-code-dream Runtime. -->
 <!-- [Sync] 2026-08-24: add native-target qualification and fail-closed scoped npm publication architecture. -->
-<!-- [Sync] 2026-08-24: mark the restored-source build as local historical evidence after the public npm path moved to a clean-room core. -->
-<!-- [Sync] 2026-09-13: preserve historical core receipts while admitting only the exact checked research snapshot outside public build graphs. -->
+<!-- [Sync] 2026-09-13: single original source implementation, current release boundaries and concrete programming operations; obsolete architecture/status removed. -->
 
 # Claude Code Runtime minimalization
 
-> 当前 0.1.9 决策：恢复源码是唯一实际 `src` 实现，不是旁路快照。
-> 重复 `restored-src` 已删除；原始目录、模块、字节/权限保持不变，默认编译 `src/entrypoints/cli.tsx`。
-> 旧平行 cleanroom 已退出。本文 2026-08-24 的资格/制品摘要仍只证明历史字节；
-> 当前结果见 [0.1.9 notes](../build/runtime-0.1.9-release-notes.md)。公共发布按用户已确认的来源授权走 CI。
-
-Evidence date: 2026-08-24.
-
-Structure correction on 2026-09-13: Runtime 0.1.8 compiles its canonical original src modules, byte-identical to restored-src/src (1,902 files/35 directories). External roots supply recovered dependencies/assets only. Existing source-bound headless/MCP transforms remain the build layer; no second Agent/MCP implementation is kept. See [alignment](claude-sourcemap-package-contract-alignment.md). Historical digests/production receipts below are not rebound; generated artifacts remain ignored and current release gates closed.
-
-Decision status: **historical technical implementation and qualification complete for the recorded local artifact**. The user-authorized Claude Code `2.1.88` complete restored tree was a read-only local reference/build input. Bun `1.4.0` feature DCE emitted only Git-ignored `dist/core-local/` outputs. The repository now additionally preserves the exact research-source-only subtree, but never the generated artifact or recovered dependency/vendor tree. These are technical provenance claims, not redistribution permission.
-
-The exact artifact has source digest `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e` and bundle SHA-256 `a300fe7fb3da453e45b2f2cd7721bef1963aa991498c26a2826fef8b381161f5`. Its sanitized graph contains 1,989 inputs and 48 outputs with zero resolution gaps; feature-DCE and required-input assertions pass. SDK real-process, stdio/HTTP MCP tools/resources, MCP management lifecycle, and aggregate qualification all exit 0 and bind those same hashes. The build and release manifests keep `sourceVersionEvidence=2.1.88` distinct from the qualified Dream-facing `cliCompatibilityVersion=2.1.241`. The reproducible package has 62 files, 61 checksum entries, artifact-tree SHA-256 `b674fb04734cde23c3821ae7796f3125e96e110392f6be353c30e1e7f59b0f5b`, two byte-identical passes, and records `productionEligible=true`, `publicationAllowed=false`, and `redistributionAllowed=false`. Local installation copies the qualified Runtime and exact Bun `1.4.0` into separate content-addressed user-prefix directories, exposes versioned PATH links, and leaves the user's ambient Bun unchanged.
+> 当前 `0.1.9` 使用唯一原始 `src`，默认入口 `src/entrypoints/cli.tsx`。原始目录、模块、字节和权限由 `runtime/source-provenance.json` 校验，重复 `restored-src` 已删除。外部目录只提供恢复的依赖和资源，不参与源码编译。
+> 发布、同 SHA 四宿主资格、五包公开归档和本机 Dream 采用见[当前版本记录](../build/runtime-0.1.9-release-notes.md)。执行摘要只适用于其记录的制品，不能替代其他版本或宿主的验收。
 
 ## 1. Background and problem definition
 
@@ -26,17 +15,19 @@ Dream currently reaches Claude through the Python Agent SDK and a CLI path/proce
 
 The task is to produce a separately named SDK distribution and a locally packaged minimal Runtime without copying the Agent protocol or adding a Dream-only state machine. Core pruning must be decided from Dream's real call graph and then verified at the Runtime interface. A successful UI journey is necessary but cannot prove Runtime protocol completeness by itself.
 
-## 2. Current version matrix
+## 2. 概念、规则与当前版本
+
+源代码身份、CLI 协议兼容标识、distribution 版本和实际安装是不同对象。源码校验确定编译输入，协议测试确定可观察行为，发布/安装回执确定制品字节与运行采用。Dream 表达运行意图，Runtime resolver 校验实际可执行文件，不以路径名称或版本输出代替资格检查。
+
 
 | Component | Baseline | Applicability |
 | --- | --- | --- |
 | Official rollback CLI | Claude Code `2.1.241` | Current black-box behavior and rollback target |
-| Restored Runtime source | Claude Code `2.1.88`; sourcemap repository commit `a8a678cb6244e6770e1e421767ff0987a1d95549` | Explicitly authorized external local reference/build input; historical implementation, not evidence of `2.1.241` parity |
-| Restored source digest | SHA-256 `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`; 4,471 files; 46,447,794 bytes | Builder receipt must bind the exact input without copying it into Git |
-| Agent SDK mirror | `ink-claude-dream-agent-sdk==0.2.143`, public namespace `claude_agent_sdk` unchanged | Dream's self-packaged SDK baseline; uses upstream CLI-path injection |
+| Restored Runtime source | Claude Code `2.1.88`; sourcemap repository commit `a8a678cb6244e6770e1e421767ff0987a1d95549` | Current repository source baseline; original modules are compiled, while the compatibility version requires independent protocol tests |
+| Restored source digest | SHA-256 `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`; 4,471 files; 46,447,794 bytes | Combined source/dependency baseline; Git contains only checked original source, not recovered dependencies |
+| Agent SDK mirror | `ink-claude-dream-agent-sdk==0.2.145`, public namespace `claude_agent_sdk` unchanged | Dream's self-packaged SDK baseline; uses upstream CLI-path injection |
 | SDK bundled CLI baseline | `2.1.241` | Current SDK/official CLI compatibility comparator |
 | Core builder | Bun `1.4.0` | Required for `bun:bundle` compile-time `feature()` DCE |
-| Existing envelope build | Bun `1.2.20`, Node-target wrapper | Historical process-boundary baseline; not the pruned core |
 | Current core entrypoint | repository `src/entrypoints/cli.tsx` → `src/main.tsx` → `src/cli/print.ts` | Actual canonical original modules; external root supplies recovered dependencies only |
 | Core output | `dist/core-local/` and `dist/core-package-local/` | Local, generated, Git-ignored, technically qualified, and not publishable or redistributable |
 
@@ -70,7 +61,7 @@ Official `2.1.241` package metadata and behavior remain primary evidence for cur
 | telemetry/shared diagnostics | 暂无足够图证据 | shared initialization/side effects possible | 未确认 | 暂缓 | 可能破坏 gates/support | 必须等 metafile/import-side-effect evidence |
 | shared `autoUpdater.ts` logic | 暂无足够图证据 | 可能包含最低版本/共享检查 | 未确认 | 暂缓 | 可能破坏版本合同 | 仅删除 updater command/UI，不按文件名推断共享逻辑 |
 | authentication/gateway | 已证实使用 | Runtime auth/API client → configured gateway/provider | 每次推理 | 必需 | 无法推理 | `auth.ts`/API client; Dream gateway config |
-| workspace/plugin materialization | 条件使用 | Dream 启动前 materialize，Runtime discovery | turn/resume | 条件必需 | workspace/plugin 恢复不一致 | Dream service/thread factory |
+| workspace/plugin file generation | 条件使用 | Dream 启动前生成或恢复文件，Runtime discovery | turn/resume | 条件必需 | workspace/plugin 恢复不一致 | Dream service/thread factory |
 
 Dream evidence anchors: `backend/claude_agent/thread_factory.py`, `backend/claude_agent/service.py`, `backend/libs/claude_agent_kit/server/agent_runner.py`, `sdk_env.py`, `simple_cas_client.py`, and `backend/routers/claude_agent.py` in the read-only Dream repository. “暂无足够图证据” means **retain**, not delete.
 
@@ -131,7 +122,7 @@ Non-goals: Dream business changes, Schema/migration work, a second Agent/MCP sta
 
 ## 6. Runtime capability boundary
 
-The minimal Runtime owns the existing CLI/JSONL/process contract. It may remove source modules only after the Dream matrix and Bun metafile prove they are unreachable or explicitly disabled. It must retain the profile's asserted inputs for streaming, bidirectional control, transcript/resume, permissions, workspace, sandbox, TMPDIR, MCP, extensions, and authentication/gateway.
+The minimal Runtime owns the existing CLI/JSONL/process contract. It may exclude branches from emitted artifacts only after the Dream matrix and Bun metafile prove them unreachable or explicitly disabled. Original source files, directories and module paths remain unchanged; pruning is a build-graph operation, not source-tree deletion. It must retain the profile's asserted inputs for streaming, bidirectional control, transcript/resume, permissions, workspace, sandbox, TMPDIR, MCP, extensions, and authentication/gateway.
 
 The Python SDK remains an upstream-compatible distribution. It selects either the official CLI or the custom Runtime through the upstream `cli_path`/transport/process launcher injection point. It does not copy Runtime state, parse a second wire protocol, or own user data.
 
@@ -146,7 +137,7 @@ The current official `2.1.241` binary has no public core source/build graph suit
 - `scripts/build-core-prune.ts` reads an explicit absolute, normalized, non-symlink source root; writes only ignored `dist/core-local`; records digest, metafile, gaps, and DCE results.
 - `scripts/verify-core-prune.mjs` refuses any artifact unless build status is successful, gaps are zero, forbidden inputs are absent, and every required capability input survives.
 
-Current result: build and verifier pass with 1,989 inputs, 48 outputs, zero gaps, passing DCE assertions, and every required MCP transform applied. The executable core is locally packaged and digest-qualified. This establishes the repository's technical `productionEligible=true` state, not permission to publish, redistribute, deploy, or claim a real-business run.
+Build and verifier must prove zero resolution gaps, required inputs and source-bound transformations for each artifact. Local-core eligibility and npm publication are separate manifest contracts; the current public `0.1.9` result is recorded in the release receipt, not inferred from a local build.
 
 The restored 2.1.88 settings converter does not forward `settings.sandbox.seccomp` into `SandboxRuntimeConfig`; its working extension point is the sandbox-runtime on-disk auto-discovery path. The Linux local-core build therefore places `runtime/seccomp/apply-seccomp-passthrough-v2.1.88.sh` directly at that verified helper path. Unlike the later embedded-filter helper, the 2.1.88 call includes the BPF path as argv 1, so this shim discards that one argument before `exec`. The passthrough leaves bubblewrap filesystem/network isolation logic in place but cannot compensate for an outer host that denies bubblewrap namespace creation.
 
@@ -177,7 +168,7 @@ The custom core has real Dream/Gateway/PostgreSQL main-journey evidence. The com
 
 Restored `2.1.88` already contains substantial OAuth/DCR/PKCE/token/revoke logic. It must be retained and tested rather than replaced. The separate `compat/mcp-auth/` layer records only newer gaps:
 
-- `2.1.238`: stdio MCP initialization before discovery; disabled servers not connected by list/get; trusted `headersHelper` cwd/scoping; credential-like environment removal.
+- `2.1.238`: stdio MCP initialization before discovery; disabled servers not connected by list/get; `headersHelper` executable/cwd scope validation; credential-like environment removal.
 - `2.1.239`: bounded recovery for transient remote MCP 5xx during mid-session reconnect/cloud/SDK server updates; 401/403 remain non-retryable and error output is redacted.
 
 The repository-authored compatibility patch is now integrated into the qualified headless artifact through six exact-source-bound transformations. Digest-bound MCP differential and management receipts pass, including stdio/HTTP lifecycle, colon-containing server identity, isolation/redaction, and OAuth help/management commands. Restored `2.1.88` continues to own OAuth/DCR/PKCE/token/revoke behavior; the repair does not implement another OAuth flow, MCP client, or Agent state machine.
@@ -203,11 +194,11 @@ dist/core-package-local/         # reproducible local-only package; Git-ignored
     manifest/                    # checksums, SBOM, licenses, policy, qualification summary
 ```
 
-Git may contain repository-authored tooling/tests/docs and the exact immutable research `restored-src/src` snapshot. Recovered dependencies/vendor artifacts, generated derived artifacts, user data, credentials, and tokens remain excluded. Public releases additionally exclude restored source and source-derived artifacts; the research snapshot is not covered by MIT.
+Git contains the unique original `src`, repository tooling/tests/docs and provenance. Recovered dependencies/vendor trees, generated outputs, user data and credentials remain excluded. npm artifacts contain the qualified executable, assets and manifests, not a second source tree or source maps; original copyright and source license remain.
 
 ## 12. Transcript, workspace, and plugin metadata lifecycle
 
-Runtime distribution data is immutable; user/session data is not distribution data. Dream owns the canonical thread workspace and binds `CLAUDE_CODE_TMPDIR={AGENT_CWD}/{thread_id}/.claude-tmp`, a normalized real child with no symlink and mode `0700`. Runtime transcript files remain in the Runtime's session store for resume. Dream owns its persisted projection. Plugin/workspace materialization is recreated or restored by Dream before launch. OAuth credentials and user MCP configuration stay in their existing user/config stores and are never copied into the artifact. Actor configuration uses `CLAUDE_CONFIG_DIR`. A valid explicit `CLAUDE_SECURESTORAGE_CONFIG_DIR` must be an absolute normalized NFC path and fixes credential storage to its `0600` `.credentials.json`; no selector retains the official keychain.
+Runtime distribution data is immutable; user/session data is not distribution data. Dream owns the canonical thread workspace and binds `CLAUDE_CODE_TMPDIR={AGENT_CWD}/{thread_id}/.claude-tmp`, a normalized real child with no symlink and mode `0700`. Runtime transcript files remain in the Runtime's session store for resume. Dream owns its persisted projection. Plugin/workspace files are generated or restored by Dream before launch. OAuth credentials and user MCP configuration stay in their existing user/config stores and are never copied into the artifact. Actor configuration uses `CLAUDE_CONFIG_DIR`. A valid explicit `CLAUDE_SECURESTORAGE_CONFIG_DIR` must be an absolute normalized NFC path and fixes credential storage to its `0600` `.credentials.json`; no selector retains the official keychain.
 
 Manual `mcp login --no-browser` also owns one bounded operational receipt at `${CLAUDE_CONFIG_DIR}/.ink-runtime-diagnostics/mcp-oauth-stage.jsonl`. Each login synchronously replaces the prior file before recording, so it represents only the actor's single active operation; the directory is forced to `0700` and the file to `0600`. The file is capped at 16 unique allowlisted stages and 4,096 bytes. Records contain only schema version, increasing sequence, ISO timestamp, and stage. They never contain server identity, URLs, paths, callback/query values, OAuth parameters, credentials, error text, or environment values. Recorder I/O is fail-safe and cannot change authentication success/failure. `logout` and `remove` neither read nor require the receipt. It is actor Runtime data, excluded from Git and all artifacts, and the next manual login overwrites it.
 
@@ -228,30 +219,26 @@ The custom SDK must exercise the same contract against both the official compara
 
 ```mermaid
 flowchart LR
-    U["Upstream SDK 0.2.143"] --> P["Python wheel and sdist"]
-    S["Authorized restored-src 2.1.88"] --> B["Bun 1.4 feature-DCE builder"]
-    C["Capability profile and resolution map"] --> B
-    B -->|"1,989 inputs / 48 outputs / zero gaps / DCE pass"| L["Qualified Git-ignored dist/core-local"]
-    M["Separate MCP compatibility patch"] -->|"six source-bound transforms applied"| B
-    Q["Source-bound OAuth repair"] -->|"official SDK 2.0.0 contract 3/3"| B
-    P --> T["Interface differential suite"]
-    L --> T
-    O["Official CLI 2.1.241 comparator"] --> T
-    T --> A["Bound qualification and reproducible local package"]
-    A -->|"source-bound tooling only"| G["Private Git remote"]
+    S["Unique original src"] --> B["Locked Bun 1.4.0 compiler"]
+    D["Recovered dependencies and locked assets"] --> B
+    C["Prune profile and source-hash-bound compatibility transforms"] --> B
+    B --> V["Source graph, DCE and protocol validation"]
+    V --> L["Separately qualified local-core package"]
+    V --> N["Four native host qualifications at one commit"]
+    N --> P["Four platform archives and selector archive"]
+    P --> R["CI publication and exact registry integrity checks"]
+    R --> I["Fresh installation and Dream startup identity"]
 ```
 
-The current build moved through `blocked` → `built` → `verified` → `qualified`; a DCE pass alone was not sufficient. The package is locally production-eligible under its artifact contract; its real Dream main journey and final real Comfy lane passed. Authenticated Admin UI evidence remains unavailable because no administrator browser session was supplied. Publication, redistribution, and deployment remain separate decisions.
+Local-core and npm keep separate entrypoints, capabilities and publication contracts. A local Darwin ARM64 result does not qualify another host. npm uses the existing main CI workflow and protected publication environment; platform packages publish before selector. Registry visibility delays may retry the same archive after digest comparison; mismatched content fails, and an occupied version is never rebuilt or overwritten.
 
-多平台发布不复用这一份 Darwin ARM64 资格结论。core builder 现在只允许 native `darwin-arm64`、`darwin-x64`、`linux-arm64`、`linux-x64`，receipt 及 SDK/MCP/management/full qualification subject 都携带 `runtimeTarget`；四个平台分别绑定各自 ripgrep SHA-256，两个 Linux 目标还分别绑定同架构 seccomp helper/BPF。npm 目标由 `@glide-the/ink-claude-code-dream` 选择包和四个平台包组成，平台包固定依赖并实测 `bun@1.4.0`。Windows、Linux musl 和交叉打包没有完整证据，保持 fail-closed。
-
-`npm pack` 有三层独立安全门：仓库根 lifecycle 拒绝 legacy envelope；生成式 package prepack 校验法律状态、qualification、target/arch、manifest、ripgrep checksum 和 Bun 版本；最终 tgz verifier 再拒绝 legacy material、用户数据和任意 `**/*.map`。当前 publication/redistribution 两个字段均为 false，且 npm 发布许可证为空，所以 workflow 在下载制品前就停止。
+Build/prepack/tarball verifiers check matching source, target, qualification, license, capabilities and checksums. Windows, musl and unsupported architectures fail without choosing a substitute. Current `0.1.9` four-host and five-package results are in the release receipt; functional upgrades require fresh evidence. Documentation-only edits do not rebuild or republish immutable versions.
 
 ## 15. Security and license boundary
 
-The user requested the original directories and modules be the actual implementation. Canonical src and restored-src/src are now identical original trees, with Anthropic copyright/provenance retained; recovered dependencies/vendor artifacts and generated outputs stay out of Git. The private root is UNLICENSED. Repository-authored selector/compatibility tooling licenses do not relicense original modules; old cleanroom code is retired. Local compilation/integration is technically supported together, while public redistribution/publication still requires separate authority.
+The implementation is the unique checked original `src`; original Anthropic copyright and source-derived SBOM are retained. Repository tooling licenses do not relicense original modules. Public `0.1.9` follows operator-confirmed redistribution authority and the existing machine-readable npm policy; local-core keeps its own non-publication contract. License statements must match the actual artifact, not another implementation's receipts.
 
-No secret, OAuth token, complete environment, transcript body, Workspace body, user config, or materialized plugin content may enter Git, receipts, logs, or artifacts. Source-root absolute paths are sanitized from receipts.
+No secret, OAuth token, complete environment, transcript body, Workspace body, user config or generated plugin files may enter Git, receipts, logs or artifacts. Source-root absolute paths are sanitized from receipts.
 
 ## 16. Upgrade and patch replay
 
@@ -269,7 +256,7 @@ Testing is deliberately layered in this order:
 2. **Interface-level differential**: custom SDK against official and custom Runtime for JSONL/control/session/resume/tools/permissions/errors/cancel/MCP/plugins/skills/hooks/workspace/sandbox/auth carriers and semantics. This is the primary Runtime compatibility gate.
 3. **Real Dream business journey**: public production entry with the local Dream/Admin/Gateway/PostgreSQL topology verifies SSE, persistence, UI, real MCP and Admin visibility. It detects integration/business regressions but cannot replace layer 2.
 
-The current static and interface layers pass through digest-bound local-core receipts. The SDK real-process differential, stdio/HTTP MCP tools/resources differential, management lifecycle, and aggregate qualifier all exit 0. The official MCP Python SDK `2.0.0` OAuth CLI contract passes 3/3 through source-bound, pipe, and real-PTY lanes, including the fake-`security` sentinel and already-exited `waitForExit` case. The standard full repository suite runs `node --test --test-concurrency=1 tests/*.test.mjs`: test files share the built artifact and process-level fixtures, so cross-file serialization avoids lifecycle/PTY resource contention without reducing individual protocol assertions. The custom-core Dream main journey and final real Comfy lane pass. Comfy Resources/Prompts were `not_reported`; no tool was invoked because the three-gate charging policy lacked zero-cost evidence, not because of a functional failure. Historical wrapper/official receipts remain comparator evidence only.
+Results belong in versioned execution receipts. The current release receipt distinguishes provider-free protocol/artifact verification, local process adoption and operator-reported real model/Notion acceptance. A green fake-provider lane is not proof of a real business workflow; each capability and host retains its recorded coverage and skips.
 
 ## 19. Acceptance criteria
 
@@ -282,24 +269,22 @@ The minimal Runtime's technical artifact gate requires:
 - interface differential is clean or every intentional difference is documented and accepted;
 - artifact contains no vendor source or user material and its local/publication license decision is explicit.
 
-The current artifact meets these technical criteria: the Dream manifest gate passed, the Dream backend suite reported 1,954 passed / 24 skipped / 607 subtests, the standard Runtime lifecycle run reported 44 passed / 2 external OAuth-fixture skips, and the reproducible package reports `productionEligible=true`. The real custom-core Dream main journey passed through the production UI and persisted topology. The separately configured complete local OAuth CLI/provider-fixture contract passed 3/3. The preceding candidate's `token_save_completed` → `credentials_missing` result is recorded as a fixed failure; the final real Comfy rerun passed with `credentials_present`, 41 tools, and complete cleanup. Publication and redistribution remain prohibited without Anthropic authorization.
-
-The final command `PATH=/Users/dmeck/.nvm/versions/node/v24.13.0/bin:$PATH bun run verify` exited 0: Node 44 passed with 2 external OAuth-fixture skips, MCP compatibility 46 passed with 6 authorized-source fixture skips, SDK contract, acceptance, release verification, and archive reproducibility passed. With `INK_AUTHORIZED_CORE_SOURCE_ROOT` set to the read-only restored-source root, the follow-up MCP compatibility replay executed all source-bound fixtures and passed 52/52 with zero failures. Archive SHA-256 is `64c919d1f11b2770497a080c4cdeb8587925f45d928912459b31647e1b68eb38`; checksum-inventory SHA-256 is `61e12c7c1828c05fb6e70535abb36ff1fbe924aaba2d78787b9ce8e832b3947c`.
+Versioned release/qualification receipts are the source for actual outcomes, commands, skips and digests. This design states the acceptance contract and does not retain superseded implementation measurements as current results.
 
 ## 20. Open items and design self-review
 
 | Question | Current answer |
 | --- | --- |
 | Focused on Runtime rather than Dream workarounds? | Yes; Dream is an interface consumer and test target only. |
-| Evidence before deletion? | Yes for CCR, swarm/team, interactive REPL/IDE UI, updater command/UI, and feedback UI; unknown shared code remains. |
-| SDK/MCP/tools/SSE/Workspace/sandbox/resume/auth retained? | Yes: required-input assertions and digest-bound SDK/MCP/management receipts pass; the official SDK OAuth CLI contract passes 3/3; the custom-core Dream main journey passed SSE, Workspace/sandbox/transcript and same-session resume; final real Comfy OAuth and 41-tool inventory passed. |
+| Evidence before build-graph exclusion? | Yes for CCR, swarm/team, interactive REPL/IDE UI, updater command/UI, and feedback UI; unknown shared code remains. |
+| SDK/MCP/tools/SSE/Workspace/sandbox/resume/auth retained? | Required inputs and protocol behaviors remain explicit build/qualification gates. Current 0.1.9 results and real-business scope are in its release receipt; prior Comfy or custom-core journeys do not qualify another version. |
 | Slash Skill and ordinary Agent/Task preserved? | Yes; they are explicitly KEEP and not conflated with swarm/team or interactive fork UI. |
 | Blind reliance on old behavior? | No; old source is the build baseline, while current deltas are separately evidenced and patched. |
 | Second Agent/MCP state machine introduced? | No. |
 | Python SDK over-rewritten? | No; distribution rename/build flow only, public namespace and upstream launcher retained. |
 | User data packaged? | No; output and receipts exclude it. |
-| License boundary explicit? | Yes: exact restored source is immutable research material, not MIT; derived artifacts stay ignored, public builds exclude both, and no Anthropic redistribution authorization exists. |
-| Replayable and independently reversible? | Yes for the current native target: exact digests/manifests, two byte-identical package passes, and the official CLI path provide replay and rollback evidence. Other npm targets require their own replay and qualification. |
-| Minimal implementation? | Yes: delete proven non-IM surfaces first; defer telemetry/diagnostics/shared updater logic. |
+| License boundary explicit? | Yes: original copyright/source license remain; public npm policy records operator-confirmed authority, while local-core retains its own publication restrictions. |
+| Replayable and independently reversible? | Current 0.1.9 four-host qualification and exact archive/install evidence are linked. Future upgrades require fresh target-specific replay and qualification; explicit CLI-path rollback preserves business contracts. |
+| Minimal implementation? | Yes: exclude only graph-proven non-Dream runtime branches; keep original source and defer telemetry/diagnostics/shared updater logic. |
 
-Open decisions: supply an authenticated Admin browser session if UI evidence is required, separately decide whether to authorize deployment, obtain explicit redistribution/publication terms and npm license, configure npm Trusted Publisher, and execute complete native qualification on Darwin x64/Linux x64/Linux ARM64. Publication and redistribution remain prohibited absent authorization. The qualified hashes above prove only their recorded native target, not the other npm packages. Official CLI `2.1.241` remains the external comparator and direct rollback; restored `2.1.88` plus the separate MCP and OAuth repairs remains the local implementation.
+Functional upgrades must assess affected capabilities and complete normal business workflows before testing. Remote deployment and Admin UI acceptance are not implied by a local release. Current `0.1.9` status is in the linked receipt; future versions require their own native qualification and license/integrity gates. Official CLI `2.1.241` remains the external comparator and direct rollback; restored `2.1.88` plus the separate MCP and OAuth repairs remains the local implementation.

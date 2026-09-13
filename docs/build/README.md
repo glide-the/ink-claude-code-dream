@@ -1,14 +1,13 @@
 <!-- [Input] Canonical original src modules, locked tooling, recovered dependencies/assets and current policy. -->
 <!-- [Output] Actual original-module build and verification commands with explicit release boundaries. -->
-<!-- [Pos] Current build guide; previous envelope/cleanroom procedures are historical only. -->
+<!-- [Pos] Current single-source build guide and artifact-validation boundary. -->
 <!-- [Sync] 2026-09-13: retain qualified source/build gates and link completed four-host public release evidence. -->
 
 # Build and package
 
 There is one active Runtime implementation: original `src`, verified against
 `runtime/source-provenance.json`. The default build enters `src/entrypoints/cli.tsx`.
-`src/cleanroom` and the envelope/fake-core builders are removed, recoverable at
-Git commit `38fdd3c`, not alternative current build products.
+No second source tree or alternative implementation participates in the build.
 
 ## Requirements and commands
 
@@ -38,7 +37,7 @@ The implementation root is hardwired to this repository.
 The builder applies existing `runtime/core-prune-profile.json` headless transforms
 and `compat/mcp-auth` / `compat/dream-runtime` deltas without editing original src. It writes only Git-ignored
 `dist/core-local`. Receipt sourceLayout must prove repository src input and no parallel
-implementation. Verifier rejects restored-src/cleanroom build paths.
+implementation. Verifier rejects duplicate source trees and implementation roots outside this repository.
 
 Current original source inventory is 1,902 files/30,382,832 bytes/35 module directories;
 the original src plus recovered dependency baseline is 4,471 files/46,447,794 bytes,
@@ -59,7 +58,7 @@ This is real native-host evidence, not the retired five-native fixture lane.
 Docs/publisher-only edits run ordinary CI without rebuilding or republishing that version.
 
 Original source copyright is retained; root is private UNLICENSED and public release
-authority is recorded from the operator confirmation. Old cleanroom MIT receipts cannot
-qualify these bytes; real four-host CI now feeds exact archives to automatic publishing.
+authority is recorded from the operator confirmation. Qualification is bound to exact
+source/archive bytes; four-host CI feeds those archives to automatic publishing.
 See [0.1.9 results](runtime-0.1.9-release-notes.md), [test guide](../test/README.md) and
 [alignment decision](../design/claude-sourcemap-package-contract-alignment.md).
