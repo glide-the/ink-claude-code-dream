@@ -6,6 +6,44 @@
 
 # Notion CLI production Bash sandbox
 
+<!-- [Sync] 2026-09-13: distinguish current PATH compatibility regression from the completed historical 0.1.4 receipt. -->
+
+## Current 0.1.9 compatibility follow-up
+
+This document's implementation and release evidence below is historical 0.1.4.
+Current production ownership is original `src` with source-bound
+`compat/dream-runtime` transforms; retired cleanroom/restored-src paths must not
+be recreated or used as active artifacts.
+
+Dream task `01a09969-a9f1-7382-b707-c83337e2ae53` reproduced
+`Failed to read config.json` using the normally installed 0.1.9 Runtime and real
+ntn 0.15.1 with synthetic config. Commit `2577b9a`'s `nativeNtn` stops at a
+non-absolute PATH entry before a valid native ntn; the old `0ebafe9` resolver
+continued past missing candidates. Rejection removes the Notion environment,
+so ntn can fall back to a default home denied by the sandbox.
+
+The applied Dream-only composition repair removes only nonempty relative PATH
+directories proven absent at the final canonical thread cwd (ENOENT/ENOTDIR).
+It keeps order, existing directories, empty entries, symlinks and uncertain I/O
+results, and leaves this Runtime's strict shadow/native policy unchanged.
+Prepending the ntn directory was rejected because it changes unrelated command
+resolution. No Runtime source, version, manifest, installed binary or old
+attestation was modified for this follow-up.
+
+Dream's current design and sequence remain in
+`docs/design/notion-session/runtime-bash-env-remediation.md` and
+`runtime-credential-and-skill-sequence.md` in the Dream repository. Current
+verification passed 45 focused tests (zero skipped). Normal Dream thread
+`56887baf-e44a-4816-a3aa-0cfb44f3b0a1` completed three turns: the first used
+local Grep and is not a Notion receipt; the next two each completed a real
+`ntn api v1/search` without config errors. Both returned list/results=1,
+has_more=true and a request ID; no search-matching claim is made. The persisted
+Claude ID stayed the same across both continued turns, and refreshed history
+showed all three completed turns with ready input. Projection config mtimes
+advanced every turn, with config0600/home0700 and no symlinks. This is current
+SDK 0.2.145 / installed Runtime 0.1.9 / ntn 0.15.1 evidence, independent of
+the historical 0.1.4 receipt below. No Notion writes or artifact release occurred.
+
 ## Finding
 
 This change closes a clean-room production sandbox allowlist gap. It is not described as a generic source-migration omission.
