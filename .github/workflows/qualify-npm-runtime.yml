@@ -5,12 +5,14 @@
 # [Sync] 2026-09-13: build before fixture-enabled tests; install Dream's pinned YAML import dependency.
 # [Sync] 2026-09-13: temporary hosted Ubuntu userns preparation; keep real sandbox tests enabled.
 # [Sync] 2026-09-13: docs/publisher-only changes use ordinary CI, not another same-version artifact set.
+# [Sync] 2026-09-13: classify root agent governance as documentation; keep workflow changes qualified.
 
 name: Qualify npm Runtime
 on:
   push:
     branches: [main]
     paths-ignore:
+      - AGENTS.md
       - README.md
       - docs/**
       - '**/.folder.md'

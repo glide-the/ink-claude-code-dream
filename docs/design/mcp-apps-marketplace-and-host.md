@@ -1,7 +1,7 @@
-<!-- [Input] MCP Apps 2026-01-26 specification, ext-apps revision 10195ad, and the clean-room Runtime/Marketplace evidence. -->
+<!-- [Input] MCP Apps 2026-01-26 specification, ext-apps revision 10195ad, and original-module Runtime/Marketplace evidence. -->
 <!-- [Output] Product interaction, status semantics, security boundary, compatibility matrix, and phased acceptance plan for MCP Apps. -->
 <!-- [Pos] Authoritative design for the ext-apps Marketplace entry and any future MCP Apps Host capability. -->
-<!-- [Sync] 2026-09-02: record the skills-only Marketplace integration and ordinary-MCP/Apps-Host compatibility boundary. -->
+<!-- [Sync] 2026-09-13: distinguish Runtime 0.1.9 headless MCP from Dream's existing Node/browser Host; remove superseded implementation evidence and parallel Host proposals. -->
 
 # MCP Apps Marketplace 接入与 Host 交互方案
 
@@ -11,7 +11,7 @@
 
 本次接入的上游 `modelcontextprotocol/ext-apps` 也必须准确分类：仓库中的 Claude Plugin Marketplace 条目 `plugins/mcp-apps` 是 4 个面向开发者的 Skills，不包含 `.mcp.json`、可启动 MCP server 或 MCP Apps Host。安装成功只证明这些 Skills 可被 Claude Code/本 Runtime 的 `--plugin-dir` 机制加载，不能证明 MCP Apps 可运行。
 
-截至 2026-09-02，当前总体结论为：**仅支持普通 MCP，不支持 MCP Apps Host**。现有 Runtime 能保留内部 discovery/result/resource 对象中的扩展字段，并能读取 MCP App HTML 资源；但它未声明 `io.modelcontextprotocol/ui` 能力，也没有 iframe、AppBridge、权限、CSP 或 Host/UI 消息生命周期。因此保持不协商 UI 扩展是当前正确的 fail-closed 行为。
+当前 Runtime `0.1.9` 的边界为：**支持普通 MCP，不在此 headless Runtime 内实现 MCP Apps Host**。Dream 已有独立的 Next 服务端和浏览器 Host；其 preview、权限与验收由 Dream MCP Apps 设计集定义，不能据本 Runtime 的边界判断 Dream 不支持 Apps。现有 Runtime 能保留内部 discovery/result/resource 对象中的扩展字段，并能读取 MCP App HTML 资源；但它未声明 `io.modelcontextprotocol/ui` 能力，也没有 iframe、AppBridge、权限、CSP 或 Host/UI 消息生命周期。因此保持不协商 UI 扩展是当前正确的 fail-closed 行为。
 
 ## 2. 目标与边界
 
@@ -42,7 +42,7 @@
 | MCP Apps Host | 负责扩展协商、resource 校验、sandbox、CSP、权限、AppBridge、tool result 和生命周期的客户端 UI 宿主。 |
 | `mcp-apps` Skills | `ext-apps/plugins/mcp-apps` 的 4 个开发指导 Skills；不等于 server 或 Host。 |
 
-官方规范使用 “Host” 表示承载应用 UI 的 MCP client。本项目映射为 Dream 的服务端组合层加前端安全容器；当前 clean-room Runtime 只承担 headless MCP client 与 Claude turn，不承担浏览器 Host。
+官方规范使用 “Host” 表示承载应用 UI 的 MCP client。本项目中 Host 由 Dream 的 Next 服务端与浏览器组件提供；本仓库原 Runtime 只承担 headless MCP client 与 Claude turn，不承担浏览器 Host。
 
 ### 3.2 配置与运行状态规则
 
@@ -95,16 +95,16 @@
 
 ```mermaid
 flowchart LR
-  A["外部 Claude Code / Dream 安装流程"] -->|"解析 Marketplace，物化插件目录"| B["mcp-apps Skills"]
+  A["外部 Claude Code / Dream 安装流程"] -->|"解析 Marketplace，生成插件目录"| B["mcp-apps Skills"]
   B -->|"--plugin-dir"| C["原始 Runtime Skill loader"]
   D["Dream 生成的 MCP config"] --> E["src/services/mcp/client.ts"]
   E -->|"initialize / tools / resources"| F["MCP server"]
   E -->|"普通 tool 定义与 JSON 结果"| G["Claude turn"]
-  E -. "当前没有 UI DTO/桥接" .-> H["Dream MCP Apps Host"]
-  H -. "尚未实现" .-> I["隔离 iframe / AppBridge"]
+  D --> H["Dream Next Node MCP Apps Host"]
+  H --> I["Dream Browser 隔离 iframe / AppBridge"]
 ```
 
-- 0.1.8 的实际实现是原始 canonical src，旧 `src/cleanroom` 已删除；本节不再引用已退出的 registry/protocol 模块。
+- 当前 0.1.9 使用唯一原始 `src`，默认构建进入 `src/entrypoints/cli.tsx`。
 - MCP client：`src/services/mcp/client.ts` 使用 SDK 的 stdio 和 Streamable HTTP transport，声明普通 roots/elicitation capabilities，不声明 `io.modelcontextprotocol/ui`。
 - discovery/资源：该 client 保留 tools/resources 列表；`src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts` 使用 `resources/read` 和 ReadResourceResultSchema。原始模块 stdio/HTTP fixture 已验证普通 tool/resource 通路。
 - 插件/Skills：原始 loader 经 SDK --plugin-dir 路径加载，实际 SDK fixture 已验证 local plugin/project Skill 和 hooks；Marketplace catalog 的官方开发 Skills pin 不变。
@@ -124,48 +124,23 @@ flowchart LR
 
 ## 6. 兼容性矩阵
 
-以下 Marketplace/Apps 扩展 fixture 运行结果是本设计编写时的历史证据。
-0.1.8 当前已复核 Marketplace pin、原始 MCP source 非 UI Host，以及真实原始模块
-普通 stdio/HTTP tool/resource；旧 registry、empty-capabilities 或 Apps metadata
-运行结果不自动覆盖新实现。当前 capabilities 是普通 roots/elicitation，非 Apps UI。
+本矩阵定义当前职责和必需检查；实际执行结果归入对应版本的 qualification 或 Dream MCP Apps 回执，不保留废弃实现的 registry/capabilities 测量。
 
-| 要求 | 代码/静态证据 | 运行证据 | 结论 | 缺口 |
-| --- | --- | --- | --- | --- |
-| Marketplace 收录 | 本仓库 manifest 使用官方 `git-subdir`、固定 URL/path/SHA，并明确 skills-only | 官方 Claude Code `plugin validate .` 通过；隔离配置可 add/list/install | 支持 | 不代表 server/Host |
-| 插件安装与加载 | Runtime 支持 `--plugin-dir`，Skill catalog 读取 plugin Skills | 官方 Claude Code 安装后得到 4 个 Skills；与上游逐文件一致；Runtime 加载 4/4 | 支持开发 Skills | Runtime 本身不执行 Marketplace 命令 |
-| MCP server 启动/连接 | `McpRegistry` 支持 stdio/HTTP/SSE；上游 Skills 无 server 配置 | 上游 quickstart stdio fixture 连接为 `connected` | 示例 server 可单独连接；插件安装不会启动它 | 产品仍需真实 MCP App server 配置 |
-| initialize/Apps 协商 | Client 创建时 capabilities 为 `{}` | fixture 观察到 `{}` | 不支持 Apps 协商 | 安全 Host 完成后才可声明 extension/MIME |
-| 普通 tool 发现/调用 | discovery 和 callTool 使用官方 SDK | `get-time` 可发现、调用并返回 text/structured content | 支持普通 MCP | 需 app-only visibility 与 UI 调用授权 |
-| Apps metadata 保留 | 内部类型和 SDK discovery 保留未知字段；model/status projection 会裁剪 | 测试确认 registry 内有 `_meta.ui`，model tool 无 metadata | 内部部分保留，对 Host 不可达 | 需要专用、校验后的 UI DTO |
-| `ui://` resource 读取 | list/read resource 通路存在 | MIME `text/html;profile=mcp-app` 与 HTML 可读 | 可读取，不等于可展示 | 需 schema/MIME/CSP 校验和 blob 处理 |
-| 安全 UI 渲染 | 无 iframe/WebView/AppBridge/sandbox 代码；headless profile 明确关闭 rich rendering | 无目标系统页面可打开 | 不支持 | 需独立 origin、sandbox proxy、双 iframe、CSP |
-| Host/UI 双向交互 | 无 `ui/initialize`、postMessage JSON-RPC 或 Host callbacks | 无可执行目标链路 | 不支持 | 需 AppBridge 生命周期及授权路由 |
-| result/error 传递 | 普通 MCP result/isError 保留后转 JSON | content、structured content、result `_meta` 与 `isError` 被 registry fixture 保留 | 普通 MCP result/error 已验证，Apps 事件不支持 | 需 tool input/result/error 精确投递 |
-| Apps cancel/teardown | 普通 turn 有独立取消语义，但没有 App bridge 生命周期 | 未执行 Apps cancel/teardown；目标链路不存在 | 不支持且未做运行验证 | 需 request 关联、取消投递、`ui/resource-teardown` 与挂起调用清理 |
-| 生命周期/恢复 | server reconnect/close 存在 | 普通 fixture 可关闭 | 普通连接支持 | 缺应用加载、崩溃、revision、页面关闭状态机 |
+| 对象 | 当前负责模块 | 校验与能力边界 |
+| --- | --- | --- |
+| 开发 Skills | 固定 SHA 的 Marketplace 内容及原始 plugin/Skill loader | 安装只提供 4 个开发 Skills，不启动 Server、不新增 Host |
+| 普通 MCP | Runtime `src/services/mcp/client.ts` 与源码哈希绑定的构建适配 | 验证 stdio/HTTP tool/resource/permission/cancel；不协商 Apps UI extension |
+| App 结果转换 | Dream Kit SDK 消息转换与 DTO 校验 | 仅适配 SDK 实际输出，匹配批准调用 ID；普通结果始终保留 |
+| Apps 协商与页面资源 | Dream Next Node MCP Apps package | 按 actor/workspace/Server 授权，检查 descriptor、URI、MIME、CSP 和 permission |
+| iframe/AppBridge 与交互 | Dream Browser Host | 按独立 origin 隔离，关联消息窗口和 request ID；失败降级到同次普通工具结果 |
 
-## 7. 处理判断与分阶段方案
+## 7. 本次处理、影响范围与评审
 
-### 推荐方案：先诚实接入 Skills，再建设独立 Host
+复用现有 Marketplace、Runtime MCP client、Dream Kit 结果转换和 Dream Node/Browser Host。不在 Runtime 新建 Apps transport、DTO 状态机、浏览器容器或第二套权限路由。开发 Skills 固定来源和文件摘要；其更新只影响插件内容与发现，不应改变 Server 配置、笔记身份、Thread 或 transcript。
 
-1. **阶段 0（本次）**：发布 skills-only Marketplace 条目、固定上游 commit、增加边界测试与文档。Marketplace 卡片只标记“开发 Skills”，不得显示“MCP Apps 可用”。
-2. **阶段 1（Runtime 合同）**：增加经过校验的 Apps metadata/resource/result/control DTO；按 visibility 隔离 model/app tool；加入 desired/effective/revision diagnostics。Host 未就绪时继续不声明 extension。
-3. **阶段 2（Dream 组合层）**：以 server/session/tool-call 身份绑定 UI 调用，复用现有 MCP registry 或受控代理；权限、资源读取和 tool call 均走同一公开生产授权入口，不新增数据库 schema。
-4. **阶段 3（Dream 前端 Host）**：使用官方 `@modelcontextprotocol/ext-apps/app-bridge` 或兼容实现；采用不同 origin 的 sandbox proxy 与双 iframe；从声明生成 CSP/permissions，默认拒绝。
-5. **阶段 4（真实验收）**：用固定版官方 quickstart 和一个产品实际 server 完成 initialize、resource、双向调用、取消、断连恢复、权限拒绝及会话回归，并保存脱敏协议日志和截图。
+功能变更先评估插件加载、普通 MCP、SDK 结果形态、批准调用关联、Node 授权、页面隔离及历史恢复，再测试完整 Chat 新会话、tool result、App 首次加载、按钮调用、刷新历史、拒绝授权和取消。真实外部 Server/OAuth、公开应用和生产启用需要各自的业务回执，不由 provider-free fixture 推断。
 
-影响范围包括 Runtime MCP DTO/visibility、Dream 后端会话桥、Dream 前端安全容器、诊断状态和对应测试。无需修改 `ext-apps` 上游；只有发现 AppBridge/规范缺陷时才提交上游 issue 或补丁。
-
-### 备选方案：保持文本降级，使用外部支持 Host
-
-若当前产品不需要内嵌交互 UI，保持本 Runtime 为普通 MCP client，将 MCP Apps 交互交给明确支持 Apps 的 Claude 产品或其他 Host。本产品只展示 tool 的文本/structured fallback，并标记“交互界面需在兼容 Host 打开”。优点是安全面和实现成本最低；限制是 Dream 内不能操作 App UI。
-
-### 需要的产品决策
-
-- Dream 是否必须承载 inline、fullscreen 或 picture-in-picture 显示模式；默认只建议 inline。
-- 哪些权限可申请、是否允许会话级记忆、外链是否需要 Host 中转；默认均拒绝并按请求授权。
-- app-only tool 是否允许无确认调用；建议仍复用普通 MCP tool 权限策略，不给应用额外信任。
-- unsupported Apps 是完全隐藏入口，还是保留文本 fallback；建议保留可工作的普通 MCP 并明确标记“无交互界面”。
+设计评审以 Dream 主设计的背景/目标/概念规则和既有 default/desired/effective/revision 合同为准，不追加确认弹窗、通用插件执行框架或与本次目标无关的 Host 分期。Runtime 本身不提供 UI 时保留普通文本结果；Dream Host 的局部失败不能丢失该结果或阻断其他 Server。
 
 ## 8. 用户角色与典型场景
 
@@ -228,40 +203,50 @@ flowchart LR
 sequenceDiagram
   actor U as 用户
   participant M as Marketplace/安装器
-  participant R as Runtime MCP client
-  participant S as MCP server
-  participant H as Dream Apps Host
+  participant H as Dream Browser Host
+  participant K as Dream Kit/SDK 消息转换
+  participant R as Claude Agent Runtime
+  participant S as MCP Server
+  participant N as Dream Next Node Host
   participant A as Sandbox App
 
-  U->>M: 安装 mcp-apps 开发 Skills
-  M-->>U: Skills 已安装（不会创建或启动 server）
-  U->>R: 另行启用已配置的 MCP server
-  R->>S: 启动 stdio server 或连接远端 server
-  R->>S: initialize（仅 Host 已就绪时声明 UI extension）
-  S-->>R: server capabilities
-  R->>S: tools/list
-  S-->>R: tool + _meta.ui.resourceUri
-  U->>R: 调用关联 tool
-  R->>S: tools/call
-  S-->>R: tool result / structured content
-  R->>S: resources/read ui://…
-  S-->>R: text/html;profile=mcp-app + UI metadata
-  R->>H: 已校验的 resource/result/context snapshot
-  H->>A: 在隔离容器加载并 ui/initialize
+  U->>M: 安装固定版本开发 Skills
+  M-->>U: Skills 已安装（不会启动 Server）
+  U->>H: 普通 Chat 请求
+  H->>K: 已授权 Thread 的正常 turn
+  K->>R: SDK cli_path/options，启动 Claude turn
+  R->>K: PreToolUse 工具审批
+  K-->>R: 既有权限策略决定
+  R->>S: 批准后 tools/call
+  S-->>R: MCP tool result
+  R-->>K: SDK 实际发出的结果消息
+  K->>K: 按 tool-use ID 匹配唯一 pending MCP call，转换并校验 App DTO
+  K-->>H: 同次普通工具结果和 App DTO
+  H->>N: 关联 Server/tool 的 App 准备请求
+  N->>N: actor/workspace/Server 授权与 descriptor 校验
+  N->>S: Apps initialize、catalog 和 resources/read
+  S-->>N: App HTML 与 resource metadata
+  N->>N: URI/MIME/CSP/permission 校验
+  N-->>H: 经检查的页面资源与 Host 配置
+  H->>A: 独立 origin 加载，ui/initialize
   A-->>H: ui/notifications/initialized
-  H-->>A: tool input/result
-  A->>H: tools/call / resources/read / update context
-  H->>R: 重新鉴权后的请求
-  R->>S: MCP request
-  alt server、resource 或 bridge 失败
-    R-->>H: 分层错误或取消
-    H-->>U: 文本 fallback、重试或诊断
-    U->>R: 重连
-    R->>S: 重新启动/连接并协商
-    R->>H: 新 effective revision
-    H->>A: 重载并重新初始化
-  else revision 变化或关闭
-    H->>A: teardown / cancel pending calls
+  H-->>A: 关联的 tool input/result
+  A->>H: 按钮触发 tools/call
+  H->>N: 关联 App request ID 的代理请求
+  N->>N: 重新执行身份、权限与工具策略校验
+  N->>S: 允许后 MCP tools/call
+  S-->>N: 该次调用结果
+  N-->>H: App response
+  H-->>A: 关联 response
+  alt App 资源或 bridge 失败
+    H-->>U: 保留同次普通工具结果，显示局部失败
+  else 刷新并打开历史
+    H->>K: 只读历史请求
+    K-->>H: 持久化 parts/App DTO
+    H->>N: 重新准备 App 页面资源
+    Note over H,R: 不重放模型 turn 或历史工具调用
+  else 关闭或 revision 变化
+    H->>A: teardown、取消挂起调用
   end
 ```
 

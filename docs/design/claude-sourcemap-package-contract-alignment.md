@@ -14,14 +14,6 @@ The default compiler starts at `src/entrypoints/cli.tsx` and resolves original
 `src/main.tsx`, `src/cli/print.ts`, `src/services/mcp/client.ts` and the rest of this
 repository's module graph.
 
-The old `src/cleanroom` and wrapper `src/cli.ts`, `contracts.ts`, `launcher.ts`,
-`manifest.ts` are removed. Prior implementation and tests remain recoverable from
-Git commit `38fdd3c`. Retired policies move to `runtime/history/0.1.7`, marked
-`historicalOnly`; no active build or workflow reads them.
-
-`0.1.6` fixed only the outer package shape; `0.1.7` added a side snapshot but retained
-the redesigned implementation. Neither fulfilled the requested same-module build.
-`0.1.8` corrects the actual source ownership and compiler routing.
 
 ## Original module structure and identity
 
@@ -59,7 +51,7 @@ The combined original src/recovered dependency baseline remains 4,471 files,
 `470ca57d6390e2f9df5e2bb0a6f32b8b62c64f262ae3d02a31349488a08c228e`.
 A receipt must declare implementationRoot=src, implementationSource=repository,
 parallelImplementation=false, and recovered-dependencies-only external use.
-The verifier rejects a restored-src or cleanroom implementation graph.
+The verifier rejects duplicate source trees and any implementation graph not rooted in the repository's `src`.
 
 Headless pruning and the existing source-bound MCP/auth/security-storage fixes stay
 in the build transformation layer. Original source bytes remain intact. Physically

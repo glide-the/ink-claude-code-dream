@@ -2,6 +2,7 @@
 // [Output] Offline evidence for exact-byte retries, propagation deadlines, ordering and credential-safe failure.
 // [Pos] Provider-free publication-tool regression; never contacts npm or qualifies synthetic Runtime archives.
 // [Sync] 2026-09-13: cover delayed/fractional-clock visibility without republishing or weakening immutable integrity checks.
+// [Sync] 2026-09-13: verify AGENTS-only updates skip packaging while workflow updates do not.
 
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -22,7 +23,7 @@ test("docs/publisher-only changes skip packaging, never source or qualification 
   assert.ok(block);
   const patterns = block.trim().split("\n").map(line => line.trim().slice(2).replace(/^['"]|['"]$/g, ""));
   const ignored = file => patterns.some(pattern => path.matchesGlob(file, pattern));
-  for (const file of ["README.md", ".folder.md", "scripts/.folder.md", "docs/build/runtime-0.1.9-release-notes.md",
+  for (const file of ["AGENTS.md", "README.md", ".folder.md", "scripts/.folder.md", "docs/build/runtime-0.1.9-release-notes.md",
     "scripts/publish-qualified-npm.mjs", "tests/publish-qualified-npm.test.mjs"]) assert.equal(ignored(file), true, file);
   for (const file of ["src/entrypoints/cli.tsx", "compat/dream-runtime/policy.ts", "runtime/source-provenance.json",
     "scripts/build-core-prune.ts", "scripts/npm-release.mjs", "tests/fixtures/mcp_server.py", "package.json", "bun.lock",
