@@ -3,6 +3,7 @@
 // [Pos] The single Runtime compiler reads original project modules from src; external roots supply dependencies/assets only.
 // [Sync] 2026-08-30: restore the 2.1.88 Linux sandbox-runtime seccomp assets from an exact locked Apache dependency.
 // [Sync] 2026-09-13: remove the parallel implementation and compile the aligned project module tree.
+// [Sync] 2026-09-15: retain original non-interactive plugin registrations before print parsing without modifying src.
 
 import { createHash } from "node:crypto";
 import { builtinModules } from "node:module";
@@ -986,8 +987,9 @@ function transformHeadlessCliEntry(source: string): string {
     typeof process.env.CLAUDE_AGENT_SDK_VERSION === 'string' &&
     process.env.CLAUDE_AGENT_SDK_VERSION.length > 0
   const mcpManagement = args[0] === 'mcp'
-  if (!explicitPrint && !pythonSdkStreamJson && !mcpManagement) {
-    process.stderr.write('Error: this local core accepts only print, authenticated Python SDK stream-json, or MCP management mode\\n');
+  const pluginManagement = args[0] === 'plugin' || args[0] === 'plugins'
+  if (!explicitPrint && !pythonSdkStreamJson && !mcpManagement && !pluginManagement) {
+    process.stderr.write('Error: this local core accepts only print, authenticated Python SDK stream-json, or MCP/plugin management mode\\n');
     process.exitCode = 2;
     return;
   }
@@ -1010,6 +1012,17 @@ function transformHeadlessCliEntry(source: string): string {
 }
 
 function transformHeadlessMain(source: string): string {
+  // Move, rather than reimplement, the source-bound Commander registrations.
+  // Both boundaries are within the digest-pinned main.tsx in the prune profile.
+  const pluginStart = '  // Hidden flag on all plugin/marketplace subcommands to target cowork_plugins.';
+  const pluginEnd = '  // END ANT-ONLY\n\n  // Setup token command';
+  const start = source.indexOf(pluginStart);
+  const end = source.indexOf(pluginEnd, start);
+  if (start < 0 || end <= start || source.indexOf(pluginStart, start + 1) !== -1 ||
+      source.indexOf(pluginEnd, end + 1) !== -1) {
+    fail('headless-main-v1.pluginRegistrationSpan: original plugin registration boundaries drift');
+  }
+  const pluginRegistration = source.slice(start, end);
   let transformed = replaceUnique(
     source,
     "const getTeammateModeSnapshot = () => require('./utils/swarm/backends/teammateModeSnapshot.js') as typeof import('./utils/swarm/backends/teammateModeSnapshot.js');\n",
@@ -1147,7 +1160,11 @@ function transformHeadlessMain(source: string): string {
     profileCheckpoint('run_after_parse');
     return program;
   }`,
-    `  // SDK-headless build invariant: management registration below is unreachable.
+    `  // Original plugin argv management is independent of interactive startup.
+  if (process.argv[2] === 'plugin' || process.argv[2] === 'plugins') {
+${pluginRegistration}
+  }
+  // SDK-headless build invariant: remaining management registration below is unreachable.
   profileCheckpoint('run_before_parse');
   await program.parseAsync(process.argv);
   profileCheckpoint('run_after_parse');

@@ -4,6 +4,7 @@
 [Input] A Claude CLI path and the source-only Ink SDK available on sys.path.
 [Output] A JSON receipt for stream-json, permission, tool, interrupt, and resume.
 [Pos] Provider-free process-boundary contract gate for a locally built core.
+[Sync] 2026-09-15: install the fixture through real marketplace/plugin commands before SDK Skill loading.
 [Sync] 2026-08-30: make the official nested-Docker comparator skip only its
                    unpatchable embedded Unix-socket filter and retain bounded Bash diagnostics.
 """
@@ -444,7 +445,8 @@ async def run_contract(cli: Path, dream_compat: bool = False) -> dict[str, Any]:
             "---\nname: runtime-contract\ndescription: Provider-free Runtime skill contract.\n"
             "---\nReturn the exact marker runtime-skill-contract.\n"
         )
-        plugin_root = root / "runtime-contract-plugin"
+        marketplace_root = root / "marketplace"
+        plugin_root = marketplace_root / "runtime-contract-plugin"
         plugin_manifest = plugin_root / ".claude-plugin" / "plugin.json"
         plugin_manifest.parent.mkdir(parents=True)
         plugin_manifest.write_text(
@@ -463,6 +465,41 @@ async def run_contract(cli: Path, dream_compat: bool = False) -> dict[str, Any]:
             "---\nname: plugin-contract\ndescription: Local plugin skill contract.\n"
             "---\nReturn the exact marker runtime-plugin-skill-contract.\n"
         )
+        marketplace_manifest = marketplace_root / ".claude-plugin" / "marketplace.json"
+        marketplace_manifest.parent.mkdir(parents=True)
+        marketplace_manifest.write_text(json.dumps({
+            "name": "runtime-contract-marketplace",
+            "owner": {"name": "Runtime contract fixture"},
+            "plugins": [{"name": "runtime-contract-plugin", "source": "./runtime-contract-plugin"}],
+        }) + "\n")
+        plugin_spec = "runtime-contract-plugin@runtime-contract-marketplace"
+
+        def plugin_command(*argv: str) -> str:
+            result = subprocess.run(
+                [str(cli), "plugin", *argv], cwd=workspace,
+                env=_safe_env("http://127.0.0.1:1", config_dir, tmpdir),
+                capture_output=True, text=True, timeout=60,
+            )
+            if result.returncode != 0:
+                raise AssertionError(f"plugin command {argv[0]} failed ({result.returncode}): {result.stderr[-1000:]}")
+            return result.stdout
+
+        plugin_command("validate", str(plugin_root))
+        plugin_command("marketplace", "add", str(marketplace_root))
+        plugin_command("install", plugin_spec)
+        registry = json.loads((config_dir / "plugins" / "installed_plugins.json").read_text())
+        records = registry.get("plugins", {}).get(plugin_spec, [])
+        if len(records) != 1:
+            raise AssertionError("CLI install did not produce exactly one V2 plugin registry record")
+        plugin_root = Path(records[0]["installPath"]).resolve()
+        plugin_root.relative_to((config_dir / "plugins" / "cache").resolve())
+        if not (plugin_root / "skills" / "plugin-contract" / "SKILL.md").is_file():
+            raise AssertionError("installed plugin is missing its Skill")
+        plugin_command("disable", plugin_spec)
+        plugin_command("enable", plugin_spec)
+        installed_list = json.loads(plugin_command("list", "--json"))
+        if not any(item.get("id") == plugin_spec and item.get("enabled") for item in installed_list):
+            raise AssertionError("plugin list does not report the enabled installation")
         sandbox_boundary = workspace / "sandbox-boundary.txt"
         bash_command = (
             "printf 'runtime-contract-ok\\n' > sdk-contract.txt; "
@@ -723,6 +760,10 @@ async def run_contract(cli: Path, dream_compat: bool = False) -> dict[str, Any]:
                 if request.get("max_tokens") != 1000 or request.get("output_config", {}).get("effort") != "xhigh":
                     raise AssertionError("Explicit Dream max-output/effort did not reach the provider request")
                 dream_facts = {"notionNativeBash": True, "notionHookExcluded": True, "explicitMaxOutput": 1000, "explicitEffort": "xhigh", "modelId": "claude-contract-local", "contextCarrier": 128000}
+            plugin_command("uninstall", plugin_spec)
+            plugin_command("marketplace", "remove", "runtime-contract-marketplace")
+            if json.loads(plugin_command("list", "--json")):
+                raise AssertionError("uninstall did not restore an empty plugin inventory")
             return {
                 **({"dreamCompatibility": dream_facts} if dream_facts is not None else {}),
                 "contractVersion": 1,
@@ -751,6 +792,8 @@ async def run_contract(cli: Path, dream_compat: bool = False) -> dict[str, Any]:
                     "workspaceWrite": True,
                 },
                 "extensions": {
+                    "cliPluginInstalled": True,
+                    "cliPluginLifecycle": True,
                     "localPluginSkillInvoked": provider.plugin_skill_result_seen,
                     "projectSkillInvoked": provider.skill_result_seen,
                     "subagentInvoked": provider.agent_result_seen,

@@ -15,7 +15,7 @@ test("original source, selector and local package have one Runtime version", asy
  const selector = await json("package/package.json");
  const local = await json("runtime/local-artifact-policy.json");
  const npm = await json("runtime/npm-release-policy.json");
- assert.equal(pkg.version, "0.1.9");
+ assert.equal(pkg.version, "0.1.10");
  assert.equal(selector.version, pkg.version);
  assert.equal(local.artifact.version, pkg.version);
  assert.equal(npm.version, pkg.version);
@@ -28,7 +28,7 @@ test("original source, selector and local package have one Runtime version", asy
 test("operator authority opens legal gate but does not qualify runtime artifacts", () => {
  const plan = spawnSync(process.execPath, ["scripts/npm-release.mjs", "plan"], { cwd: root, encoding: "utf8" });
  assert.equal(plan.status, 0, plan.stderr);
- assert.equal(JSON.parse(plan.stdout).version, "0.1.9");
+ assert.equal(JSON.parse(plan.stdout).version, "0.1.10");
  const gate = spawnSync(process.execPath, ["scripts/npm-release.mjs", "legal"], { cwd: root, encoding: "utf8",
   env: { ...process.env, INK_NPM_PUBLICATION_ALLOWED: "true" } });
  assert.equal(gate.status, 0, gate.stderr);

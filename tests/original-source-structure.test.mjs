@@ -36,7 +36,7 @@ test("the actual default build uses original project modules as one Runtime", as
  const layout = await json("runtime/source-layout.json");
  const build = await readFile(resolve(root, "scripts/build.ts"), "utf8");
  const compiler = await readFile(resolve(root, "scripts/build-core-prune.ts"), "utf8");
- assert.equal(pkg.version, "0.1.9");
+ assert.equal(pkg.version, "0.1.10");
  assert.equal(pkg.license, "UNLICENSED");
  assert.equal(pkg.scripts.build, "./node_modules/.bin/bun scripts/build.ts");
  assert.ok(!Object.keys(pkg.scripts).some(name => name.startsWith("cleanroom:")));

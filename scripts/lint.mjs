@@ -20,7 +20,7 @@ const localManifest = await json("runtime/local-release-manifest.json");
 const npm = await json("runtime/npm-release-policy.json");
 function require_(condition, message) { if (!condition) throw new Error(message); }
 
-require_(pkg.name === "ink-claude-code-dream" && pkg.version === "0.1.9" && pkg.private === true &&
+require_(pkg.name === "ink-claude-code-dream" && pkg.version === "0.1.10" && pkg.private === true &&
   pkg.license === "UNLICENSED" && !Object.hasOwn(pkg, "bin"), "private project identity drift");
 require_(selector.version === pkg.version && selector.bin.claude === "cli.js" &&
   selector.bin["ink-claude-code-dream"] === "cli.js", "selector version/entrypoint drift");

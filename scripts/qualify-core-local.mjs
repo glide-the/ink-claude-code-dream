@@ -3,7 +3,8 @@
 // [Output] An ignored full-runtime qualification receipt bound to the exact core bytes/source digest.
 // [Pos] Technical release gate before packaging and real Dream business acceptance; no user data is read.
 // [Sync] 2026-08-24: bind every qualification lane to the exact native Runtime target.
-// [Sync] 2026-09-13: bind new local qualification receipts to Runtime 0.1.9 only.
+// [Sync] 2026-09-15: bind new local qualification receipts to Runtime 0.1.10 only.
+// [Sync] 2026-09-15: require install-to-SDK plugin lifecycle evidence, not only local directory loading.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -173,12 +174,17 @@ if (
 
 const subject = {
   runtime: "ink-claude-code-dream",
-  version: "0.1.9",
+  version: "0.1.10",
   coreBundleSha256: createHash("sha256").update(coreBundle).digest("hex"),
   sourceDigest: coreReceipt.sourceDigest.digest,
   runtimeTarget: coreReceipt.runtimeTarget,
 };
 assertDifferential(sdkReceipt, "real-process-sdk-differential", subject, "SDK receipt");
+if (sdkReceipt.comparedInvariant?.extensions?.cliPluginInstalled !== true ||
+    sdkReceipt.comparedInvariant?.extensions?.cliPluginLifecycle !== true ||
+    sdkReceipt.comparedInvariant?.extensions?.localPluginSkillInvoked !== true) {
+  fail("SDK receipt lacks real CLI plugin install/lifecycle and SDK Skill execution evidence");
+}
 assertDifferential(mcpReceipt, "real-process-mcp-differential", subject, "MCP receipt");
 assertManagement(managementReceipt, subject, coreReceipt.cliCompatibilityVersion);
 assertDifferential(dreamReceipt, "real-process-dream-runtime-contract", subject, "Dream Runtime receipt");
