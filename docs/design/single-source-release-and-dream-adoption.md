@@ -5,6 +5,8 @@
 
 # 唯一源码、CI 发布与本机 Dream 更新
 
+<!-- [Sync] 2026-09-15: restore original plugin CLI management and complete install-to-SDK evidence; delivery remains separate. -->
+
 ## 背景与问题
 
 Runtime 已将原始恢复模块作为实际 `src` 实现。重复保存的
@@ -87,6 +89,67 @@ token/config 与本地 fake provider。环境的显式 undefined 也阻止 execa
   不冒充一次真实用户/model turn。
 - 回退只使用上一已验证安装和提交，不覆盖发布版本、不重绑旧收据。
   删除的重复源码可从 Git 提交 `a40037a` 恢复；原始参考仓库保持不动。
+
+## 插件管理入口恢复
+
+### 背景与问题
+
+2026-09-15 核对已发布 `0.1.9`：原始插件文件和本地目录加载均存在，但
+headless 入口拒绝 `plugin`，同时删除了 `main.tsx` 中的命令注册。Dream
+安装服务需要 marketplace add/update、plugin install 和 built-in validate，
+因此安装在生成制品之前失败。版本输出及 local plugin Skill 测试不能覆盖安装。
+
+### 目标与边界
+
+构建层从 digest-pinned `src/main.tsx` 提取唯一的原始 plugin/marketplace
+Commander 注册区间，移到同一个程序的 headless parse 之前；原处理函数继续
+执行。顶层允许 `plugin` 和 `plugins`，其他交互入口仍拒绝，不增加 parser、
+安装服务或 UI，不修改原始字节、来源合同、MCP、SDK API 或数据库。
+
+### 概念与规则
+
+源码保留、命令可调用、安装登记、制品校验和会话加载分别验收。区间 marker
+不唯一或原始摘要变化时构建失败；处理函数必须进入依赖图并通过现有 DCE、
+资源和许可证检查。Dream 默认复用 Agent 的合格 Runtime resolver；已有
+plugin-only 显式路径保持兼容，但必须是绝对可执行路径。执行安装前，除版本
+外还检查 `plugin --help`，失败不能创建 ready 记录或退回 ambient CLI。
+
+```mermaid
+sequenceDiagram
+  participant U as Dream 用户
+  participant D as Dream 安装服务
+  participant A as Admin 目录/数据库
+  participant R as 原 Runtime 插件 CLI
+  participant S as SDK 会话
+  U->>D: 安装已批准 entry ID
+  D->>A: 查询来源、revision、commit 和 digest
+  D->>R: 解析可执行文件，检查版本及 plugin help
+  D->>R: marketplace add/update、plugin install
+  R-->>D: V2 registry 和插件缓存目录
+  D->>D: 校验缓存边界、manifest、完整文件摘要
+  alt CLI 或内容校验失败
+    D->>A: operation error，不创建 ready
+    D-->>U: 原 operation 错误与重试入口
+  else 安装通过
+    D->>A: artifact ready，保留 entry lineage
+    U->>D: Deck 绑定并启动新会话
+    D->>S: 打包已选插件并传 --plugin-dir
+    S-->>U: Skill 加载与实际工具结果
+  end
+```
+
+### 审查与验收
+
+复用原注册、处理函数、安装 operation、artifact 与 SDK fixture，方案只修复
+已证实的入口和消费者缺口。SDK fixture 先实际 validate/add/install，再检查
+V2 registry、cache containment、enable/disable/list，随后执行该安装目录中的
+Skill，以及既有权限、stream、resume、cancel；最后卸载并移除 marketplace。
+full qualification 必须包含安装、生命周期与 Skill 执行事实，旧的 loading-only
+收据不能满足新门禁。隔离 fixture 不等于真实账户或外部 Marketplace 验收。
+
+已发布 `0.1.9` 不覆盖、不改写历史成功回执。本次修复版本为 `0.1.10`；源码修复、测试通过、新版本发布、
+本机安装和运行采用分别报告；后续交付走现有四平台资格与 CI 发布，再原子更新
+Dream 精确版本。此修复不授权自动提交、合并、发布、安装或重启用户服务。
 
 ## 发布后收尾：问题、方案与目标审查
 

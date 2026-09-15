@@ -1,13 +1,13 @@
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
 <!-- [Output] Explain the one Runtime implementation, actual build, verification and local integration boundaries. -->
 <!-- [Pos] Operator entry point for ink-claude-code-dream. -->
-<!-- [Sync] 2026-09-13: link AGENTS governance alongside completed 0.1.9 publication/local adoption and registry verification. -->
+<!-- [Sync] 2026-09-15: prepare Runtime 0.1.10 plugin-management repair for fresh native qualification and publication. -->
 
 # ink-claude-code-dream
 
 Repository maintenance rules: [AGENTS.md](AGENTS.md) and the affected folder contracts.
 
-Runtime `0.1.9` uses the original `claude-code-sourcemap` modules directly.
+Runtime `0.1.10` uses the original `claude-code-sourcemap` modules directly.
 `src` is the only implementation and preserves original directories, module paths, permissions and
 initial bytes: **1,902 files, 35 module directories, 30,382,832 bytes**.
 The default build compiles `src/entrypoints/cli.tsx`, not a wrapper or a side snapshot.
@@ -90,10 +90,10 @@ The private root package is the build workspace, not the npm selector.
 `cli.js`. Both command aliases select an exact native optional package. The selector is
 repository-authored; its MIT license does not relicense the original Runtime modules.
 
-Runtime project, selector and native expectations are `0.1.9`.
-All five npm packages are published, and the public archives match the qualified CI bytes.
-Local Dream installation and startup adoption were verified; Dream project metadata is
-backend `0.1.3` / frontend `0.0.3`. Python SDK stays `0.2.145`, source provenance
+Runtime project, selector and native expectations are `0.1.10`.
+This version restores plugin management and requires fresh four-platform qualification and
+five-package publication. The previous `0.1.9` archives remain immutable.
+Python SDK stays `0.2.145`, source provenance
 `2.1.88`, and Dream-facing CLI compatibility `2.1.241`; API schema stays `2.0.0`.
 
 The four native-host qualifications passed for release source `820be726`.
@@ -105,6 +105,15 @@ Docker image build was not verified. Older `0.1.4` public releases and `0.1.5` a
 are historical evidence only. See [release evidence](docs/build/runtime-0.1.9-release-notes.md).
 
 ## Marketplace and publication boundary
+
+Published `0.1.9` has a known plugin-management regression: its headless entry rejects
+`plugin`, despite retaining local plugin loading. Runtime `0.1.10` restores the original
+`plugin`/`plugins` and Marketplace Commander registrations at build time, without
+changing original `src` bytes or enabling the TUI. SDK qualification now installs a
+disposable local Marketplace plugin through the actual CLI before loading it with
+`--plugin-dir` and executing its Skill. Version output alone is not management evidence.
+Delivery uses the existing native qualification and publishing gates; CI and registry
+results must be recorded separately from the source change.
 
 The reviewed Marketplace still pins the official MCP Apps development Skills at
 `10195ad91851502134930e9b80ec2c04e277a720`. It does not install an MCP server or add

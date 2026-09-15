@@ -1,6 +1,6 @@
 {
   "schemaVersion": "ink-original-source-layout/v1",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "implementationRoot": "src",
   "provenance": "runtime/source-provenance.json",
   "singleSource": true,

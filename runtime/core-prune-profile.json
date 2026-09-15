@@ -264,6 +264,8 @@
       "src/tools/ReadMcpResourceTool/ReadMcpResourceTool.ts"
     ],
     "extensions.plugins-skills-hooks": [
+      "src/cli/handlers/plugins.ts",
+      "src/services/plugins/pluginCliCommands.ts",
       "src/utils/plugins/pluginLoader.ts",
       "src/skills/loadSkillsDir.ts",
       "src/utils/hooks.ts"
@@ -321,13 +323,13 @@
       "path": "src/entrypoints/cli.tsx",
       "sha256": "87d4d49ed7512cf225d074e8f41aa3fb2f69eed19b9199e7eb30ddfd252a324f",
       "transform": "headless-cli-entry-v1",
-      "reason": "Keep the version fast path, then fail closed unless argv selects -p/--print before loading the full CLI."
+      "reason": "Keep version, print, Python SDK and MCP paths; admit original plugin/plugins argv management without interactive startup."
     },
     {
       "path": "src/main.tsx",
       "sha256": "ad018cfab3cd3d55878176e43cd5facd300ed649d2910070a3fae257604dc407",
       "transform": "headless-main-v1",
-      "reason": "Force the SDK print path and return before all management-subcommand registration and interactive startup branches."
+      "reason": "Move the original plugin/marketplace Commander registrations before headless parse; retain SDK print and remove other management and interactive startup branches."
     },
     {
       "path": "src/commands.ts",

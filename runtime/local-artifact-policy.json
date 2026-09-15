@@ -2,8 +2,8 @@
   "schemaVersion": "ink-core-local-artifact-policy/v1",
   "artifact": {
     "name": "ink-claude-code-dream",
-    "version": "0.1.9",
-    "directory": "dist/core-package-local/ink-claude-code-dream-0.1.9",
+    "version": "0.1.10",
+    "directory": "dist/core-package-local/ink-claude-code-dream-0.1.10",
     "entrypoint": "bin/ink-claude-code-dream",
     "coreEntrypoint": "lib/core/cli.js",
     "bunVersion": "1.4.0",
@@ -80,7 +80,7 @@
     "schemaVersion": 1,
     "status": "passed",
     "subjectRuntime": "ink-claude-code-dream",
-    "subjectVersion": "0.1.9",
+    "subjectVersion": "0.1.10",
     "requireCoreBundleSha256": true,
     "requireSourceDigest": true
   },

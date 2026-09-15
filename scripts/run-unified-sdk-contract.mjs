@@ -72,7 +72,7 @@ try {
     contracts[0].dreamCompatibility.notionStdioExcluded = mcpContract.notionStdioExcluded === true;
     const build = JSON.parse(await readFile(join(root, "dist/core-local/build-receipt.json"), "utf8"));
     const receipt = { schemaVersion: 1, status: "passed", evidenceType: "real-process-dream-runtime-contract", calibrationOnly: false,
-      subject: { runtime: "ink-claude-code-dream", version: "0.1.9", sourceDigest: build.sourceDigest.digest,
+      subject: { runtime: "ink-claude-code-dream", version: "0.1.10", sourceDigest: build.sourceDigest.digest,
         runtimeTarget: build.runtimeTarget, coreBundleSha256: createHash("sha256").update(await readFile(join(root, "dist/core-local/bundle/cli.js"))).digest("hex") },
       facts: contracts[0].dreamCompatibility, businessAcceptanceIncluded: false };
     const directory = join(root, "dist/core-local/qualification");

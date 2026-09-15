@@ -2,6 +2,7 @@
 // [Output] Prove local-only ownership, Bun 1.4.0 pin, capability retention, feature separation, resolver rules, and DCE assertions.
 // [Pos] Provider-free static contract test; it does not read, copy, modify, or build restored source.
 // [Sync] 2026-08-30: require exact 2.1.88-compatible Linux seccomp helper/BPF assets beside the emitted chunks.
+// [Sync] 2026-09-15: retain original plugin registrations and install-to-SDK qualification scope.
 
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -128,6 +129,23 @@ test("2.1.88 seccomp passthrough removes only the leading BPF argument", () => {
   assert.match(missingCommand.stderr, /requires a BPF path and command/);
 });
 
+test("plugin management uses original registrations and requires install-to-SDK evidence", async () => {
+  assert.match(builder, /const pluginManagement = args\[0\] === 'plugin' \|\| args\[0\] === 'plugins'/);
+  assert.match(builder, /!mcpManagement && !pluginManagement/);
+  assert.match(builder, /const pluginRegistration = source\.slice\(start, end\)/);
+  assert.match(builder, /\$\{pluginRegistration\}/);
+  assert.match(builder, /original plugin registration boundaries drift/);
+  assert.match(builder, /if \(process\.argv\[2\] === 'plugin' \|\| process\.argv\[2\] === 'plugins'\)/);
+  for (const input of ['src/cli/handlers/plugins.ts', 'src/services/plugins/pluginCliCommands.ts']) {
+    assert.ok(profile.capabilityInputAssertions['extensions.plugins-skills-hooks'].includes(input));
+  }
+  const harness = await readFile(resolve(repositoryRoot, 'scripts/run-core-sdk-contract.py'), 'utf8');
+  assert.match(harness, /plugin_command\("install", plugin_spec\)/);
+  assert.match(harness, /plugin_root = Path\(records\[0\]\["installPath"\]\)\.resolve\(\)/);
+  assert.match(qualifier, /cliPluginInstalled !== true/);
+  assert.match(qualifier, /cliPluginLifecycle !== true/);
+});
+
 test("required Dream capability roots remain explicit", () => {
   assert.deepEqual(
     new Set(profile.requiredCapabilities),
@@ -210,7 +228,7 @@ test("feature profile is closed and DCE asserts absent bootstrap branches", () =
   assert.match(builder, /resolver reached disabled import/);
 });
 
-test("headless transforms are source-bound and keep only print plus version entry paths", () => {
+test("headless transforms are source-bound and retain SDK, MCP, and plugin management entry paths", () => {
   const transformByPath = new Map(
     profile.sourceTransforms.map(({ path, transform }) => [path, transform]),
   );
@@ -233,7 +251,7 @@ test("headless transforms are source-bound and keep only print plus version entr
   assert.match(builder, /source transform target digest drift/);
   assert.match(builder, /marker must occur exactly once/);
   assert.match(builder, /source transform produced invalid syntax/);
-  assert.match(builder, /accepts only print, authenticated Python SDK stream-json, or MCP management mode/);
+  assert.match(builder, /accepts only print, authenticated Python SDK stream-json, or MCP\/plugin management mode/);
   assert.match(builder, /const hasPrintFlag = true/);
   assert.match(builder, /const isNonInteractiveSession = true/);
   assert.match(builder, /management registration below is unreachable/);

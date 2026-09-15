@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // [Input] The actual compiled original Runtime bundle and locked Bun, not a fake or cleanroom entrypoint.
-// [Output] Prove version and empty MCP inventory work; interactive mode is explicitly rejected by the headless profile.
+// [Output] Prove version, empty MCP/plugin inventories and print parsing; interactive mode remains rejected.
 // [Pos] Provider-free source Runtime smoke; no user prompt, model, or credential is used.
 // [Sync] 2026-09-13: replace the obsolete supervisor/fake-core acceptance path.
+// [Sync] 2026-09-15: prove original plugin help/list and alias reachability alongside headless rejection.
 
 import { mkdtemp, mkdir, rm } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
@@ -31,10 +32,22 @@ try {
     throw new Error("original MCP inventory smoke failed: " + (inventory.stderr || inventory.stdout));
   }
   const interactive = run([]);
+  const pluginHelp = run(["plugin", "--help"]);
+  const marketplaces = run(["plugin", "marketplace", "list", "--json"]);
+  const plugins = run(["plugins", "list", "--json"]);
+  const printPromptHelp = run(["-p", "plugin", "--help"]);
+  if (pluginHelp.status !== 0 || !pluginHelp.stdout.includes('marketplace') ||
+      marketplaces.status !== 0 || plugins.status !== 0 ||
+      printPromptHelp.status !== 0 || /Usage: claude plugin\b/.test(printPromptHelp.stdout) ||
+      JSON.parse(marketplaces.stdout).length !== 0 || JSON.parse(plugins.stdout).length !== 0) {
+    throw new Error("original plugin management smoke failed: " +
+      (pluginHelp.stderr || marketplaces.stderr || plugins.stderr));
+  }
   if (interactive.status !== 2 || !interactive.stderr.includes("accepts only print")) {
     throw new Error("headless interactive-mode rejection failed");
   }
-  console.log(JSON.stringify({ ok: true, runtime: "0.1.9", implementationRoot: "src",
-    version: version.stdout.trim(), mcpInventory: true, interactiveMode: "rejected",
+  console.log(JSON.stringify({ ok: true, runtime: "0.1.10", implementationRoot: "src",
+    version: version.stdout.trim(), mcpInventory: true, pluginManagement: true,
+    printPromptPreserved: true, interactiveMode: "rejected",
     providerRequests: 0, fakeCore: false }));
 } finally { await rm(fixture, { recursive: true, force: true }); }
