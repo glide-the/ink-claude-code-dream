@@ -1,7 +1,7 @@
 <!-- [Input] Original module recovery, duplicate source directory, GitHub npm publishing and local Dream integration. -->
 <!-- [Output] Minimal implementation and interaction plan with independently verifiable release states. -->
 <!-- [Pos] Current source-cleanup/release/adoption design and acceptance checklist. -->
-<!-- [Sync] 2026-10-11: add packaging-only image native fix, reviewed boundaries, flows and pending fresh-release states. -->
+<!-- [Sync] 2026-10-11: record completed image-native 0.1.11 qualification/publication/adoption and separate blocked real image acceptance. -->
 <!-- [Sync] 2026-09-13: retain completed immutable release; scope post-release visibility/documentation fixes without redesign. -->
 
 # 唯一源码、CI 发布与本机 Dream 更新
@@ -183,6 +183,8 @@ workflow；真正 qualification 命令或构建输入变化时不得沿用该收
 
 ## 图片原生依赖修复（2026-10-11，源码已实现）
 
+以下为生产发布前的修复设计与当时技术结果；历史图示保留，当前发布/采用状态见文末及独立0.1.11回执。
+
 ### 背景与问题
 
 IM本轮实际Runtime 0.1.10的2400px视觉输入在Gateway POST前失败。构建保留sharp 0.34.5的JavaScript图片处理，但npm平台包仅声明Bun；目标平台sharp及libvips原生包没有成为安装依赖。打包、归档校验及install smoke都只核对Bun，版本输出不能覆盖图片处理。
@@ -271,3 +273,29 @@ stateDiagram-v2
 ## 图片原生依赖生产发布授权（2026-10-11）
 
 用户明确要求Runtime验证后走生产发布。新候选为0.1.11；五个公开包当前latest均为0.1.10，0.1.11均未存在。本轮原子同步项目、selector、四平台政策、manifest、资格与安装检查的版本事实，旧制品及历史收据保持不变。沿既有scoped PR→源码CI→main四平台qualification→同SHA五包发布→公开完整性→精确安装→Dream pin/resolver采用路径执行。前述私有CLI观察仍只是技术证据，不能替代新版本四平台资格。各状态以[0.1.11发布记录](../build/runtime-0.1.11-release-notes.md)的真实命令或CI回执推进；缺输入或门禁失败时保留失败结果，不降低条件。
+
+## 图片原生依赖当前发布与采用状态（2026-10-11）
+
+0.1.11已由#28的同一merge SHA a60eb7f3完成main源码CI、四host native资格、
+原CI五包生产发布与公开归档逐字节检查。本机精确global install、默认resolver
+及Bun native load通过；正常Dream后端以原入口和保留env加载新版本，其余
+正常服务PID未变。发布后实际CLI/SDK大图新会话及resume在fake Gateway下
+通过，SDK/env/管理及启动合同也重新验证。具体命令/skip和摘要由
+[0.1.11发布记录](../build/runtime-0.1.11-release-notes.md)管理。
+
+```mermaid
+stateDiagram-v2
+  [*] --> 同源CI已通过
+  同源CI已通过 --> 四平台资格已通过
+  四平台资格已通过 --> 五包生产发布已完成
+  五包生产发布已完成 --> 公开字节已验证
+  公开字节已验证 --> 正常Dream已采用
+  正常Dream已采用 --> 真实图片验收受阻: 本机登录拒绝且image_turn capability缺失
+  真实图片验收受阻 --> 真实图片验收待执行: 前置条件由所属业务边界恢复后
+  note right of 正常Dream已采用: 仅Runtime采用，不代表图片业务通过
+  note right of 真实图片验收待执行: 尚未执行；不得绕过Schema或认证
+```
+
+未向正常库执行DDL/grant、重设账户或调用真实图片模型；
+Docker构建及远端部署未执行。文档收尾PR不重新资格化或发布同版本，
+不修改src/provenance、已发布归档或旧回执。

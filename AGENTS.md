@@ -1,3 +1,4 @@
+<!-- [Sync] 2026-10-11: public Runtime 0.1.11 qualified/published/adopted; real image business acceptance remains separate and incomplete. -->
 <!-- [Input] Dream repository governance and the Runtime's current source, build, release and integration contracts. -->
 <!-- [Output] Mandatory instructions for coding agents maintaining this Runtime repository. -->
 <!-- [Pos] Root repository governance; nested folder contracts refine their own scope. -->
@@ -36,7 +37,7 @@
 
 ## 版本与发布
 
-- 当前待发布合同为 Runtime `0.1.11`、SDK `0.2.145`、CLI compatibility `2.1.241`；已发布 `0.1.10` 的范围保留在 [0.1.10 回执](docs/build/runtime-0.1.10-release-notes.md)，`0.1.11` 的图片原生依赖修复必须由新一轮四平台 CI 资格与发布回执确认。源码 provenance 版本不是 Runtime 发行版本；后续升级同步受影响合同，不将本段当作永久版本常量。
+- 当前已发布合同为 Runtime `0.1.11`、SDK `0.2.145`、CLI compatibility `2.1.241`；四平台同源资格、公开五包和正常Dream采用见 [0.1.11 回执](docs/build/runtime-0.1.11-release-notes.md)。已发布 `0.1.10` 的范围保留在 [0.1.10 回执](docs/build/runtime-0.1.10-release-notes.md)，真实图片业务验收仍由Dream独立记录，不能从发布推断通过。源码 provenance 版本不是 Runtime 发行版本；后续升级同步受影响合同，不将本段当作永久版本常量。
 - 版本变化时，原子同步事实确实变化的受影响合同，包括根项目、selector、四个平台、manifest/计划/门禁、安装验证、README 与相关设计，并在 Dream 同步相关精确 pin、resolver、Docker 和依赖/接入记录；不为同步而改动未受影响的文件。npm 不安装 Python SDK，`uv sync`不安装 Runtime。
 - 普通 PR CI 通过不等于完成四平台原生资格化或公开发布。按当前 workflow 检查确切源 SHA、平台构建、许可证/授权、SBOM、checksum、无 `.map`及生产 gate，复用仍有效的同字节验收。
 - 先发布四个精确平台包，再发布 selector；发布仅通过已配置的 CI/OIDC 与保护门禁，不从私有根目录执行 `npm publish`。文档变更不自动授权版本递增、重新资格化或发布。

@@ -1,3 +1,4 @@
+<!-- [Sync] 2026-10-11: public Runtime 0.1.11 qualified/published/adopted; real image business acceptance remains separate and incomplete. -->
 <!-- [Input] Canonical original src modules, locked tooling, recovered dependencies/assets and current policy. -->
 <!-- [Output] Actual original-module build and verification commands with explicit release boundaries. -->
 <!-- [Pos] Current single-source build guide and artifact-validation boundary. -->
@@ -79,6 +80,6 @@ This repair requires the next Runtime version and fresh qualification. Do not
 rebuild or publish a different `0.1.10` archive. See the
 [current design](../design/single-source-release-and-dream-adoption.md).
 
-The current image-native candidate is Runtime `0.1.11`; see the
+The current published image-native release is Runtime `0.1.11`; see the
 [release record](runtime-0.1.11-release-notes.md) for actual qualification, publication
 and adoption receipts. Historical `0.1.10` archives are never repacked.
