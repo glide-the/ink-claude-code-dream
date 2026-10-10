@@ -1,6 +1,7 @@
 // [Input] Original restored modules, the actual project src, and active build/version contracts.
 // [Output] Prove unique original directories/files/modules/bytes and src-based compilation.
 // [Pos] Regression for the user's single original-module Runtime requirement.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
 // [Sync] 2026-09-13: cover both trees and prevent a renamed or relocated parallel implementation.
 
 import assert from "node:assert/strict";
@@ -36,7 +37,7 @@ test("the actual default build uses original project modules as one Runtime", as
  const layout = await json("runtime/source-layout.json");
  const build = await readFile(resolve(root, "scripts/build.ts"), "utf8");
  const compiler = await readFile(resolve(root, "scripts/build-core-prune.ts"), "utf8");
- assert.equal(pkg.version, "0.1.10");
+ assert.equal(pkg.version, "0.1.11");
  assert.equal(pkg.license, "UNLICENSED");
  assert.equal(pkg.scripts.build, "./node_modules/.bin/bun scripts/build.ts");
  assert.ok(!Object.keys(pkg.scripts).some(name => name.startsWith("cleanroom:")));

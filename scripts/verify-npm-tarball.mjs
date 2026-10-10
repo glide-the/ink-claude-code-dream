@@ -2,6 +2,7 @@
 // [Input] One generated npm tgz, or the complete four-platform plus one-meta release set.
 // [Output] Strict identity/manifest/checksum/legal/target validation and exact five-package inventory evidence.
 // [Pos] Final immutable npm release gate; it rejects maps, legacy/user data, aliases, and incomplete release sets.
+// [Sync] 2026-10-11: require exact target sharp/libvips dependencies independently of JSON key order.
 
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
@@ -9,6 +10,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createGunzip } from "node:zlib";
 import tar from "tar-stream";
+import { platformDependenciesMatch, platformRuntimeDependencies } from "./npm-runtime-dependencies.mjs";
 
 const tarballs = process.argv.slice(2).map(value => path.resolve(value));
 if (tarballs.length === 0) {
@@ -127,7 +129,7 @@ function verifyPlatform(parsed, pkg, attestation, platform) {
     pkg.name !== platform.package ||
     JSON.stringify(pkg.os) !== JSON.stringify([platform.os]) ||
     JSON.stringify(pkg.cpu) !== JSON.stringify([platform.cpu]) ||
-    JSON.stringify(pkg.dependencies) !== JSON.stringify({ [policy.bun.package]: policy.bun.version }) ||
+    !platformDependenciesMatch(pkg, platformRuntimeDependencies(policy, target)) ||
     pkg.scripts?.prepack !== "node scripts/prepack.mjs" ||
     pkg.inkRuntime?.target !== target ||
     pkg.inkRuntime?.bunVersion !== policy.bun.version ||

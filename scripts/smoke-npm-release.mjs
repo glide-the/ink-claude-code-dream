@@ -3,11 +3,14 @@
 // [Output] Reviewed Bun postinstall, dry-run/real pack, strict tgz verification, clean install, and executable smoke evidence.
 // [Pos] Pre-publish npm acceptance for exactly qualified original-source platform artifacts.
 // [Sync] 2026-09-13: preserve the upstream CLI version banner instead of expecting the retired cleanroom format.
+// [Sync] 2026-10-11: load exact target sharp/libvips with Bun from both stage and hoisted fresh-install core anchors.
 
 import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { createRequire } from "node:module";
+import { platformDependenciesMatch, platformRuntimeDependencies, probeNativeImageDependencies } from "./npm-runtime-dependencies.mjs";
 
 const [stageArgument] = process.argv.slice(2);
 if (!stageArgument) throw new Error("[npm-smoke] usage: smoke-npm-release.mjs <dist/npm-stage/<target>>");
@@ -27,8 +30,11 @@ function parseNpmPackJson(output) {
 try {
   const packageRoot = path.join(stageRoot, "platform");
   const platformPackage = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
-  if (JSON.stringify(platformPackage.dependencies) !== JSON.stringify({ bun: "1.4.0" })) {
-    throw new Error("[npm-smoke] platform package must depend only on exact bun@1.4.0");
+  const policy = JSON.parse(await readFile(path.resolve(import.meta.dirname, "../runtime/npm-release-policy.json"), "utf8"));
+  const target = platformPackage.inkRuntime?.target;
+  const expected = platformRuntimeDependencies(policy, target);
+  if (!platformDependenciesMatch(platformPackage, expected)) {
+    throw new Error("[npm-smoke] platform package exact Runtime dependencies mismatch");
   }
   run("npm", ["install", "--foreground-scripts", "--no-audit", "--no-fund"], packageRoot);
   const installedBunPackage = JSON.parse(
@@ -40,6 +46,9 @@ try {
   ) {
     throw new Error("[npm-smoke] installed Bun package/postinstall contract drift");
   }
+  const stageNative = probeNativeImageDependencies({ target, expected, dependencyRoot: packageRoot,
+    coreRoot: path.join(packageRoot, "runtime"), corePath: path.join(packageRoot, "runtime/lib/core/cli.js"),
+    bunPath: createRequire(path.join(packageRoot, "package.json")).resolve("bun/bin/bun.exe") });
   const dryRun = parseNpmPackJson(run("npm", ["pack", "--dry-run", "--json"], packageRoot));
   if (dryRun[0].files.some(file => file.path.toLowerCase().endsWith(".map"))) {
     throw new Error("[npm-smoke] npm dry-run inventory contains a source map");
@@ -62,6 +71,9 @@ try {
     "node_modules",
     ...platformPackage.name.split("/"),
   );
+  const installedNative = probeNativeImageDependencies({ target, expected, dependencyRoot: installRoot,
+    coreRoot: path.join(platformRoot, "runtime"), corePath: path.join(platformRoot, "runtime/lib/core/cli.js"),
+    bunPath: createRequire(path.join(platformRoot, "package.json")).resolve("bun/bin/bun.exe") });
   const cliVersion = run(
     path.join(platformRoot, "bin", "ink-claude-code-dream-platform"),
     ["--version"],
@@ -70,7 +82,7 @@ try {
   if (!/^2\.1\.241(?: \(Claude Code\))?$/.test(cliVersion)) {
     throw new Error(`[npm-smoke] expected CLI compatibility version 2.1.241, received ${cliVersion}`);
   }
-  process.stdout.write(`${JSON.stringify({ status: "npm-smoke-passed", platformPackage: platformPackage.name, bunVersion, cliVersion, tarballs: 1, sourceMaps: 0 })}\n`);
+  process.stdout.write(`${JSON.stringify({ status: "npm-smoke-passed", platformPackage: platformPackage.name, bunVersion, cliVersion, stageNative, installedNative, tarballs: 1, sourceMaps: 0 })}\n`);
 } finally {
   await rm(tempRoot, { recursive: true, force: true });
 }

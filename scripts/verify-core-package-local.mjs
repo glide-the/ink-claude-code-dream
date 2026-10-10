@@ -2,6 +2,7 @@
 // [Input] A packaged local derived Runtime artifact plus checked-in local artifact/template contracts.
 // [Output] Fail closed on checksum, provenance, qualification, reproducibility, SBOM/license, executable, or mutable-data boundary drift.
 // [Pos] Read-only verifier for dist/core-package-local; it never reads restored source or executes the candidate core.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
 // [Sync] 2026-08-24: require native target identity across core, qualifications, manifests, and assets.
 // [Sync] 2026-09-15: verify only local-core Runtime 0.1.10 candidate artifacts.
 
@@ -16,7 +17,7 @@ const defaultPackageRoot = path.join(
   repositoryRoot,
   "dist",
   "core-package-local",
-  "ink-claude-code-dream-0.1.10",
+  "ink-claude-code-dream-0.1.11",
 );
 
 function fail(message) {

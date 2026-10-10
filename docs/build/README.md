@@ -1,6 +1,7 @@
 <!-- [Input] Canonical original src modules, locked tooling, recovered dependencies/assets and current policy. -->
 <!-- [Output] Actual original-module build and verification commands with explicit release boundaries. -->
 <!-- [Pos] Current single-source build guide and artifact-validation boundary. -->
+<!-- [Sync] 2026-10-11: exact native image dependency checks are local source repair; old release/normal adoption unchanged. -->
 <!-- [Sync] 2026-09-13: retain qualified source/build gates and link completed four-host public release evidence. -->
 
 # Build and package
@@ -50,8 +51,9 @@ digests. It does not change archive/ZIP policy.
 
 `npm run package` uses the current local original-core packager after build verification.
 Production eligibility is computed from fresh digest-bound receipts, not hardcoded.
-The current Darwin ARM64 base local-core package is qualified; installation still requires
-its exact manifest. npm capability qualification and all four native hosts remain separate.
+The historical `0.1.9` Darwin ARM64 base local-core package was qualified; installation still
+required its exact manifest. That evidence does not qualify the `0.1.11` candidate.
+npm capability qualification and all four native hosts remain separate.
 Four native targets plus package-root selector passed the source-derived CI qualification
 for release `0.1.9` at source `820be726`; the public five archives match those CI bytes.
 This is real native-host evidence, not the retired five-native fixture lane.
@@ -62,3 +64,21 @@ authority is recorded from the operator confirmation. Qualification is bound to 
 source/archive bytes; four-host CI feeds those archives to automatic publishing.
 See [0.1.9 results](runtime-0.1.9-release-notes.md), [test guide](../test/README.md) and
 [alignment decision](../design/claude-sourcemap-package-contract-alignment.md).
+
+## Image native package dependencies
+
+The existing four-target [npm policy](../../runtime/npm-release-policy.json)
+now pins Bun and the target sharp/libvips packages. The shared
+[dependency helper](../../scripts/npm-runtime-dependencies.mjs) is consumed by
+staging, standalone prepack, archive verification and installation smoke.
+Build-time sharp metadata must match these versions; native loading uses Bun
+and the core bundle's resolution anchor. Optional overrides and installation
+tree escapes fail before a successful probe.
+
+This repair requires the next Runtime version and fresh qualification. Do not
+rebuild or publish a different `0.1.10` archive. See the
+[current design](../design/single-source-release-and-dream-adoption.md).
+
+The current image-native candidate is Runtime `0.1.11`; see the
+[release record](runtime-0.1.11-release-notes.md) for actual qualification, publication
+and adoption receipts. Historical `0.1.10` archives are never repacked.

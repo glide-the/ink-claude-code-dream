@@ -2,6 +2,7 @@
 // [Input] Checked-in npm/local artifact policies and one production-qualified target-native local core package.
 // [Output] Print layout, gate publication, stage one native platform, or aggregate four tgz files into one bound meta package.
 // [Pos] Reproducible npm package generator; it never reads restored source and cannot override legal flags by environment.
+// [Sync] 2026-10-11: declare exact target sharp/libvips and embed the shared Bun dependency probe in standalone prepack.
 
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
@@ -22,6 +23,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { dependenciesMatch, nativeImageProbe, platformDependenciesMatch, platformRuntimeDependencies, probeNativeImageDependencies } from "./npm-runtime-dependencies.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const policyPath = path.join(repositoryRoot, "runtime", "npm-release-policy.json");
@@ -100,7 +102,7 @@ function relativePosix(root, file) {
   return path.relative(root, file).split(path.sep).join("/");
 }
 
-function validatePolicy(policy, localPolicy) {
+async function validatePolicy(policy, localPolicy) {
   if (
     policy.schemaVersion !== "ink-npm-release-policy/v1" ||
     policy.repository !== "glide-the/ink-claude-code-dream" ||
@@ -127,6 +129,17 @@ function validatePolicy(policy, localPolicy) {
       !platform.ripgrepPath.includes(`/vendor/ripgrep/${platform.cpu}-${platform.os}/`)
     ) {
       fail(`invalid npm platform definition: ${target}`);
+    }
+  }
+  const rootPackage = await readJson(path.join(repositoryRoot, "package.json"), "build package");
+  const sharp = await readJson(path.join(repositoryRoot, "node_modules/sharp/package.json"), "build sharp metadata");
+  if (rootPackage.devDependencies?.sharp !== policy.imageProcessing?.sharpVersion || sharp.version !== policy.imageProcessing?.sharpVersion) {
+    fail("npm image dependency policy differs from bundled sharp version");
+  }
+  for (const target of allowedTargets) {
+    const dependencies = platformRuntimeDependencies(policy, target);
+    for (const [name, version] of Object.entries(dependencies)) {
+      if (name.startsWith("@img/") && sharp.optionalDependencies?.[name] !== version) fail(`sharp native dependency version mismatch: ${name}`);
     }
   }
   if (!policy.unsupported?.["win32-x64"] || !policy.unsupported?.["win32-arm64"]) {
@@ -277,11 +290,11 @@ function platformLauncherBody(policy, target) {
   return `#!/bin/sh\nset -eu\nINK_PLATFORM_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)\nINK_HOST=$(node -p "process.platform + '-' + process.arch")\nif [ "$INK_HOST" != "${target}" ]; then echo "platform package ${target} cannot run on $INK_HOST" >&2; exit 78; fi\n${glibcGate}INK_BUN=$(node -e "const {createRequire}=require('node:module');const r=createRequire(process.argv[1]+'/');process.stdout.write(r.resolve('bun/bin/bun.exe'))" "$INK_PLATFORM_ROOT/package.json")\nINK_BUN_VERSION=$("$INK_BUN" --version)\nif [ "$INK_BUN_VERSION" != "${policy.bun.version}" ]; then echo "requires Bun ${policy.bun.version}; received $INK_BUN_VERSION" >&2; exit 78; fi\nexport INK_CLAUDE_CODE_BUN_PATH=$INK_BUN\nexec "$INK_PLATFORM_ROOT/runtime/bin/ink-claude-code-dream" "$@"\n`;
 }
 
-function generatedPrepackBody(packageName, target = null) {
+function generatedPrepackBody(packageName, target = null, policy = null) {
   const platformChecks = target
-    ? `\nconst host=process.platform+'-'+process.arch;\nif(host!==att.runtimeTarget||pkg.os?.[0]!==process.platform||pkg.cpu?.[0]!==process.arch||pkg.inkRuntime?.target!==att.runtimeTarget) throw new Error('npm prepack platform/arch gate failed');\nconst release=JSON.parse(await readFile(path.join(root,'runtime/release-manifest.json'),'utf8'));\nconst artifact=JSON.parse(await readFile(path.join(root,'runtime/manifest/artifact-manifest.json'),'utf8'));\nif(release.core?.runtimeTarget!==att.runtimeTarget||artifact.artifact?.runtimeTarget!==att.runtimeTarget||artifact.payloadTreeSha256!==att.payloadTreeSha256) throw new Error('npm prepack Runtime manifest binding failed');\nconst rg=await readFile(path.join(root,pkg.inkRuntime.ripgrepPath));\nif(createHash('sha256').update(rg).digest('hex')!==pkg.inkRuntime.ripgrepSha256) throw new Error('npm prepack ripgrep checksum failed');\nconst require=createRequire(path.join(root,'package.json'));\nconst bun=require.resolve('bun/bin/bun.exe');\nconst probe=spawnSync(bun,['--version'],{encoding:'utf8'});\nif(probe.status!==0||probe.stdout.trim()!==pkg.inkRuntime.bunVersion||pkg.inkRuntime.bunVersion!=='1.4.0') throw new Error('npm prepack exact Bun 1.4.0 gate failed');`
+    ? `\nconst host=process.platform+'-'+process.arch;\nif(host!==att.runtimeTarget||pkg.os?.[0]!==process.platform||pkg.cpu?.[0]!==process.arch||pkg.inkRuntime?.target!==att.runtimeTarget) throw new Error('npm prepack platform/arch gate failed');\nconst release=JSON.parse(await readFile(path.join(root,'runtime/release-manifest.json'),'utf8'));\nconst artifact=JSON.parse(await readFile(path.join(root,'runtime/manifest/artifact-manifest.json'),'utf8'));\nif(release.core?.runtimeTarget!==att.runtimeTarget||artifact.artifact?.runtimeTarget!==att.runtimeTarget||artifact.payloadTreeSha256!==att.payloadTreeSha256) throw new Error('npm prepack Runtime manifest binding failed');\nconst rg=await readFile(path.join(root,pkg.inkRuntime.ripgrepPath));\nif(createHash('sha256').update(rg).digest('hex')!==pkg.inkRuntime.ripgrepSha256) throw new Error('npm prepack ripgrep checksum failed');\nconst expected=${JSON.stringify(target ? platformRuntimeDependencies(policy,target) : {})};\nconst dependenciesMatch=${dependenciesMatch.toString()};\nconst platformDependenciesMatch=${platformDependenciesMatch.toString()};\nif(!platformDependenciesMatch(pkg,expected)) throw new Error('npm prepack exact Runtime dependencies mismatch');\nconst nativeImageProbe=${nativeImageProbe.toString()};\nconst probeNativeImageDependencies=${probeNativeImageDependencies.toString()};\nconst require=createRequire(path.join(root,'package.json'));\nconst bun=require.resolve('bun/bin/bun.exe');\nif(pkg.inkRuntime.bunVersion!==expected.bun) throw new Error('npm prepack Bun policy mismatch');\nprobeNativeImageDependencies({target:${JSON.stringify(target)},expected,dependencyRoot:root,coreRoot:path.join(root,'runtime'),corePath:path.join(root,'runtime/lib/core/cli.js'),bunPath:bun});`
     : `\nconst optional=Object.entries(pkg.optionalDependencies??{});\nif(optional.length!==4||optional.some(([name,version])=>!name.startsWith('@glide-the/ink-claude-code-dream-')||version!==pkg.version)||att.schemaVersion!=='ink-npm-meta-publication-attestation/v1'||!Array.isArray(att.platforms)||att.platforms.length!==4||Object.hasOwn(att,'runtimeTarget')) throw new Error('npm prepack platform selector/aggregate attestation failed');`;
-  return `#!/usr/bin/env node\n// Generated from scripts/npm-release.mjs; verifies immutable npm staging only.\nimport { createHash } from 'node:crypto';\nimport { spawnSync } from 'node:child_process';\nimport { createRequire } from 'node:module';\nimport { readFile, readdir } from 'node:fs/promises';\nimport path from 'node:path';\nconst root=path.resolve(import.meta.dirname,'..');\nconst pkg=JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));\nconst att=JSON.parse(await readFile(path.join(root,'npm-publication-attestation.json'),'utf8'));\nif(pkg.name!==${JSON.stringify(packageName)}||pkg.private===true||att.publicationAllowed!==true||att.redistributionAllowed!==true||att.productionEligible!==true${target ? `||att.runtimeTarget!==${JSON.stringify(target)}` : ""}) throw new Error('npm prepack identity/legal/qualification gate failed');${platformChecks}\nasync function walk(dir){for(const e of await readdir(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isSymbolicLink())throw new Error('npm symlink forbidden: '+p);if(e.isDirectory()){if(e.name!=='node_modules')await walk(p)}else if(e.isFile()&&p.toLowerCase().endsWith('.map'))throw new Error('source map forbidden from npm package: '+p);}}\nawait walk(root);\nprocess.stdout.write(JSON.stringify({status:'prepack-verified',package:pkg.name})+'\\n');\n`;
+  return `#!/usr/bin/env node\n// Generated from scripts/npm-release.mjs; verifies immutable npm staging only.\nimport { createHash } from 'node:crypto';\nimport { spawnSync } from 'node:child_process';\nimport { createRequire } from 'node:module';\nimport { realpathSync } from 'node:fs';\nimport { readFile, readdir } from 'node:fs/promises';\nimport path from 'node:path';\nconst root=path.resolve(import.meta.dirname,'..');\nconst pkg=JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));\nconst att=JSON.parse(await readFile(path.join(root,'npm-publication-attestation.json'),'utf8'));\nif(pkg.name!==${JSON.stringify(packageName)}||pkg.private===true||att.publicationAllowed!==true||att.redistributionAllowed!==true||att.productionEligible!==true${target ? `||att.runtimeTarget!==${JSON.stringify(target)}` : ""}) throw new Error('npm prepack identity/legal/qualification gate failed');${platformChecks}\nasync function walk(dir){for(const e of await readdir(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isSymbolicLink())throw new Error('npm symlink forbidden: '+p);if(e.isDirectory()){if(e.name!=='node_modules')await walk(p)}else if(e.isFile()&&p.toLowerCase().endsWith('.map'))throw new Error('source map forbidden from npm package: '+p);}}\nawait walk(root);\nprocess.stdout.write(JSON.stringify({status:'prepack-verified',package:pkg.name})+'\\n');\n`;
 }
 
 async function writeGenerated(file, body, mode = 0o644) {
@@ -299,7 +312,7 @@ async function verifyGeneratedTemplates(policy) {
       ["meta-prepack.mjs", generatedPrepackBody(policy.metaPackage), "node"],
       ...Object.entries(policy.platforms).flatMap(([target, platform]) => [
         [`${target}-launcher.sh`, platformLauncherBody(policy, target), "sh"],
-        [`${target}-prepack.mjs`, generatedPrepackBody(platform.package, target), "node"],
+        [`${target}-prepack.mjs`, generatedPrepackBody(platform.package, target, policy), "node"],
       ]),
     ];
     for (const [name, body, runtime] of scripts) {
@@ -362,7 +375,7 @@ async function stage(context, target, outputRoot, policy) {
     os: [platform.os],
     cpu: [platform.cpu],
     files: ["bin", "runtime", "scripts", "npm-publication-attestation.json", "README.md"],
-    dependencies: { [policy.bun.package]: policy.bun.version },
+    dependencies: platformRuntimeDependencies(policy, target),
     engines: { node: ">=22 <25" },
     publishConfig: { access: policy.publish.access, provenance: true },
     scripts: { prepack: "node scripts/prepack.mjs" },
@@ -385,12 +398,12 @@ async function stage(context, target, outputRoot, policy) {
     );
     await writeGenerated(
       path.join(platformRoot, "scripts", "prepack.mjs"),
-      generatedPrepackBody(platform.package, target),
+      generatedPrepackBody(platform.package, target, policy),
     );
     await writeGenerated(path.join(platformRoot, "npm-publication-attestation.json"), stableJson(attestation));
     await writeGenerated(
       path.join(platformRoot, "README.md"),
-      `# ${platform.package}\n\n仅适用于 ${target}；包含精简 Runtime，并固定依赖 bun@${policy.bun.version}；不包含 source map。\n`,
+      `# ${platform.package}\n\n仅适用于 ${target}；包含精简 Runtime，并固定依赖 Bun 和同目标 sharp/libvips 原生包（版本见 package.json）；不包含 source map。\n`,
     );
     for (const root of [platformRoot]) {
       for (const file of await filesUnder(root)) {
@@ -521,7 +534,7 @@ const [policy, localPolicy] = await Promise.all([
   readJson(policyPath, "npm release policy"),
   readJson(localPolicyPath, "local artifact policy"),
 ]);
-validatePolicy(policy, localPolicy);
+await validatePolicy(policy, localPolicy);
 if (command === "plan") {
   process.stdout.write(stableJson(layout(policy, localPolicy)));
 } else if (command === "templates") {

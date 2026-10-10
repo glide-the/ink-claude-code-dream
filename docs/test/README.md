@@ -1,6 +1,7 @@
 <!-- [Input] Actual original Runtime bundle, src/reference inventories and installed public SDK/fixture interpreters. -->
 <!-- [Output] Current source, build and local protocol validation, including skipped/remaining lanes. -->
 <!-- [Pos] Test guide for the unified original-module Runtime, not real business acceptance. -->
+<!-- [Sync] 2026-10-11: exact native image dependency checks are local source repair; old release/normal adoption unchanged. -->
 <!-- [Sync] 2026-09-13: add offline publisher verification and separate operator acceptance from technical receipts. -->
 
 # Test guide
@@ -85,3 +86,18 @@ qualification and no npm upload or network request is made. Ordinary CI runs the
 docs/folder/publisher-only main commits do not regenerate a published Runtime version.
 The operator separately confirmed real model and real Notion E2E for `0.1.9`; this does not
 change automated test scope. Docker image build remains unverified.
+
+## Image native dependencies
+
+`npm test` includes `npm-release-contract.test.mjs`: four target maps match
+bundled sharp metadata, key order is irrelevant, optional overrides fail, and
+actual Bun loads host native packages from an isolated hoisted installation.
+Metadata/version failures and native-library symlinks outside that tree are
+rejected. The fixture's core file is only a resolution anchor, not a CLI.
+
+The IM专项 also observes an unchanged released CLI processing 2400px input in
+a private installation using the production dependency map, then resuming the
+same session through public SDK. Its Gateway is a fixture and the records are
+technical evidence. It does not qualify a new archive, other host platforms,
+normal installation or a real model. Those require the original release and
+real-business gates in the [current design](../design/single-source-release-and-dream-adoption.md).

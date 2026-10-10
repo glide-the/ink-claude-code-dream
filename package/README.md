@@ -10,3 +10,5 @@ Dream-compatible Claude CLI package. Like the reference `@anthropic-ai/claude-co
 The entrypoint selects the exact optional native package for Darwin/Linux on arm64/x64. Its implementation is built from the repository's original src modules; raw TypeScript, source maps and user/session/Workspace/OAuth data are excluded. Original source copyright remains applicable to derived native artifacts; the selector's MIT license does not relicense them.
 
 This checked-in directory is a private release template. Use the repository packaging and verification commands; do not publish it directly.
+
+<!-- [Sync] 2026-10-11: selector 0.1.11 pins the four exact image-native platform candidates; publication remains gated. -->
