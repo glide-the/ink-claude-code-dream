@@ -1,3 +1,4 @@
+<!-- [Sync] 2026-10-11: public Runtime 0.1.11 qualified/published/adopted; real image business acceptance remains separate and incomplete. -->
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
 <!-- [Output] Explain the one Runtime implementation, actual build, verification and local integration boundaries. -->
 <!-- [Pos] Operator entry point for ink-claude-code-dream. -->
@@ -91,9 +92,9 @@ The private root package is the build workspace, not the npm selector.
 `cli.js`. Both command aliases select an exact native optional package. The selector is
 repository-authored; its MIT license does not relicense the original Runtime modules.
 
-Runtime project, selector and native candidate expectations are `0.1.11`.
-This version adds the required native image dependencies and requires fresh four-platform
-qualification and five-package publication. Published `0.1.10` archives remain immutable.
+Runtime project, selector and public native packages are `0.1.11`.
+This version adds the required native image dependencies and completed fresh four-platform
+qualification, five-package publication and normal Dream Runtime adoption. Published `0.1.10` archives remain immutable.
 The [0.1.11 release record](docs/build/runtime-0.1.11-release-notes.md) tracks actual gates.
 Python SDK stays `0.2.145`, source provenance
 `2.1.88`, and Dream-facing CLI compatibility `2.1.241`; API schema stays `2.0.0`.
@@ -139,7 +140,7 @@ No API, database or ZIP-policy change is planned. See [build](docs/build/README.
 
 ## Image native dependency repair — 2026-10-11
 
-The next release's platform packages now declare the exact Bun, target sharp and
+The released 0.1.11 platform packages declare the exact Bun, target sharp and
 libvips dependencies from [npm policy](runtime/npm-release-policy.json). The
 shared [dependency contract](scripts/npm-runtime-dependencies.mjs) checks exact
 keys/versions and rejects optional overrides. Prepack and install smoke run the
