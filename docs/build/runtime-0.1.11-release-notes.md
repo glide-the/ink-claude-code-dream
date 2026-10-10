@@ -1,7 +1,7 @@
 <!-- [Input] Image-native dependency source repair, operator production authorization and fresh release receipts. -->
 <!-- [Output] Exact Runtime 0.1.11 qualification, publication and normal Dream adoption state. -->
 <!-- [Pos] Current image-native release record; earlier release records remain immutable history. -->
-<!-- [Sync] 2026-10-11: same-source CI qualification, production publication, public integrity and normal Dream adoption completed; real image business acceptance remains blocked. -->
+<!-- [Sync] 2026-10-11: correct Dream authentication evidence to OAuth client-scope failure; released bytes and normal adoption remain unchanged. -->
 
 # Runtime 0.1.11 image native dependencies
 
@@ -31,7 +31,7 @@ by production publication and normal adoption; each stage requires its own evide
 | Five exact archive publication | [38082683882](https://github.com/glide-the/ink-claude-code-dream/actions/runs/38082683882), same merge SHA, success; native packages before selector through the existing protected CI chain |
 | Public registry integrity | All five public 0.1.11 archives byte-equal to the qualified archives; exact versions/platform/dependency metadata, SHA-512 integrity and SHA-256 checks exit 0 |
 | Normal installation and Dream adoption | Normal Node 24.13.0/npm 11.6.2 exact global install exit 0; default resolver/manifest and actual Bun native load passed. Identified normal Dream backend gracefully restarted; new startup identity Runtime 0.1.11 / SDK 0.2.145 / dream_runtime, health 200; Admin/frontend/PostgreSQL listener PIDs unchanged |
-| Normal account image acceptance | Incomplete: designated account rejected by local Admin email login; normal database lacks exact dream.image-turn.v1 capability. No real image model calls, account reset or normal DDL/grant |
+| Normal account image acceptance | Incomplete: actual Dream email flow returns invalid_scope for images:create at the local callback; no local Dream session established. The earlier Admin operator rejection cannot establish Dream credential failure. Exact dream.image-turn.v1 capability independently remains absent; no real image model calls, account reset or normal DDL/grant |
 
 Private same-byte CLI fixtures from the earlier source-repair stage prove technical
 behavior only. They do not qualify these new release archives or establish real-model
@@ -78,7 +78,7 @@ Environment stayed only in memory; safe startup identity confirms the new pin an
 normal service remains running. Docker/AutoDL source defaults were synchronized;
 no Docker build or remote deployment was performed. SDK/API versions are unchanged.
 
-Full commands, raw receipts, local authentication rejection and capability audit are
+Full commands, raw receipts, actual Dream OAuth client-scope failure and capability audit are
 in the [Dream adoption record](/Users/dmeck/project/ink-dream-memory/docs/deploy/runtime-0.1.11-image-native-and-dream-adoption.md)
 and [image task execution record](/Users/dmeck/project/ink-dream-memory/docs/exec/image-model-call-division-20261010.md).
 Real image generation/editing, intent selection, normal file/history/settlement and

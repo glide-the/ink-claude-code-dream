@@ -1,7 +1,7 @@
 <!-- [Input] Original module recovery, duplicate source directory, GitHub npm publishing and local Dream integration. -->
 <!-- [Output] Minimal implementation and interaction plan with independently verifiable release states. -->
 <!-- [Pos] Current source-cleanup/release/adoption design and acceptance checklist. -->
-<!-- [Sync] 2026-10-11: record completed image-native 0.1.11 qualification/publication/adoption and separate blocked real image acceptance. -->
+<!-- [Sync] 2026-10-11: distinguish Dream OAuth scope failure from Admin operator rejection; published Runtime/adoption and schema readiness remain separate. -->
 <!-- [Sync] 2026-09-13: retain completed immutable release; scope post-release visibility/documentation fixes without redesign. -->
 
 # 唯一源码、CI 发布与本机 Dream 更新
@@ -290,7 +290,7 @@ stateDiagram-v2
   四平台资格已通过 --> 五包生产发布已完成
   五包生产发布已完成 --> 公开字节已验证
   公开字节已验证 --> 正常Dream已采用
-  正常Dream已采用 --> 真实图片验收受阻: 本机登录拒绝且image_turn capability缺失
+  正常Dream已采用 --> 真实图片验收受阻: Dream OAuth scope失败且image_turn capability缺失
   真实图片验收受阻 --> 真实图片验收待执行: 前置条件由所属业务边界恢复后
   note right of 正常Dream已采用: 仅Runtime采用，不代表图片业务通过
   note right of 真实图片验收待执行: 尚未执行；不得绕过Schema或认证
