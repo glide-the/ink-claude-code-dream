@@ -1,6 +1,7 @@
 // [Input] Runtime MCP management harness, provider-free fake CLI, optional official 2.1.241, and read-only Dream production driver source.
 // [Output] Prove exact driver reuse, candidate colon lifecycle, secret-safe receipts, identity isolation, and official reference calibration.
 // [Pos] Real process-boundary management contract; it performs no OAuth, provider, model, Dream business, or persistent user operation.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
 // [Sync] 2026-08-24: aggregate qualification binds source provenance separately from the Dream-facing CLI version.
 // [Sync] 2026-09-15: bind candidate management evidence to Runtime 0.1.10 and honor explicit isolated-worktree Python selection.
 
@@ -156,7 +157,7 @@ test("provider-free candidate fixture passes colon lifecycle, isolation, and pro
     assert.equal(receipt.status, "passed");
     assert.equal(receipt.calibrationOnly, false);
     assert.equal(receipt.subject.runtime, "ink-claude-code-dream");
-    assert.equal(receipt.subject.version, "0.1.10");
+    assert.equal(receipt.subject.version, "0.1.11");
     assert.match(receipt.subject.coreBundleSha256, /^[a-f0-9]{64}$/);
     assert.equal(receipt.subject.sourceDigest, "4".repeat(64));
     assert.equal(receipt.subject.runtimeTarget, `${process.platform}-${process.arch}`);

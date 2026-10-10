@@ -2,7 +2,7 @@
   "schemaVersion": "ink-npm-release-policy/v1",
   "repository": "glide-the/ink-claude-code-dream",
   "scope": "@glide-the",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "metaPackage": "@glide-the/ink-claude-code-dream",
   "command": "ink-claude-code-dream",
   "runtimePackagePolicy": "runtime/local-artifact-policy.json",
@@ -19,6 +19,10 @@
     "version": "1.4.0",
     "resolvedExecutable": "bin/bun.exe",
     "requireNativeVersionProbe": true
+  },
+  "imageProcessing": {
+    "sharpVersion": "0.34.5",
+    "libvipsVersion": "1.2.4"
   },
   "materialPolicy": {
     "forbiddenSuffixes": [

@@ -4,6 +4,7 @@
 [Input] Absolute CLI/output/Dream-backend paths, isolated 0700 config identity, and candidate/reference mode.
 [Output] Secret-safe provider-free receipt for version/help/user HTTP lifecycle, colon names, isolation, and redaction.
 [Pos] Real process-boundary contract; it imports Dream's production driver/parser and does not copy their state machine.
+[Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
 [Sync] 2026-08-24: bind candidate management evidence to one qualified native Runtime target.
 [Sync] 2026-09-15: require candidate identity Runtime 0.1.10 in new management evidence.
 """
@@ -482,7 +483,7 @@ def main() -> int:
                 raise ContractFailure("candidate core binding receipt is not built")
             qualification_subject = {
                 "runtime": "ink-claude-code-dream",
-                "version": "0.1.10",
+                "version": "0.1.11",
                 "coreBundleSha256": _sha256(core_bundle),
                 "sourceDigest": source_digest,
                 "runtimeTarget": runtime_target,

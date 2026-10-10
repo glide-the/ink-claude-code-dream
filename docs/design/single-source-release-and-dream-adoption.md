@@ -1,6 +1,7 @@
 <!-- [Input] Original module recovery, duplicate source directory, GitHub npm publishing and local Dream integration. -->
 <!-- [Output] Minimal implementation and interaction plan with independently verifiable release states. -->
 <!-- [Pos] Current source-cleanup/release/adoption design and acceptance checklist. -->
+<!-- [Sync] 2026-10-11: add packaging-only image native fix, reviewed boundaries, flows and pending fresh-release states. -->
 <!-- [Sync] 2026-09-13: retain completed immutable release; scope post-release visibility/documentation fixes without redesign. -->
 
 # 唯一源码、CI 发布与本机 Dream 更新
@@ -179,3 +180,94 @@ E404，包含请求耗时的总等待上限为 5 分钟。上限是可调整的 
 本次精确 merge SHA 的冗余资格 run，继续等待普通 CI；原 `0.1.9` payload 和
 构建实现不变，复用已通过的四平台资格并避免后继发布。不取消其他任务、不禁用
 workflow；真正 qualification 命令或构建输入变化时不得沿用该收尾例外。
+
+## 图片原生依赖修复（2026-10-11，源码已实现）
+
+### 背景与问题
+
+IM本轮实际Runtime 0.1.10的2400px视觉输入在Gateway POST前失败。构建保留sharp 0.34.5的JavaScript图片处理，但npm平台包仅声明Bun；目标平台sharp及libvips原生包没有成为安装依赖。打包、归档校验及install smoke都只核对Bun，版本输出不能覆盖图片处理。
+
+### 目标与边界
+
+复用现有四平台npm政策、stager、prepack、tarball verifier和install smoke，只补齐同目标的两项精确原生依赖。原始src、源码摘要、CLI/SDK协议、解析/恢复/取消、权限与精确thread临时目录均不改变。已发布0.1.10和正常安装保持；代码修复用于下一版本，发布与采用另走已有门禁。本轮不新增或覆盖0.1.10制品，不把私有fixture当成production-qualified发布。
+
+### 概念与规则
+
+当前已发布平台包的effective依赖为Bun；desired为Bun加对应目标的`@img/sharp-<target>`与`@img/sharp-libvips-<target>`。精确版本在npm policy保存，并与构建工作区sharp版本及其optionalDependencies核对。原policy SHA是配置revision，发布制品仍使用原Runtime发行version；修改本地policy不改变已发布包。
+
+现有stager、prepack、verifier和install smoke消费同一精确依赖映射；不从宿主全局node_modules或模型名称推断。归档中依赖缺失、额外依赖、错版本或错目标均拒绝；平台包不允许非空optionalDependencies覆盖必需依赖。metadata只用两包的`./package` export，原生模块使用sharp包的`./sharp.node` export，不能使用未开放的`./package.json`。prepack/install smoke除原Bun版本检查外，使用同一个已核对Bun子进程，以实际core bundle路径为createRequire解析锚点，核对metadata并加载目标sharp.node；只在Node中require成功不足以声明Runtime可用。缺失或加载失败不能产生smoke成功。实际image处理仍由原CLI模块执行，新/resume视觉输入另由实际CLI观察。依赖映射按精确键和值比较，忽略JSON键顺序；prepack内嵌共享helper生成的预期值及探针函数，不依赖未归档的仓库文件，也不使用待校验依赖自证。stage探针允许其自身目录内的npm布局，fresh-install探针显式接收整个隔离installRoot并允许其中的正常hoisting；core、metadata、native、libvips的导出目录及其中全部库文件解析后的真实路径都必须位于对应目录，树外依赖或符号链接逃逸均拒绝。
+
+正常路径为policy→stager package.json→隔离npm安装→prepack native加载→原tarball检查→全新安装与实际CLI图片输入。失败时沿原打包错误退出，不自动安装到正常Runtime、切换CLI或改HOME/PATH。技术fixture可使用同字节已发布bundle和生产依赖映射验证新/resume图片处理，但必须private、独立home/workspace/假Gateway，禁止添加生产资格标记。
+
+### 验收与发布状态
+
+独立评审先检查实际稿；本机技术检查覆盖四目标依赖映射/错误配置、唯一原src字节、既有兼容合同及2400px真实CLI视觉转换。其他平台native加载、四平台资格、新版公开制品、正常安装和指定真实账户/模型验收均未执行，不使用旧回执代替。版本、发布、Dream pin和正常服务采用仍须按上方完整发布合同处理。
+
+### 正常与异常时序
+
+```mermaid
+sequenceDiagram
+  participant P as npm-release-policy.json
+  participant S as npm-release.mjs
+  participant N as 隔离npm安装
+  participant B as Bun原生探针
+  participant V as verify-npm-tarball.mjs
+  participant M as smoke-npm-release.mjs
+  S->>P: 读取四目标和精确版本
+  S->>S: 核对构建sharp metadata并派生依赖
+  S-->>N: 平台package与内嵌prepack
+  N->>B: 指定stage目录和实际core解析位置
+  B->>B: 核对版本及全部库文件realpath后加载
+  B-->>N: native-image-dependencies-verified
+  N->>V: 原门禁允许的新版本归档
+  V->>P: 精确依赖和原资格绑定
+  V-->>M: 归档合同通过
+  M->>N: 全新隔离安装
+  M->>B: installRoot边界内允许hoisting
+  B-->>M: 同目标native加载通过
+  M-->>M: 原CLI版本smoke
+  Note over M,B: 实际CLI图片新建及恢复由独立SDK fixture验证
+```
+
+```mermaid
+sequenceDiagram
+  participant O as 发布执行者
+  participant G as 现有prepack或smoke
+  participant B as Bun原生探针
+  O->>G: 候选平台安装或pack
+  alt 依赖缺失、版本错误或optional覆盖
+    G-->>O: 退出失败并保留命令回执
+  else 精确依赖声明正确
+    G->>B: core位置与明确安装边界
+    alt native缺失、树外库或加载失败
+      B-->>G: 抛出具体探针错误
+      G-->>O: 退出失败，不能形成smoke成功
+    else 本机native通过
+      G-->>O: 本机技术回执
+    end
+  end
+  O->>O: 修订候选配置，重新执行受影响门禁
+  Note over O,G: 旧版包及正常安装保持；发布须新版本和四平台资格
+```
+
+### 状态与评审修订
+
+```mermaid
+stateDiagram-v2
+  [*] --> 源码修复
+  源码修复 --> 本机技术验证: 确定性合同与实际CLI图片观察
+  本机技术验证 --> 下一版本候选: 版本更新与新构建
+  下一版本候选 --> 四平台资格: 原完整资格门禁
+  四平台资格 --> 新版发布: 五包完整校验与原CI发布
+  新版发布 --> Dream采用: 精确pin与正常安装
+  Dream采用 --> 真实模型验收: 指定真实账户与实体
+  note right of 本机技术验证: 本轮到此；后继状态尚未执行
+```
+
+独立实际稿评审先关闭Bun执行和公开exports两项P2；源码复审再关闭optional覆盖及真实libvips库文件逃逸两项P2。新增回归验证这些失败路径。原始src和provenance未改；源码/依赖notice不改变已发布包资格。本机实际CLI及命令细节见[IM执行记录](/Users/dmeck/project/ink-dream-memory/docs/exec/image-model-call-division-20261010.md)。
+
+本轮本机回执：Node24.13.0/Bun1.4.0下npm test为58 pass/4 skip、MCP源兼容52 pass、Dream兼容4 pass、原src1902文件摘要一致、10模板语法通过；同字节CLI私有安装的2400px新会话和resume均success。四skip的原外部comparator/OAuth fixture未提供，未宣称这些通过。其他三个host native、完整四平台资格、新版pack/发布/采用及真实模型仍待执行；本机结果不推进这些状态。
+
+## 图片原生依赖生产发布授权（2026-10-11）
+
+用户明确要求Runtime验证后走生产发布。新候选为0.1.11；五个公开包当前latest均为0.1.10，0.1.11均未存在。本轮原子同步项目、selector、四平台政策、manifest、资格与安装检查的版本事实，旧制品及历史收据保持不变。沿既有scoped PR→源码CI→main四平台qualification→同SHA五包发布→公开完整性→精确安装→Dream pin/resolver采用路径执行。前述私有CLI观察仍只是技术证据，不能替代新版本四平台资格。各状态以[0.1.11发布记录](../build/runtime-0.1.11-release-notes.md)的真实命令或CI回执推进；缺输入或门禁失败时保留失败结果，不降低条件。

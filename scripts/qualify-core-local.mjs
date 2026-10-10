@@ -2,6 +2,7 @@
 // [Input] A verified local core bundle plus digest-bound SDK, session-MCP, and MCP-management process receipts.
 // [Output] An ignored full-runtime qualification receipt bound to the exact core bytes/source digest.
 // [Pos] Technical release gate before packaging and real Dream business acceptance; no user data is read.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
 // [Sync] 2026-08-24: bind every qualification lane to the exact native Runtime target.
 // [Sync] 2026-09-15: bind new local qualification receipts to Runtime 0.1.10 only.
 // [Sync] 2026-09-15: require install-to-SDK plugin lifecycle evidence, not only local directory loading.
@@ -174,7 +175,7 @@ if (
 
 const subject = {
   runtime: "ink-claude-code-dream",
-  version: "0.1.10",
+  version: "0.1.11",
   coreBundleSha256: createHash("sha256").update(coreBundle).digest("hex"),
   sourceDigest: coreReceipt.sourceDigest.digest,
   runtimeTarget: coreReceipt.runtimeTarget,

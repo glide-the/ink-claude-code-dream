@@ -1,13 +1,14 @@
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
 <!-- [Output] Explain the one Runtime implementation, actual build, verification and local integration boundaries. -->
 <!-- [Pos] Operator entry point for ink-claude-code-dream. -->
+<!-- [Sync] 2026-10-11: exact native image dependency checks are local source repair; old release/normal adoption unchanged. -->
 <!-- [Sync] 2026-09-15: prepare Runtime 0.1.10 plugin-management repair for fresh native qualification and publication. -->
 
 # ink-claude-code-dream
 
 Repository maintenance rules: [AGENTS.md](AGENTS.md) and the affected folder contracts.
 
-Runtime `0.1.10` uses the original `claude-code-sourcemap` modules directly.
+Runtime `0.1.11` uses the original `claude-code-sourcemap` modules directly.
 `src` is the only implementation and preserves original directories, module paths, permissions and
 initial bytes: **1,902 files, 35 module directories, 30,382,832 bytes**.
 The default build compiles `src/entrypoints/cli.tsx`, not a wrapper or a side snapshot.
@@ -90,17 +91,19 @@ The private root package is the build workspace, not the npm selector.
 `cli.js`. Both command aliases select an exact native optional package. The selector is
 repository-authored; its MIT license does not relicense the original Runtime modules.
 
-Runtime project, selector and native expectations are `0.1.10`.
-This version restores plugin management and requires fresh four-platform qualification and
-five-package publication. The previous `0.1.9` archives remain immutable.
+Runtime project, selector and native candidate expectations are `0.1.11`.
+This version adds the required native image dependencies and requires fresh four-platform
+qualification and five-package publication. Published `0.1.10` archives remain immutable.
+The [0.1.11 release record](docs/build/runtime-0.1.11-release-notes.md) tracks actual gates.
 Python SDK stays `0.2.145`, source provenance
 `2.1.88`, and Dream-facing CLI compatibility `2.1.241`; API schema stays `2.0.0`.
 
-The four native-host qualifications passed for release source `820be726`.
-Local packaging/installation still requires its digest-bound production gate. The operator
-subsequently confirmed real model conversation and real Notion end-to-end acceptance;
-this is user-reported acceptance, not an automated test receipt. The task-started local
-backend was stopped at the operator's request; startup evidence does not imply it remains running.
+Historical release `0.1.9` passed four native-host qualifications at source `820be726`.
+That release's local packaging/installation required its digest-bound production gate. The operator
+subsequently confirmed real model conversation and real Notion end-to-end acceptance for that
+historical release; this is user-reported acceptance, not an automated test receipt for `0.1.11`.
+The task-started historical backend was stopped at the operator's request; its startup evidence
+does not imply a current service remains running or qualify the new candidate.
 Docker image build was not verified. Older `0.1.4` public releases and `0.1.5` acceptance
 are historical evidence only. See [release evidence](docs/build/runtime-0.1.9-release-notes.md).
 
@@ -133,3 +136,18 @@ other lookup errors. A visibility timeout never authorizes a fresh build or vers
 Release and local adoption follow the [current design](docs/design/single-source-release-and-dream-adoption.md).
 No API, database or ZIP-policy change is planned. See [build](docs/build/README.md),
 [test](docs/test/README.md), and [historical 0.1.7 notes](docs/build/runtime-0.1.7-release-notes.md).
+
+## Image native dependency repair — 2026-10-11
+
+The next release's platform packages now declare the exact Bun, target sharp and
+libvips dependencies from [npm policy](runtime/npm-release-policy.json). The
+shared [dependency contract](scripts/npm-runtime-dependencies.mjs) checks exact
+keys/versions and rejects optional overrides. Prepack and install smoke run the
+image probe with the locked Bun from the actual core resolution location; every
+resolved native library must remain in the isolated installation.
+
+The operator authorized validation followed by production release of `0.1.11`.
+Published `0.1.10` and original src remain unchanged. Fresh four-host qualification,
+exact archive publication, normal installation and Dream adoption advance only
+from their own receipts. Same-byte CLI private fixtures are technical evidence only. See the
+[design and verification boundaries](docs/design/single-source-release-and-dream-adoption.md#图片原生依赖修复2026-10-11源码已实现).

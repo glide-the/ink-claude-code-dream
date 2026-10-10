@@ -2,6 +2,7 @@
 // [Input] Unique original src inventory, provenance, build/package contracts and historical attestations.
 // [Output] Fail on a parallel implementation, module/layout drift, version drift, or unsafe release authority.
 // [Pos] Source-of-truth lint for the single original-module Runtime.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
 // [Sync] 2026-09-13: replace the mistaken prohibition on combining original source with the actual implementation.
 
 import { createHash } from "node:crypto";
@@ -20,7 +21,7 @@ const localManifest = await json("runtime/local-release-manifest.json");
 const npm = await json("runtime/npm-release-policy.json");
 function require_(condition, message) { if (!condition) throw new Error(message); }
 
-require_(pkg.name === "ink-claude-code-dream" && pkg.version === "0.1.10" && pkg.private === true &&
+require_(pkg.name === "ink-claude-code-dream" && pkg.version === "0.1.11" && pkg.private === true &&
   pkg.license === "UNLICENSED" && !Object.hasOwn(pkg, "bin"), "private project identity drift");
 require_(selector.version === pkg.version && selector.bin.claude === "cli.js" &&
   selector.bin["ink-claude-code-dream"] === "cli.js", "selector version/entrypoint drift");
