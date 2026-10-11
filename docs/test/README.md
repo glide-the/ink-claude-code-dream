@@ -1,3 +1,5 @@
+<!-- [Sync] 2026-10-12: public 0.1.12 adopted; six normal image/Token, settings and 19-image reopen/hash observed; image-inflight cancel remains unverified. -->
+<!-- [History] Candidate-stage Sync below records prior pending gates; current status is in the final section. -->
 <!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
 <!-- [Input] Actual original Runtime bundle, src/reference inventories and installed public SDK/fixture interpreters. -->
 <!-- [Output] Current source, build and local protocol validation, including skipped/remaining lanes. -->
@@ -69,6 +71,8 @@ Git history and are not counted as validating this implementation.
 Static build, local protocol and real Dream business acceptance are distinct layers.
 A passing fake provider or Dream manifest fixture does not prove real business,
 four-host native qualification, public registry installation or publication authority.
+Historical 0.1.9 guide statement (original wording retained):
+
 Current results are in [0.1.9 notes](../build/runtime-0.1.9-release-notes.md).
 Old immutable acceptance receipts cannot qualify current bytes. Publication and local
 adoption follow the current release design; no API/database/ZIP changes are planned.
@@ -102,3 +106,18 @@ same session through public SDK. Its Gateway is a fixture and the records are
 technical evidence. It does not qualify a new archive, other host platforms,
 normal installation or a real model. Those require the original release and
 real-business gates in the [current design](../design/single-source-release-and-dream-adoption.md).
+
+## Current 0.1.12 evidence — 2026-10-12
+
+The 0.1.9 results and local-only image fixture above belong to their original
+stages. The [0.1.12 record](../build/runtime-0.1.12-release-notes.md) separates
+actual four-platform qualification38149158758, publication38149958179, public
+byte matching and normal Dream adoption from SDK/fake Gateway tests and
+normal-account business evidence. The second compact feedback, five image
+main operations/Token captures and reference/mention controls were observed.
+Manual recovery's sixth image and Token capture, 19-image reopen, six new
+download SHA matches and original model settings refresh now have normal receipts.
+The initial async-history helper count failure is retained without a model replay.
+Ordinary cancellation passed after a same-turn running Stop; early-submit Stop
+only disconnected and image-inflight cancellation is unverified. Fixture/external-lane skips
+are not passed and document validation does not complete those business checks.

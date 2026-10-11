@@ -1,3 +1,5 @@
+<!-- [Sync] 2026-10-12: public 0.1.12 adopted; six normal image/Token, settings and 19-image reopen/hash observed; image-inflight cancel remains unverified. -->
+<!-- [History] Candidate-stage Sync below is retained; current publication/adoption is described in the final section. -->
 <!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
 <!-- [Sync] 2026-10-11: public Runtime 0.1.11 qualified/published/adopted; real image business acceptance remains separate and incomplete. -->
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
@@ -10,7 +12,7 @@
 
 Repository maintenance rules: [AGENTS.md](AGENTS.md) and the affected folder contracts.
 
-Runtime candidate `0.1.12` uses the original `claude-code-sourcemap` modules directly.
+Runtime `0.1.12` uses the original `claude-code-sourcemap` modules directly.
 `src` is the only implementation and preserves original directories, module paths, permissions and
 initial bytes: **1,902 files, 35 module directories, 30,382,832 bytes**.
 The default build compiles `src/entrypoints/cli.tsx`, not a wrapper or a side snapshot.
@@ -66,8 +68,11 @@ These use disposable homes/workspaces and local fake providers, not real model r
 The MCP fixture can use a separate interpreter; Dream's MCP 1.x environment is unchanged.
 The smoke checks version, empty MCP inventory and explicit interactive-mode rejection.
 This build is headless; restoring the original UI modules does not mean they are enabled.
+Historical 0.1.9 verification pointer (original wording retained):
+
 Current results and remaining qualification boundaries are in
 [0.1.9 notes](docs/build/runtime-0.1.9-release-notes.md).
+Current 0.1.12 evidence is in the [release record](docs/build/runtime-0.1.12-release-notes.md).
 
 ## Module and capability boundary
 
@@ -93,10 +98,10 @@ The private root package is the build workspace, not the npm selector.
 `cli.js`. Both command aliases select an exact native optional package. The selector is
 repository-authored; its MIT license does not relicense the original Runtime modules.
 
-Runtime project and selector candidate are `0.1.12`; the current public native packages remain `0.1.11` until fresh qualification and publication.
-This version adds the required native image dependencies and completed fresh four-platform
+Runtime project, selector and four platform packages are publicly released as `0.1.12`.
+This version retains the required native image dependencies, adds compact-image compatibility and completed fresh four-platform
 qualification, five-package publication and normal Dream Runtime adoption. Published `0.1.10` archives remain immutable.
-The [0.1.11 release record](docs/build/runtime-0.1.11-release-notes.md) tracks actual gates.
+The [0.1.12 release record](docs/build/runtime-0.1.12-release-notes.md) tracks the current gates; the 0.1.11 record remains immutable history.
 Python SDK stays `0.2.145`, source provenance
 `2.1.88`, and Dream-facing CLI compatibility `2.1.241`; API schema stays `2.0.0`.
 
@@ -141,6 +146,9 @@ No API, database or ZIP-policy change is planned. See [build](docs/build/README.
 
 ## Image native dependency repair — 2026-10-11
 
+Historical 0.1.11 repair/release stage; the following original account is retained.
+Current compact-image publication/adoption and business progress are below.
+
 The released 0.1.11 platform packages declare the exact Bun, target sharp and
 libvips dependencies from [npm policy](runtime/npm-release-policy.json). The
 shared [dependency contract](scripts/npm-runtime-dependencies.mjs) checks exact
@@ -153,3 +161,16 @@ Published `0.1.10` and original src remain unchanged. Fresh four-host qualificat
 exact archive publication, normal installation and Dream adoption advance only
 from their own receipts. Same-byte CLI private fixtures are technical evidence only. See the
 [design and verification boundaries](docs/design/single-source-release-and-dream-adoption.md#图片原生依赖修复2026-10-11源码已实现).
+
+## Current 0.1.12 delivery — 2026-10-12
+
+Source `826de9672a4b5540513c2cdfa097e52ff221ebed` completed the same-source
+four-platform qualification and five-package publication; public integrity
+matched qualified bytes and normal Dream adopted Runtime 0.1.12/SDK 0.2.145.
+The second same-session compact completion was visible once, original images
+were retained, and five new image operations and normal Admin Token captures
+were observed. Reference/mention controls and manual unsupported recovery passed;
+the sixth image captured 29605 Tokens in the normal Admin UI. All 19 images
+reopened, each of the six new downloads matched its initial SHA, and original
+model choices survived refresh. Ordinary cancellation does not qualify image
+in-flight cancellation. See the [current receipt](docs/build/runtime-0.1.12-release-notes.md).
