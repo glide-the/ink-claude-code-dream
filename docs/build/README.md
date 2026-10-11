@@ -1,3 +1,4 @@
+<!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
 <!-- [Sync] 2026-10-11: public Runtime 0.1.11 qualified/published/adopted; real image business acceptance remains separate and incomplete. -->
 <!-- [Input] Canonical original src modules, locked tooling, recovered dependencies/assets and current policy. -->
 <!-- [Output] Actual original-module build and verification commands with explicit release boundaries. -->

@@ -236,7 +236,9 @@
     ],
     "session.transcript-resume": [
       "src/utils/sessionStorage.ts",
-      "src/utils/sessionRestore.ts"
+      "src/utils/sessionRestore.ts",
+      "src/commands/compact/index.ts",
+      "src/commands/compact/compact.ts"
     ],
     "tools.permissions": [
       "src/tools.ts",
@@ -335,7 +337,7 @@
       "path": "src/commands.ts",
       "sha256": "3bfd54c3cfcaed9f10d5dc15334cc49e42d0c9374e92d9a7058897701d95df64",
       "transform": "headless-commands-v1",
-      "reason": "Retain dynamic filesystem, plugin, bundled, and MCP skill command loading while physically deleting the interactive built-in slash-command registry and remote TUI command tables."
+      "reason": "Retain the original non-interactive compact command and dynamic filesystem, plugin, and MCP skills; prune all other built-in commands and remote TUI tables."
     },
     {
       "path": "src/tools.ts",

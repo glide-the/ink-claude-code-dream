@@ -1,3 +1,4 @@
+<!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
 <!-- [Sync] 2026-10-11: public Runtime 0.1.11 qualified/published/adopted; real image business acceptance remains separate and incomplete. -->
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
 <!-- [Output] Explain the one Runtime implementation, actual build, verification and local integration boundaries. -->
@@ -9,7 +10,7 @@
 
 Repository maintenance rules: [AGENTS.md](AGENTS.md) and the affected folder contracts.
 
-Runtime `0.1.11` uses the original `claude-code-sourcemap` modules directly.
+Runtime candidate `0.1.12` uses the original `claude-code-sourcemap` modules directly.
 `src` is the only implementation and preserves original directories, module paths, permissions and
 initial bytes: **1,902 files, 35 module directories, 30,382,832 bytes**.
 The default build compiles `src/entrypoints/cli.tsx`, not a wrapper or a side snapshot.
@@ -92,7 +93,7 @@ The private root package is the build workspace, not the npm selector.
 `cli.js`. Both command aliases select an exact native optional package. The selector is
 repository-authored; its MIT license does not relicense the original Runtime modules.
 
-Runtime project, selector and public native packages are `0.1.11`.
+Runtime project and selector candidate are `0.1.12`; the current public native packages remain `0.1.11` until fresh qualification and publication.
 This version adds the required native image dependencies and completed fresh four-platform
 qualification, five-package publication and normal Dream Runtime adoption. Published `0.1.10` archives remain immutable.
 The [0.1.11 release record](docs/build/runtime-0.1.11-release-notes.md) tracks actual gates.

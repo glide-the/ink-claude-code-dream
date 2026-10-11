@@ -299,3 +299,80 @@ stateDiagram-v2
 未向正常库执行DDL/grant、重设账户或调用真实图片模型；
 Docker构建及远端部署未执行。文档收尾PR不重新资格化或发布同版本，
 不修改src/provenance、已发布归档或旧回执。
+
+
+## 原生图片历史摘要兼容（2026-10-11，建议、未实现）
+
+### 背景与问题
+
+Dream 同会话多张真实内置图片交付和 Token 结算成功后，后续引用与一次正常 `/compact` 均遇到请求超限。原 `stripImagesFromMessages` 仅清理 user 媒体，没有清理 assistant 内置图片；local compact 也没有将当前输入素材标识带入摘要 API。修订不能用更高 Gateway 限制或忽略素材绑定处理。
+
+### 目标与边界、概念与规则
+
+复用 `compat/dream-runtime` 的纯函数、精确 SHA 和唯一 marker 变换，绑定原 `src/services/compact/compact.ts`、`src/utils/processUserInput/processSlashCommand.tsx`。仅摘要历史副本将原生 server_tool_use/image_generation_tool_result 替换为保留 call/gateway/response ID 的 text，不留孤立协议块、不含二进制；原消息、文件、receipt、账本均不修改。local compact 复用原创建的当前 userMessage，通过 immutable context 副本的 module Symbol 保存本轮 preceding 素材，不增加外部控制通道。streamCompactSummary 将素材加在原 summaryRequest 正文前；cached-prefix 原尝试和 fallback 使用同一请求。fallback 清理历史之后追加本轮请求，当前素材仍由生产 Gateway 按真实绑定校验。
+
+不修改原 src/provenance、context.messages、boundary最后UUID、summaryRequest UUID、原工具权限/abortController、缓存优先及失败后 fallback、QueryEngine/Runner/session/resume/cancel/SSE合同；非compact或无素材标识返回原对象，自动摘要不取得临时输入。若文本本身仍过大、模型失败或取消，沿原失败反馈且历史保持。恢复使用原输入框 compact 实际成功后再添加原文件并重发，不自动重做图片。
+
+```mermaid
+sequenceDiagram
+  actor U as 用户
+  participant S as processSlashCommand
+  participant C as 原compact
+  participant P as 既有兼容纯函数
+  participant G as Gateway素材边界
+  U->>S: 带当前素材标识的compact输入
+  S->>C: 原context历史与副本中的当前输入
+  C->>P: 原summaryRequest与当前输入
+  P-->>C: 相同UUID、当前素材及原摘要正文
+  C->>G: 原缓存前缀尝试
+  alt 原前缀失败
+    C->>P: 历史摘要副本清理媒体
+    P-->>C: 保留调用身份的文字
+    C->>G: 清理历史与本轮请求
+  end
+  G-->>C: 校验通过后的模型摘要
+  C-->>U: 原boundary与完成反馈
+```
+
+```mermaid
+sequenceDiagram
+  actor U as 用户
+  participant C as 原compact
+  participant G as Gateway
+  U->>C: compact恢复
+  C->>G: 原摘要路径与绑定素材
+  alt 摘要成功
+    G-->>C: 实际摘要
+    C-->>U: 可重新添加文件并发送
+  else 失败或取消
+    G-->>C: 原错误或abort
+    C-->>U: 原失败反馈，原历史和文件保留
+  end
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> 候选设计
+  候选设计 --> 源码修订: 实际稿独立评审通过
+  源码修订 --> 隔离技术验证
+  隔离技术验证 --> 四平台资格
+  四平台资格 --> 新不可变版本发布
+  新不可变版本发布 --> Dream精确采用
+  Dream精确采用 --> 同会话真实恢复
+```
+
+### 影响与验收
+
+原src库存/SHA/mode、变换唯一性、媒体省略/调用身份/普通工具/对象不变；真实新CLI+SDK公开compact、新/resume/取消和生产Admin素材边界fixture为技术验证。新Runtime候选0.1.12需当前四平台资格、五包同源公开摘要、正常resolver采用和原账户完整两链/后续引用/历史验收，0.1.11保持不可变。尚未执行的项目保持待验证；完整记录见 Dream 专项执行记录。
+
+
+独立评审补充：compact 的 stdout 原为 user replay，Dream 不显示普通 replay 文本。窄兼容在原 QueryEngine local no-query 分支完成 transcript/flush 后、原 result success 前，仅在实际 compact_boundary 与非空 stdout 同属本次 messagesFromUserInput 时调用原 localCommandOutputToSDKAssistantMessage。失败stderr/取消/普通空success不产生完成反馈；原replay/result/session/transcript均保留，不改Dream Runner或SSE状态机。新增原QueryEngine精确SHA变换和实际CLI success/boundary/assistant回执测试，正常页面确认真实完成及历史恢复。
+
+源码复审P2修订：SessionMemory可能保留旧stdout。QueryEngine在原mutableMessages.push之前以原历史UUID排除旧boundary/stdout，保存本次新boundary和唯一新stdout候选，原落盘成功后才投影；不删历史、不选任意最新文字、不把旧Symbol存在当当前身份。回归覆盖旧suffix/newstdout并存及仅旧输出不投影。
+
+
+实际制品核实补充（独立评审通过，候选实现；尚未发布采用）：原src声明compact可non-interactive，现有headless-commands变换却将COMMANDS=[]和built-in名称清空，发布CLI未注册compact。恢复入口仅保留原compact index/import/COMMANDS和名称；其他内置/TUI/remote策略、动态Skills不变。session.transcript-resume原source可达门禁增加该原命令路径。实际CLI的摘要/boundary/result是支持证据，原src声明不能代替制品。Luna初版fixture自身错误不计通过，须重建真实大图history/wire/currentBinding校验，PR31仍draft，未发布或正常采用。
+
+独立注册评审回执：`/tmp/im-image-model-split-20261010/validation-round30/compact-command-review.md`；限定恢复已实施，实际CLI和发布资格仍待验证，原源码字节未改。
+
+实际CLI候选补充（独立评审通过，候选实现；尚未发布采用）：原compact摘要成功后，headless依赖的chalk.dim在完成文案处失败。限定方案在原commands/compact/compact.ts精确SHA构建变换中，单次将完成文案ANSI包装改为同一原文字；SDK既有mapper本来去ANSI，用户完成语义不变。摘要/输出Token预算/boundary/权限/取消流程均不改，不修全局依赖。验收须实际boundary、clean Compacted assistant和同session success，不以外层success或已解包XML标签代替完成。

@@ -2,7 +2,7 @@
 // [Input] The actual compiled original Runtime bundle and locked Bun, not a fake or cleanroom entrypoint.
 // [Output] Prove version, empty MCP/plugin inventories and print parsing; interactive mode remains rejected.
 // [Pos] Provider-free source Runtime smoke; no user prompt, model, or credential is used.
-// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.12; historical receipts remain unchanged.
 // [Sync] 2026-09-13: replace the obsolete supervisor/fake-core acceptance path.
 // [Sync] 2026-09-15: prove original plugin help/list and alias reachability alongside headless rejection.
 
@@ -47,7 +47,7 @@ try {
   if (interactive.status !== 2 || !interactive.stderr.includes("accepts only print")) {
     throw new Error("headless interactive-mode rejection failed");
   }
-  console.log(JSON.stringify({ ok: true, runtime: "0.1.11", implementationRoot: "src",
+  console.log(JSON.stringify({ ok: true, runtime: "0.1.12", implementationRoot: "src",
     version: version.stdout.trim(), mcpInventory: true, pluginManagement: true,
     printPromptPreserved: true, interactiveMode: "rejected",
     providerRequests: 0, fakeCore: false }));

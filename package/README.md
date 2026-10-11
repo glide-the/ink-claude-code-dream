@@ -1,3 +1,4 @@
+<!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
 <!-- [Input] Canonical selector package metadata and generated native package contract. -->
 <!-- [Output] Explain the package-root CLI entrypoint, supported aliases/targets, and excluded mutable data. -->
 <!-- [Pos] npm selector package README copied unchanged into the generated package. -->

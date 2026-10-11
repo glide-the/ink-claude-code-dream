@@ -4,6 +4,7 @@
 // [Sync] 2026-08-30: restore the 2.1.88 Linux sandbox-runtime seccomp assets from an exact locked Apache dependency.
 // [Sync] 2026-09-13: remove the parallel implementation and compile the aligned project module tree.
 // [Sync] 2026-09-15: retain original non-interactive plugin registrations before print parsing without modifying src.
+// [Sync] 2026-10-11: retain the original non-interactive compact command in the source-bound headless registry.
 
 import { createHash } from "node:crypto";
 import { builtinModules } from "node:module";
@@ -1395,6 +1396,7 @@ const isBackgroundTasksDisabled = true;`,
 
 function transformHeadlessCommands(source: string): string {
   const headlessImportsAndRegistry = `import { feature } from 'bun:bundle'
+import compact from './commands/compact/index.js'
 import { logError } from './utils/log.js'
 import { toError } from './utils/errors.js'
 import { logForDebugging } from './utils/debug.js'
@@ -1413,8 +1415,10 @@ const clearSkillIndexCache = feature('EXPERIMENTAL_SKILL_SEARCH')
   : null
 
 export const INTERNAL_ONLY_COMMANDS: Command[] = []
-const COMMANDS = memoize((): Command[] => [])
-export const builtInCommandNames = memoize((): Set<string> => new Set())
+const COMMANDS = memoize((): Command[] => [compact])
+export const builtInCommandNames = memoize((): Set<string> =>
+  new Set(COMMANDS().flatMap(command => [command.name, ...(command.aliases ?? [])])),
+)
 
 export function findCommand(commandName: string, commands: Command[]): Command | undefined {
   return commands.find(
