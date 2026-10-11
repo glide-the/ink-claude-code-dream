@@ -1,7 +1,7 @@
 // [Input] Original-module Runtime layout, local package/NPM policies and root lifecycle guard.
 // [Output] Prove source unification does not create publication authority or a second implementation.
 // [Pos] Provider-free source-derived package/release contract regression.
-// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.12; historical receipts remain unchanged.
 // [Sync] 2026-09-13: retire the former cleanroom five-native fixture lane rather than applying it to unrelated source.
 // [Sync] 2026-10-11: validate four exact image dependency maps and actual Bun loading/hoisting/escape rejection.
 
@@ -19,7 +19,7 @@ test("original source, selector and local package have one Runtime version", asy
  const selector = await json("package/package.json");
  const local = await json("runtime/local-artifact-policy.json");
  const npm = await json("runtime/npm-release-policy.json");
- assert.equal(pkg.version, "0.1.11");
+ assert.equal(pkg.version, "0.1.12");
  assert.equal(selector.version, pkg.version);
  assert.equal(local.artifact.version, pkg.version);
  assert.equal(npm.version, pkg.version);
@@ -32,7 +32,7 @@ test("original source, selector and local package have one Runtime version", asy
 test("operator authority opens legal gate but does not qualify runtime artifacts", () => {
  const plan = spawnSync(process.execPath, ["scripts/npm-release.mjs", "plan"], { cwd: root, encoding: "utf8" });
  assert.equal(plan.status, 0, plan.stderr);
- assert.equal(JSON.parse(plan.stdout).version, "0.1.11");
+ assert.equal(JSON.parse(plan.stdout).version, "0.1.12");
  const gate = spawnSync(process.execPath, ["scripts/npm-release.mjs", "legal"], { cwd: root, encoding: "utf8",
   env: { ...process.env, INK_NPM_PUBLICATION_ALLOWED: "true" } });
  assert.equal(gate.status, 0, gate.stderr);

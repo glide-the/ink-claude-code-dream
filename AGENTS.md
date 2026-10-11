@@ -1,3 +1,4 @@
+<!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
 <!-- [Sync] 2026-10-11: public Runtime 0.1.11 qualified/published/adopted; real image business acceptance remains separate and incomplete. -->
 <!-- [Input] Dream repository governance and the Runtime's current source, build, release and integration contracts. -->
 <!-- [Output] Mandatory instructions for coding agents maintaining this Runtime repository. -->

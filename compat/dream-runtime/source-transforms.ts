@@ -1,7 +1,8 @@
 // [Input] Exact original src target hashes plus contents after the existing headless/MCP transforms.
-// [Output] Marker-checked in-memory deltas for Dream child isolation and explicit model projection.
+// [Output] Marker-checked child/model projection and original compact image/input/output compatibility.
 // [Pos] Extension of the existing source compiler, not a duplicate module tree.
 // [Sync] 2026-09-13: keep original module names, directories and file bytes unchanged.
+// [Sync] 2026-10-11: bind compact-only media copies and completion to the original modules; preserve source/history bytes.
 
 export const DREAM_SOURCE_TARGETS = [
   { path: "src/utils/subprocessEnv.ts", sha256: "519bf73db39e33c449f00be33710e3ead5ff2e48cc5e187b6fd324ac3b10a4f6" },
@@ -10,6 +11,9 @@ export const DREAM_SOURCE_TARGETS = [
   { path: "src/utils/sandbox/sandbox-adapter.ts", sha256: "7a69378764884ce8bd042e6286ee24468a77c18bb2582aa007bc4b3fd799bfcb" },
   { path: "src/utils/context.ts", sha256: "30959dbb7d41ea7cb211af6b46e0ae8ea8a73102c4f4a5d2abfc5249ba857be8" },
   { path: "src/utils/effort.ts", sha256: "0bb9ccf6afc3de0472266de1811dc6b44918abdc58ccf03ceb90d2c44c623104" },
+  { path: "src/services/compact/compact.ts", sha256: "80af045d9247de7dda0cbe7aab653329d0b7c8b62a2cdadfd86238305df71f53" },
+  { path: "src/utils/processUserInput/processSlashCommand.tsx", sha256: "56b12ed45c20c6afe2968b8510609515edbd065c0e7fa4a5edf9f0118bb45182" },
+  { path: "src/QueryEngine.ts", sha256: "7df34a6a6d106927403d49e3405dfaf70da37cae5b644b658ebaf0b877988af6" },
 ] as const;
 
 function replaceOnce(source: string, oldValue: string, newValue: string): string {
@@ -56,6 +60,32 @@ export function applyDreamSourceTransform(path: string, source: string): string 
       result = replaceOnce(result, "  'high',\n  'max',", "  'high',\n  'xhigh',\n  'max',");
       result = replaceOnce(result, "export function modelSupportsEffort(model: string): boolean {", "export function modelSupportsEffort(model: string): boolean {\n  if (explicitEffort(process.env.CLAUDE_CODE_EFFORT_LEVEL) !== undefined) return true;");
       result = replaceOnce(result, "export function modelSupportsMaxEffort(model: string): boolean {", "export function modelSupportsMaxEffort(model: string): boolean {\n  if (explicitEffort(process.env.CLAUDE_CODE_EFFORT_LEVEL) === 'max') return true;");
+      break;
+    case "src/services/compact/compact.ts":
+      imports = ["nativeImageCompactMessage", "bindCompactSummaryRequest"];
+      result = replaceOnce(result,
+        "export function stripImagesFromMessages(messages: Message[]): Message[] {\n  return messages.map(message => {",
+        "export function stripImagesFromMessages(messages: Message[]): Message[] {\n  return messages.map(message => {\n    if (message.type === 'assistant') return nativeImageCompactMessage(message)");
+      result = replaceOnce(result,
+        "  // When prompt cache sharing is enabled, use forked agent to reuse the",
+        "  summaryRequest = bindCompactSummaryRequest(summaryRequest, context)\n  // When prompt cache sharing is enabled, use forked agent to reuse the");
+      result = replaceOnce(result,
+        "          stripImagesFromMessages(\n            stripReinjectedAttachments([\n              ...getMessagesAfterCompactBoundary(messages),\n              summaryRequest,\n            ]),\n          ),",
+        "          [\n            ...stripImagesFromMessages(stripReinjectedAttachments(getMessagesAfterCompactBoundary(messages))),\n            summaryRequest,\n          ],");
+      break;
+    case "src/utils/processUserInput/processSlashCommand.tsx":
+      imports = ["withCompactInputContext"];
+      result = replaceOnce(result, "            const result = await mod.call(args, context);",
+        "            const result = await mod.call(args, command.name === 'compact' ? withCompactInputContext(context, userMessage) : context);");
+      break;
+    case "src/QueryEngine.ts":
+      imports = ["compactCompletionOutput"];
+      result = replaceOnce(result,
+        "    // Push new messages, including user input and any attachments\n    this.mutableMessages.push(...messagesFromUserInput)",
+        "    const compactOutput = compactCompletionOutput(messagesFromUserInput, this.mutableMessages)\n    // Push new messages, including user input and any attachments\n    this.mutableMessages.push(...messagesFromUserInput)");
+      result = replaceOnce(result,
+        "      yield {\n        type: 'result',\n        subtype: 'success',",
+        "      if (compactOutput) yield localCommandOutputToSDKAssistantMessage(compactOutput.content, compactOutput.uuid)\n\n      yield {\n        type: 'result',\n        subtype: 'success',");
       break;
     default: throw new Error("Unknown Dream source transform target");
   }

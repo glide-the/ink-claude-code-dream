@@ -1,7 +1,8 @@
 // [Input] Explicit candidate environment and canonical thread workspace; no implicit process.env inheritance.
-// [Output] Validated Notion-only Bash projection and explicit server-owned model limits/effort.
+// [Output] Validated child/model projection and image-compatible copies for original compact requests.
 // [Pos] Pure compatibility policy used by byte-bound original-module compiler transforms.
 // [Sync] 2026-09-13: preserve Dream contracts without duplicating Runtime state or changing original src.
+// [Sync] 2026-10-11: keep current compact materials and actual completion output; omit historical image bytes only from summaries.
 
 import { closeSync, lstatSync, openSync, readSync, realpathSync } from "node:fs";
 import { basename, delimiter, isAbsolute, join, resolve } from "node:path";
@@ -92,4 +93,82 @@ export function explicitEffort(value: string | undefined): string | undefined {
     throw new Error("Invalid explicit CLAUDE_CODE_EFFORT_LEVEL");
   }
   return value;
+}
+
+const compactInput = Symbol("ink compact current input");
+function compactRecord(value: unknown): Record<PropertyKey, unknown> | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<PropertyKey, unknown> : undefined;
+}
+
+// The original local-command userMessage already contains the current marker
+// and processed materials. Carry a copy in memory without changing history,
+// its last UUID, tool permissions, or any external request/control channel.
+export function withCompactInputContext<T extends object>(context: T, input: unknown): T {
+  const user = compactRecord(input), message = compactRecord(user?.message);
+  if (user?.type !== "user" || !Array.isArray(message?.content)) return context;
+  const prefix = message.content.slice(0, -1);
+  const markers = prefix.filter(value => {
+    const block = compactRecord(value);
+    return block?.type === "text" && typeof block.text === "string"
+      && /^\[Ink image materials: [^\]\r\n]+\]$/.test(block.text);
+  });
+  if (markers.length !== 1) return context;
+  return { ...context, [compactInput]: prefix };
+}
+
+export function bindCompactSummaryRequest<T>(request: T, context: unknown): T {
+  const prefix = compactRecord(context)?.[compactInput];
+  const original = compactRecord(request), message = compactRecord(original?.message);
+  if (!Array.isArray(prefix) || !message) return request;
+  const content = typeof message.content === "string"
+    ? [{ type: "text", text: message.content }]
+    : Array.isArray(message.content) ? message.content : undefined;
+  if (!content) return request;
+  return { ...original, message: { ...message, content: [...prefix, ...content] } } as T;
+}
+
+// Only the original compact summarizer calls this projection. Images remain
+// in the canonical messages/transcript and Dream's files and history.
+export function nativeImageCompactMessage<T>(message: T): T {
+  const original = compactRecord(message), assistant = compactRecord(original?.message);
+  if (original?.type !== "assistant" || !Array.isArray(assistant?.content)) return message;
+  let changed = false;
+  const content = assistant.content.map(value => {
+    const block = compactRecord(value);
+    const result = block?.type === "image_generation_tool_result";
+    const call = block?.type === "server_tool_use" && block.name === "image_generation";
+    if (!result && !call) return value;
+    changed = true;
+    const identity: Record<string, string> = {};
+    const id = result ? block!.tool_use_id : block!.id;
+    if (typeof id === "string") identity.call_id = id;
+    for (const key of ["gateway_request_id", "response_id"]) {
+      if (typeof block![key] === "string") identity[key] = block![key] as string;
+    }
+    return { type: "text", text: `[Image generation ${result ? "result; image data omitted from summary" : "call"}: ${JSON.stringify(identity)}]` };
+  });
+  return changed ? { ...original, message: { ...assistant, content } } as T : message;
+}
+
+export function compactCompletionOutput(messages: unknown, previousMessages: unknown): { content: string; uuid: string } | undefined {
+  const existingIds = new Set(Array.isArray(previousMessages) ? previousMessages.flatMap(value => {
+    const uuid = compactRecord(value)?.uuid;
+    return typeof uuid === "string" ? [uuid] : [];
+  }) : []);
+  if (!Array.isArray(messages) || !messages.some(value => {
+    const message = compactRecord(value);
+    return message?.type === "system" && message.subtype === "compact_boundary"
+      && typeof message.uuid === "string" && !existingIds.has(message.uuid);
+  })) return undefined;
+  const outputs = messages.flatMap(value => {
+    const user = compactRecord(value), message = compactRecord(user?.message);
+    const content = message?.content;
+    const start = "<local-command-stdout>", end = "</local-command-stdout>";
+    return user?.type === "user" && typeof user.uuid === "string" && user.uuid.length > 0 && !existingIds.has(user.uuid)
+      && typeof content === "string" && content.startsWith(start) && content.endsWith(end)
+      && content.slice(start.length, -end.length).trim()
+      ? [{ content, uuid: user.uuid }] : [];
+  });
+  return outputs.length === 1 ? outputs[0] : undefined;
 }

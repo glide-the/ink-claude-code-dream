@@ -2,7 +2,7 @@
 // [Input] Explicit official/candidate CLI paths and an Ink SDK Python executable.
 // [Output] A real-process stdio/HTTP MCP differential receipt.
 // [Pos] Protocol release gate for handshake, tools, resources, inventory, and colon names.
-// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.12; historical receipts remain unchanged.
 // [Sync] 2026-08-24: bind MCP differential evidence to the exact native Runtime target.
 // [Sync] 2026-09-15: require candidate identity Runtime 0.1.10 in new MCP evidence.
 
@@ -117,7 +117,7 @@ async function qualificationSubject() {
   const bundle = await readFile(path.resolve(coreBundlePath));
   return {
     runtime: "ink-claude-code-dream",
-    version: "0.1.11",
+    version: "0.1.12",
     coreBundleSha256: createHash("sha256").update(bundle).digest("hex"),
     sourceDigest: coreReceipt.sourceDigest.digest,
     runtimeTarget: coreReceipt.runtimeTarget,

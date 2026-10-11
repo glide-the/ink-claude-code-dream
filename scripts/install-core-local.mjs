@@ -2,7 +2,7 @@
 // [Input] A verified production-qualified local Runtime package, exact Bun 1.4.0 binary, and an explicit/default user prefix.
 // [Output] Install immutable local release/toolchain copies and atomic PATH symlinks without changing global Bun.
 // [Pos] Local operator installer; it never reads restored source, credentials, transcripts, or Dream business data.
-// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.12; historical receipts remain unchanged.
 // [Sync] 2026-08-24: add the first fail-closed local Runtime installation path.
 // [Sync] 2026-09-15: advance the immutable local candidate directory to Runtime 0.1.10.
 
@@ -31,7 +31,7 @@ const defaultPackageRoot = path.join(
   repositoryRoot,
   "dist",
   "core-package-local",
-  "ink-claude-code-dream-0.1.11",
+  "ink-claude-code-dream-0.1.12",
 );
 const defaultBunBinary = path.join(repositoryRoot, "node_modules", "bun", "bin", "bun.exe");
 const verifyScript = path.join(repositoryRoot, "scripts", "verify-core-package-local.mjs");

@@ -2,7 +2,7 @@
 // [Input] Canonical source bundle, an explicitly selected unmodified Dream SDK/Python, and the existing local-provider SDK harness.
 // [Output] Exercise the real original-module Runtime's SDK streaming/tools/sandbox/session contract, with no external model calls.
 // [Pos] Portable launcher reusing the existing public-SDK contract rather than a second Runtime or protocol harness.
-// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.11; historical receipts remain unchanged.
+// [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.12; historical receipts remain unchanged.
 // [Sync] 2026-09-13: remove the legacy envelope lane from current SDK qualification.
 
 import { mkdtemp, mkdir, readFile, writeFile, rm } from "node:fs/promises";
@@ -73,7 +73,7 @@ try {
     contracts[0].dreamCompatibility.notionStdioExcluded = mcpContract.notionStdioExcluded === true;
     const build = JSON.parse(await readFile(join(root, "dist/core-local/build-receipt.json"), "utf8"));
     const receipt = { schemaVersion: 1, status: "passed", evidenceType: "real-process-dream-runtime-contract", calibrationOnly: false,
-      subject: { runtime: "ink-claude-code-dream", version: "0.1.11", sourceDigest: build.sourceDigest.digest,
+      subject: { runtime: "ink-claude-code-dream", version: "0.1.12", sourceDigest: build.sourceDigest.digest,
         runtimeTarget: build.runtimeTarget, coreBundleSha256: createHash("sha256").update(await readFile(join(root, "dist/core-local/bundle/cli.js"))).digest("hex") },
       facts: contracts[0].dreamCompatibility, businessAcceptanceIncluded: false };
     const directory = join(root, "dist/core-local/qualification");
