@@ -3,6 +3,7 @@
 // [Output] Strict identity/manifest/checksum/legal/target validation and exact five-package inventory evidence.
 // [Pos] Final immutable npm release gate; it rejects maps, legacy/user data, aliases, and incomplete release sets.
 // [Sync] 2026-10-11: require exact target sharp/libvips dependencies independently of JSON key order.
+// [Sync] 2026-10-11: verify all canonical Dream source paths/SHA, rejecting stale fixed-count receipts.
 
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
@@ -10,6 +11,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createGunzip } from "node:zlib";
 import tar from "tar-stream";
+import { matchesDreamSourceTargets } from "../compat/dream-runtime/source-transforms.ts";
 import { platformDependenciesMatch, platformRuntimeDependencies } from "./npm-runtime-dependencies.mjs";
 
 const tarballs = process.argv.slice(2).map(value => path.resolve(value));
@@ -158,7 +160,7 @@ function verifyPlatform(parsed, pkg, attestation, platform) {
       qualification.gates.full.dreamNotionQualified !== true ||
       qualification.gates.full.dreamModelProjectionQualified !== true ||
       core.dreamCompatibility?.originalSourceModified !== false ||
-      core.dreamCompatibility?.appliedSourcePaths?.length !== 6) {
+      !matchesDreamSourceTargets(core.dreamCompatibility)) {
     fail(`${platform.package} lost qualified Dream Notion/model capability evidence`);
   }
   const ripgrep = parsed.files.get(`package/runtime/${platform.ripgrepPath}`);
