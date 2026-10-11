@@ -3,6 +3,7 @@
 // [Pos] Extension of the existing source compiler, not a duplicate module tree.
 // [Sync] 2026-09-13: keep original module names, directories and file bytes unchanged.
 // [Sync] 2026-10-11: bind compact-only media copies and completion to the original modules; preserve source/history bytes.
+// [Sync] 2026-10-11: keep compact completion text identical without ANSI formatting in the headless SDK path.
 
 export const DREAM_SOURCE_TARGETS = [
   { path: "src/utils/subprocessEnv.ts", sha256: "519bf73db39e33c449f00be33710e3ead5ff2e48cc5e187b6fd324ac3b10a4f6" },
@@ -14,6 +15,7 @@ export const DREAM_SOURCE_TARGETS = [
   { path: "src/services/compact/compact.ts", sha256: "80af045d9247de7dda0cbe7aab653329d0b7c8b62a2cdadfd86238305df71f53" },
   { path: "src/utils/processUserInput/processSlashCommand.tsx", sha256: "56b12ed45c20c6afe2968b8510609515edbd065c0e7fa4a5edf9f0118bb45182" },
   { path: "src/QueryEngine.ts", sha256: "7df34a6a6d106927403d49e3405dfaf70da37cae5b644b658ebaf0b877988af6" },
+  { path: "src/commands/compact/compact.ts", sha256: "c33d640823d01966cfcd04fa9af395217add1160e439693248e981ba1027b442" },
 ] as const;
 
 function replaceOnce(source: string, oldValue: string, newValue: string): string {
@@ -87,7 +89,13 @@ export function applyDreamSourceTransform(path: string, source: string): string 
         "      yield {\n        type: 'result',\n        subtype: 'success',",
         "      if (compactOutput) yield localCommandOutputToSDKAssistantMessage(compactOutput.content, compactOutput.uuid)\n\n      yield {\n        type: 'result',\n        subtype: 'success',");
       break;
+    case "src/commands/compact/compact.ts":
+      imports = [];
+      result = replaceOnce(result,
+        "  return chalk.dim('Compacted ' + dimmed.join('\\n'))",
+        "  return 'Compacted ' + dimmed.join('\\n')");
+      break;
     default: throw new Error("Unknown Dream source transform target");
   }
-  return `import { ${imports.join(", ")} } from "ink:dream-compat";\n${result}`;
+  return imports.length ? `import { ${imports.join(", ")} } from "ink:dream-compat";\n${result}` : result;
 }

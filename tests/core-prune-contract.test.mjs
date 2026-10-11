@@ -3,6 +3,7 @@
 // [Pos] Provider-free static contract test; it does not read, copy, modify, or build restored source.
 // [Sync] 2026-08-30: require exact 2.1.88-compatible Linux seccomp helper/BPF assets beside the emitted chunks.
 // [Sync] 2026-09-15: retain original plugin registrations and install-to-SDK qualification scope.
+// [Sync] 2026-10-11: require the original compact registry and both compact command graph inputs.
 
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -173,6 +174,9 @@ test("required Dream capability roots remain explicit", () => {
     assert.ok(inputs.length > 0);
   }
   assert.match(profile.featureDisposition.FORK_SUBAGENT, /ordinary Agent and Task/);
+  for (const input of ["src/commands/compact/index.ts", "src/commands/compact/compact.ts"]) {
+    assert.ok(profile.capabilityInputAssertions["session.transcript-resume"].includes(input));
+  }
   assert.deepEqual(profile.capabilityInputAssertions["subagents.agent-task"], [
     "src/tools/AgentTool/AgentTool.tsx",
     "src/tools/AgentTool/runAgent.ts",
@@ -186,6 +190,19 @@ test("required Dream capability roots remain explicit", () => {
   ]);
   assert.match(profile.featureDisposition.MCP_SKILLS, /ordinary filesystem\/plugin skills/);
   assert.match(profile.featureDisposition.HOOK_PROMPTS, /hook execution remains required/);
+});
+
+test("headless registry retains only original compact while other builtin and remote UI commands stay pruned", () => {
+  const registry = builder.slice(
+    builder.indexOf("const headlessImportsAndRegistry ="),
+    builder.indexOf("let transformed =", builder.indexOf("const headlessImportsAndRegistry =")),
+  );
+  assert.match(registry, /import compact from '\.\/commands\/compact\/index\.js'/);
+  assert.match(registry, /const COMMANDS = memoize\(\(\): Command\[\] => \[compact\]\)/);
+  assert.match(registry, /COMMANDS\(\)\.flatMap\(command => \[command\.name, \.\.\.\(command\.aliases \?\? \[\]\)\]\)/);
+  assert.match(registry, /INTERNAL_ONLY_COMMANDS: Command\[\] = \[\]/);
+  assert.doesNotMatch(registry, /import (?:resume|clear|addDir|ide|feedback) from/);
+  assert.match(builder, /headless-commands-v1\.remoteUiCommandsSpan/);
 });
 
 test("feature profile is closed and DCE asserts absent bootstrap branches", () => {

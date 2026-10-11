@@ -28,3 +28,17 @@
 | 原账户同会话完整业务重验 | 待执行，五项图片的前轮成功不代表新Runtime验收 |
 
 源码复审新增一项P2：SessionMemory旧stdout导致唯一性误判，已改为原push前按历史UUID排除旧boundary/stdout；原落盘后投影规则保持，新增新旧并存及仅旧输出回归。新资格待执行。
+
+## 原命令注册门
+
+0.1.11 headless 构建未注册原 compact；本候选只恢复原 non-interactive compact，沿原 isEnabled、SDK/slash 与取消路径。现有 session.transcript-resume 图门禁要求原命令两模块，静态 registry 回归不能代替实际 CLI 摘要/boundary 验证。初版 fixture 有 harness 错误，保留失败收据，未计资格通过。
+
+实际CLI测试发现完成文案chalk.dim失败，候选仅源SHA绑定将该行改为同一plain text；SDK原mapper已去ANSI，原命令状态与预算不变。新产物与真实账户仍须验证，外层result success不代替压缩boundary/完成文本。
+
+## 本轮技术资格（2026-10-11）
+
+最终R5：lint/source:verify/npm test/test:dream-compat/绝对候选Bun build/node verify-core-prune全部exit0。Node合同63项/58通过/5既有skip，Dream7项/124断言；原库存1902文件、40269454cd690c74d129a31699935d6db713f2958aabe4787e01617e1c92a906不变。metafile含原compact index与command，1998inputs/55outputs/88disabled features。
+
+实际CLI+公开SDK0.2.145的最终R8 fixture exit0（隔离技术验证）：7张有效PNG旧历史解码22058939字节；真实cached摘要body29506506→413，原fallback9886→200；actual currentImageMaterials校验与4项409拒绝、0素材通过。观察init compact、真实boundary/原尾UUID、唯一clean Compacted完成文字/同session result、旧图SHA不变、Bash真实非error结果、同session resume及真实slash interrupt取消不产生boundary/完成文字。原cached预算32000/adaptive与fallback20000/disabled保持。fake loopback7请求，不是正常账户验收。
+
+保留初版错误fixture、R3测试切片、R4相对toolchain解析、R4display产品缺口及R5/6/7断言/写入时机/SSE harness失败收据，均不计通过。最终命令/完整退出与safe receipt在Dream专项执行记录引用的round30/compact-luna/r5、actual-r8目录；四平台资格、五包公开同源发布和Dream正常采用尚未执行。

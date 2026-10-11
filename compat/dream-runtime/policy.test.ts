@@ -2,7 +2,7 @@
 // [Output] Deterministic fail-closed Notion/model policy and exact-source transform tests.
 // [Pos] Provider-free mechanical validation; no credentials or operator settings are read.
 // [Sync] 2026-09-13: verify original src remains byte-identical and deltas cannot be applied twice.
-// [Sync] 2026-10-11: exercise compact image copies, current materials, completion guards and all nine exact source targets.
+// [Sync] 2026-10-11: exercise compact image copies, current materials, completion guards and all ten exact source targets.
 
 import { test, expect } from "bun:test";
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";

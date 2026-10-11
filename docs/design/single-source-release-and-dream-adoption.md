@@ -369,3 +369,10 @@ stateDiagram-v2
 独立评审补充：compact 的 stdout 原为 user replay，Dream 不显示普通 replay 文本。窄兼容在原 QueryEngine local no-query 分支完成 transcript/flush 后、原 result success 前，仅在实际 compact_boundary 与非空 stdout 同属本次 messagesFromUserInput 时调用原 localCommandOutputToSDKAssistantMessage。失败stderr/取消/普通空success不产生完成反馈；原replay/result/session/transcript均保留，不改Dream Runner或SSE状态机。新增原QueryEngine精确SHA变换和实际CLI success/boundary/assistant回执测试，正常页面确认真实完成及历史恢复。
 
 源码复审P2修订：SessionMemory可能保留旧stdout。QueryEngine在原mutableMessages.push之前以原历史UUID排除旧boundary/stdout，保存本次新boundary和唯一新stdout候选，原落盘成功后才投影；不删历史、不选任意最新文字、不把旧Symbol存在当当前身份。回归覆盖旧suffix/newstdout并存及仅旧输出不投影。
+
+
+实际制品核实补充（独立评审通过，候选实现；尚未发布采用）：原src声明compact可non-interactive，现有headless-commands变换却将COMMANDS=[]和built-in名称清空，发布CLI未注册compact。恢复入口仅保留原compact index/import/COMMANDS和名称；其他内置/TUI/remote策略、动态Skills不变。session.transcript-resume原source可达门禁增加该原命令路径。实际CLI的摘要/boundary/result是支持证据，原src声明不能代替制品。Luna初版fixture自身错误不计通过，须重建真实大图history/wire/currentBinding校验，PR31仍draft，未发布或正常采用。
+
+独立注册评审回执：`/tmp/im-image-model-split-20261010/validation-round30/compact-command-review.md`；限定恢复已实施，实际CLI和发布资格仍待验证，原源码字节未改。
+
+实际CLI候选补充（独立评审通过，候选实现；尚未发布采用）：原compact摘要成功后，headless依赖的chalk.dim在完成文案处失败。限定方案在原commands/compact/compact.ts精确SHA构建变换中，单次将完成文案ANSI包装改为同一原文字；SDK既有mapper本来去ANSI，用户完成语义不变。摘要/输出Token预算/boundary/权限/取消流程均不改，不修全局依赖。验收须实际boundary、clean Compacted assistant和同session success，不以外层success或已解包XML标签代替完成。
