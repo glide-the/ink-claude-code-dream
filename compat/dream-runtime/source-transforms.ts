@@ -1,3 +1,4 @@
+// [Sync] 2026-10-11: exact canonical source receipt comparison replaces a stale fixed-count npm gate.
 // [Input] Exact original src target hashes plus contents after the existing headless/MCP transforms.
 // [Output] Marker-checked child/model projection and original compact image/input/output compatibility.
 // [Pos] Extension of the existing source compiler, not a duplicate module tree.
@@ -17,6 +18,20 @@ export const DREAM_SOURCE_TARGETS = [
   { path: "src/QueryEngine.ts", sha256: "7df34a6a6d106927403d49e3405dfaf70da37cae5b644b658ebaf0b877988af6" },
   { path: "src/commands/compact/compact.ts", sha256: "c33d640823d01966cfcd04fa9af395217add1160e439693248e981ba1027b442" },
 ] as const;
+
+/** Build/publication only: require the canonical path/SHA and applied-path receipts. */
+export function matchesDreamSourceTargets(receipt: unknown): boolean {
+  if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) return false;
+  const value = receipt as { requiredTargets?: unknown; appliedSourcePaths?: unknown };
+  const targets = value.requiredTargets;
+  const paths = value.appliedSourcePaths;
+  if (!Array.isArray(targets) || !Array.isArray(paths) ||
+      targets.length !== DREAM_SOURCE_TARGETS.length || paths.length !== DREAM_SOURCE_TARGETS.length) return false;
+  const expectedPaths = DREAM_SOURCE_TARGETS.map(entry => entry.path).sort();
+  return targets.every((entry, index) => entry && typeof entry === "object" && !Array.isArray(entry) &&
+    Object.keys(entry).length === 2 && entry.path === DREAM_SOURCE_TARGETS[index].path &&
+    entry.sha256 === DREAM_SOURCE_TARGETS[index].sha256) && paths.every((entry, index) => entry === expectedPaths[index]);
+}
 
 function replaceOnce(source: string, oldValue: string, newValue: string): string {
   if (source.split(oldValue).length !== 2) throw new Error("Dream source transform marker missing or ambiguous");

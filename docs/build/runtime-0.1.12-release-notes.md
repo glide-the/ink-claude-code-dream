@@ -42,3 +42,7 @@
 实际CLI+公开SDK0.2.145的最终R8 fixture exit0（隔离技术验证）：7张有效PNG旧历史解码22058939字节；真实cached摘要body29506506→413，原fallback9886→200；actual currentImageMaterials校验与4项409拒绝、0素材通过。观察init compact、真实boundary/原尾UUID、唯一clean Compacted完成文字/同session result、旧图SHA不变、Bash真实非error结果、同session resume及真实slash interrupt取消不产生boundary/完成文字。原cached预算32000/adaptive与fallback20000/disabled保持。fake loopback7请求，不是正常账户验收。
 
 保留初版错误fixture、R3测试切片、R4相对toolchain解析、R4display产品缺口及R5/6/7断言/写入时机/SSE harness失败收据，均不计通过。最终命令/完整退出与safe receipt在Dream专项执行记录引用的round30/compact-luna/r5、actual-r8目录；四平台资格、五包公开同源发布和Dream正常采用尚未执行。
+
+## npm 收据门修订
+
+main 9ecdbb0 基础CI通过；38148412748 Linux资格在 tarball gate 失败：旧6目标固定数量检查遗漏当前10目标。独立实际稿无P1/P2后复用唯一清单逐项校验path/SHA与排序应用路径，未降低任何其他门禁。新提交资格/发布待执行；失败制品未发布，正常Dream仍0.1.11。

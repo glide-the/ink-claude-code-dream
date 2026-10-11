@@ -1,3 +1,4 @@
+// [Sync] 2026-10-11: exact canonical source receipt comparison replaces a stale fixed-count npm gate.
 // [Input] Original-module Runtime layout, local package/NPM policies and root lifecycle guard.
 // [Output] Prove source unification does not create publication authority or a second implementation.
 // [Pos] Provider-free source-derived package/release contract regression.
@@ -12,6 +13,7 @@ import { resolve } from "node:path";
 import test from "node:test";
 import os from "node:os";
 import { dependenciesMatch, platformDependenciesMatch, platformRuntimeDependencies, probeNativeImageDependencies } from "../scripts/npm-runtime-dependencies.mjs";
+import { DREAM_SOURCE_TARGETS, matchesDreamSourceTargets } from "../compat/dream-runtime/source-transforms.ts";
 const root = resolve(import.meta.dirname, "..");
 const json = async file => JSON.parse(await readFile(resolve(root, file), "utf8"));
 test("original source, selector and local package have one Runtime version", async () => {
@@ -105,4 +107,28 @@ test("actual Bun loads host native images from a hoisted isolated tree and rejec
  } finally {
   await rm(tree, { recursive: true, force: true });
  }
+});
+
+
+test("npm source receipt rejects stale, duplicate, substituted, reordered and wrong-SHA targets", () => {
+ const valid = { requiredTargets: structuredClone(DREAM_SOURCE_TARGETS), appliedSourcePaths: DREAM_SOURCE_TARGETS.map(entry => entry.path).sort() };
+ assert.equal(matchesDreamSourceTargets(valid), true);
+ assert.equal(matchesDreamSourceTargets({ ...valid, requiredTargets: valid.requiredTargets.map(({ path, sha256 }) => ({ sha256, path })) }), true);
+ const extra = structuredClone(valid); extra.requiredTargets[0].extra = true;
+ assert.equal(matchesDreamSourceTargets(extra), false);
+ for (const invalid of [null, undefined, true, [], {}, { ...valid, requiredTargets: null }, { ...valid, appliedSourcePaths: null }]) assert.equal(matchesDreamSourceTargets(invalid), false);
+ const old = { requiredTargets: valid.requiredTargets.slice(0, 6), appliedSourcePaths: valid.requiredTargets.slice(0, 6).map(entry => entry.path).sort() };
+ assert.equal(matchesDreamSourceTargets(old), false);
+ for (const field of ["requiredTargets", "appliedSourcePaths"]) {
+  const missing = structuredClone(valid); missing[field].pop();
+  const duplicate = structuredClone(valid); duplicate[field][0] = duplicate[field][1];
+  const reordered = structuredClone(valid); reordered[field].reverse();
+  for (const changed of [missing, duplicate, reordered]) assert.equal(matchesDreamSourceTargets(changed), false);
+ }
+ const malformed = structuredClone(valid); malformed.requiredTargets[0] = null;
+ assert.equal(matchesDreamSourceTargets(malformed), false);
+ const wrongPath = structuredClone(valid); wrongPath.requiredTargets[0].path = "src/unknown.ts";
+ const wrongHash = structuredClone(valid); wrongHash.requiredTargets[0].sha256 = "0".repeat(64);
+ const substituted = structuredClone(valid); substituted.appliedSourcePaths[0] = "src/unknown.ts";
+ for (const changed of [wrongPath, wrongHash, substituted]) assert.equal(matchesDreamSourceTargets(changed), false);
 });

@@ -376,3 +376,7 @@ stateDiagram-v2
 独立注册评审回执：`/tmp/im-image-model-split-20261010/validation-round30/compact-command-review.md`；限定恢复已实施，实际CLI和发布资格仍待验证，原源码字节未改。
 
 实际CLI候选补充（独立评审通过，候选实现；尚未发布采用）：原compact摘要成功后，headless依赖的chalk.dim在完成文案处失败。限定方案在原commands/compact/compact.ts精确SHA构建变换中，单次将完成文案ANSI包装改为同一原文字；SDK既有mapper本来去ANSI，用户完成语义不变。摘要/输出Token预算/boundary/权限/取消流程均不改，不修全局依赖。验收须实际boundary、clean Compacted assistant和同session success，不以外层success或已解包XML标签代替完成。
+
+## 0.1.12 npm 源变换收据校验修订（已实现，验证与发布待执行）
+
+四平台资格流程在 tarball gate 发现已证实的遗漏：打包检查仍以旧版本六个变换为条件，当前构建有十个实际 SHA 绑定目标。不能把失败当成功或删除门禁。最小修订复用 `DREAM_SOURCE_TARGETS` 的现有唯一清单，在原 `source-transforms.ts` 增加仅供构建/发布使用的纯比较函数，由 `verify-npm-tarball.mjs` 调用：收据的 requiredTargets 必须逐项与当前路径及 SHA 一致，appliedSourcePaths 必须与当前排序路径数组完全一致；遗漏、重复、替换路径、旧列表或 SHA 变化均拒绝。原 originalSourceModified=false、Notion/model 资格、同源、法律、checksum 与其余发布门保持。没有新的运行配置或 Runtime 逻辑。回归验证正例及上述反例，并在新提交重跑完整原平台 qualification，不采用失败制品。
