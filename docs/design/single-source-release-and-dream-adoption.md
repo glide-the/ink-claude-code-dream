@@ -1,3 +1,4 @@
+<!-- [Sync] 2026-10-12: public 0.1.12 adopted; six normal image/Token, settings and 19-image reopen/hash observed; image-inflight cancel remains unverified. -->
 <!-- [Input] Original module recovery, duplicate source directory, GitHub npm publishing and local Dream integration. -->
 <!-- [Output] Minimal implementation and interaction plan with independently verifiable release states. -->
 <!-- [Pos] Current source-cleanup/release/adoption design and acceptance checklist. -->
@@ -5,6 +6,8 @@
 <!-- [Sync] 2026-09-13: retain completed immutable release; scope post-release visibility/documentation fixes without redesign. -->
 
 # 唯一源码、CI 发布与本机 Dream 更新
+
+阅读范围：通用单一源码和不可变发布规则持续有效；下文早期0.1.9/0.1.10、0.1.11及0.1.12候选阶段的原文、失败和图示保留为历史。当前完成与未验收边界以末节“当前0.1.12交付状态”为准，旧“本轮到此”“待发布”“未采用”不代表当前门禁。
 
 <!-- [Sync] 2026-09-15: restore original plugin CLI management and complete install-to-SDK evidence; delivery remains separate. -->
 
@@ -93,6 +96,8 @@ token/config 与本地 fake provider。环境的显式 undefined 也阻止 execa
 
 ## 插件管理入口恢复
 
+> 历史：0.1.9发现与0.1.10修复阶段。原文和业务图保留，本节的候选/采用状态不代表当前0.1.12状态。
+
 ### 背景与问题
 
 2026-09-15 核对已发布 `0.1.9`：原始插件文件和本地目录加载均存在，但
@@ -154,6 +159,8 @@ Dream 精确版本。此修复不授权自动提交、合并、发布、安装�
 
 ## 发布后收尾：问题、方案与目标审查
 
+> 历史：0.1.9发布后的收尾记录。以下原“当前发布说明”、进程停止和资格取消均只指该次阶段，不描述当前服务或0.1.12资格。
+
 `0.1.9` 四平台资格、公开五包、正常 PATH 安装和本机启动采用均已完成，
 结果见 [当前发布说明](../build/runtime-0.1.9-release-notes.md)。用户已另行确认
 真实模型对话/Notion E2E；任务启动的后端随后按要求停止，不重新启动。
@@ -182,6 +189,8 @@ E404，包含请求耗时的总等待上限为 5 分钟。上限是可调整的 
 workflow；真正 qualification 命令或构建输入变化时不得沿用该收尾例外。
 
 ## 图片原生依赖修复（2026-10-11，源码已实现）
+
+> 历史：0.1.11发布前的源码修复与本机技术验证阶段。本节保留当时未执行的后继门禁原文；当前发布、正常采用及业务范围见末节。
 
 以下为生产发布前的修复设计与当时技术结果；历史图示保留，当前发布/采用状态见文末及独立0.1.11回执。
 
@@ -254,6 +263,8 @@ sequenceDiagram
 
 ### 状态与评审修订
 
+> 以下状态图中的“本轮到此”是此历史本机技术阶段的停止点，不是当前0.1.12交付状态。原图不改写。
+
 ```mermaid
 stateDiagram-v2
   [*] --> 源码修复
@@ -272,9 +283,13 @@ stateDiagram-v2
 
 ## 图片原生依赖生产发布授权（2026-10-11）
 
+> 历史：0.1.11候选存在性前检及发布授权时的原始记录，后续资格/公开结果已另行记录。
+
 用户明确要求Runtime验证后走生产发布。新候选为0.1.11；五个公开包当前latest均为0.1.10，0.1.11均未存在。本轮原子同步项目、selector、四平台政策、manifest、资格与安装检查的版本事实，旧制品及历史收据保持不变。沿既有scoped PR→源码CI→main四平台qualification→同SHA五包发布→公开完整性→精确安装→Dream pin/resolver采用路径执行。前述私有CLI观察仍只是技术证据，不能替代新版本四平台资格。各状态以[0.1.11发布记录](../build/runtime-0.1.11-release-notes.md)的真实命令或CI回执推进；缺输入或门禁失败时保留失败结果，不降低条件。
 
 ## 图片原生依赖当前发布与采用状态（2026-10-11）
+
+> 历史：0.1.11当时的“当前”快照。下文OAuth/schema阻碍图及未执行说明只属于该阶段，不能作为当前0.1.12或最终真实验收限制。
 
 0.1.11已由#28的同一merge SHA a60eb7f3完成main源码CI、四host native资格、
 原CI五包生产发布与公开归档逐字节检查。本机精确global install、默认resolver
@@ -302,6 +317,8 @@ Docker构建及远端部署未执行。文档收尾PR不重新资格化或发布
 
 
 ## 原生图片历史摘要兼容（2026-10-11，建议、未实现）
+
+> 历史：0.1.12设计起点与逐轮修订原文。建议、三轮P2、draft、候选未发布以及技术验证要求保留当时语境；最终实现、同源公开、正常采用和真实可见结果见末节。
 
 ### 背景与问题
 
@@ -379,4 +396,39 @@ stateDiagram-v2
 
 ## 0.1.12 npm 源变换收据校验修订（已实现，验证与发布待执行）
 
+> 历史：旧固定六项tarball gate失败后的修订阶段，后续完整资格38149158758及公开38149958179已经完成，不采用失败制品。
+
 四平台资格流程在 tarball gate 发现已证实的遗漏：打包检查仍以旧版本六个变换为条件，当前构建有十个实际 SHA 绑定目标。不能把失败当成功或删除门禁。最小修订复用 `DREAM_SOURCE_TARGETS` 的现有唯一清单，在原 `source-transforms.ts` 增加仅供构建/发布使用的纯比较函数，由 `verify-npm-tarball.mjs` 调用：收据的 requiredTargets 必须逐项与当前路径及 SHA 一致，appliedSourcePaths 必须与当前排序路径数组完全一致；遗漏、重复、替换路径、旧列表或 SHA 变化均拒绝。原 originalSourceModified=false、Notion/model 资格、同源、法律、checksum 与其余发布门保持。没有新的运行配置或 Runtime 逻辑。回归验证正例及上述反例，并在新提交重跑完整原平台 qualification，不采用失败制品。
+
+## 当前0.1.12交付状态
+
+四平台资格38149158758与五包公开发布38149958179已成功；公开exact set、clean host原生依赖和正常Dream采用均通过，原会话六项图片/Token、19图重开与设置回执已冻结。前述候选、未发布及旧流程描述保留为修订历史，当前细项及未验收边界见[0.1.12回执](../build/runtime-0.1.12-release-notes.md)。
+
+### 当前正常采用与已观察业务（2026-10-12）
+
+公开五包来自source `826de9672a4b5540513c2cdfa097e52ff221ebed`，public integrity与资格归档逐包一致。正常Dream使用Runtime0.1.12、SDK0.2.145和compat2.1.241；原src1902文件与历史包不变。compact兼容最终绑定四个原模块（compact摘要、processSlashCommand、QueryEngine及compact完成文案），早期三文件说明只属于设计起点。
+
+Runtime原SDK仅发送完整synthetic完成文字。Dream另在原文字消费层严格识别该完成消息，沿原callback/保存处理，没有改变Runtime包字节、普通snapshot去重、SSE/恢复/取消协议。第一次页面缺提示保留为失败；第二次同会话manual boundary `0d9cfe85-8ba7-4e55-ab1e-858527afa4ca` 已实际保存，9条原native图片hash保持、15张UI图保持、唯一Compacted可见。
+
+同一正常账户五项新图片已交付并settled，正常Admin既有Dmeck SUPER_ADMIN Chrome会话可见Token流水，分别为原生生成13911、上传原生编辑17581、草图原生编辑14191、Images生成567、Images编辑2102。引用理解、纯文字与讨论工具名控制通过；没有新管理账户、密码重置或cookie注入。四个新native Responses请求顶层`cached_tokens`均实际报告0，属于已知值；图片引擎缓存分项及完整上游图片USD仍未知，旧三条历史缓存仍缺失，不能由平台Token结算推成已知费用。
+
+unsupported反馈后的用户手动恢复第六图已交付，真实蓝圆PNG SHA `7e69c6620e44f03b81ee0ba10b660223e9c84734b367c38449113a2db5008750`与下载一致；实际请求`req_5045b53386d14af39c24f1844f66d233` reserve237545/capture29605/release207940在原Admin UI可见。最终重开恢复原13+新6=19张，6张新图逐个重下载SHA与首次相同、Compacted1且idle；原AI `gpt-6.1-sol`恢复刷新，Image `codex-gpt-image-2`保持。主执行者实际correlation命令exit0，27正常requests/81ledger中6execution唯一，冻结选择/source/result/native SHA/Token/可见账本一致。
+
+初次恢复helper异步历史加载导致expected1/received4失败保留，没有重发模型。early-submit Stop只断开连接的过程保留，同turn实际running后Stop成功；普通取消通过不代表图片执行中取消验收。图片引擎缓存分项及完整上游图片USD仍未知、旧三条历史缓存仍缺失；四个新native Responses请求已报告0的顶层`cached_tokens`不属于这些未知项。本文记录已观察业务项，不标整体Goal或未合并PR完成；此文档收尾不重新资格化、构建或发布0.1.12，不修改业务服务。正常账本/调用记录与失败均保留。
+
+```mermaid
+stateDiagram-v2
+  [*] --> 同源四平台资格完成
+  同源四平台资格完成 --> 五包公开身份已核对
+  五包公开身份已核对 --> 正常Dream采用完成
+  正常Dream采用完成 --> compact唯一反馈已观察
+  compact唯一反馈已观察 --> 五项图片与Token已观察
+  五项图片与Token已观察 --> 引用与文字控制已通过
+  引用与文字控制已通过 --> 用户手动恢复第六图已观察
+  用户手动恢复第六图已观察 --> 十九图重开及六图SHA一致
+  十九图重开及六图SHA一致 --> 原模型选择刷新恢复
+  原模型选择刷新恢复 --> 正常关联回执已冻结
+  note right of 正常关联回执已冻结: 图片执行中取消未验收，未知上游费用不作推定
+```
+
+当前证据分别为round30的`public-runtime12-identity.json`、正常采用两份安全回执、`compact-feedback-cli-readback.json`/`runtime12-compact-feedback-visible.json`、主五项usage/可见账本，以及`real-runtime12-unsupported-recovery.json`、恢复下载、`real-runtime12-final-history.json`、`real-runtime12-final-reopen-hashes.json`、`real-runtime12-final-settings.json`与`check-runtime12-final-correlations.out`/`.exit`；具体路径、命令/退出码、失败及最终冻结由[Dream专项执行记录](/Users/dmeck/project/ink-dream-memory/docs/exec/image-model-call-division-20261010.md)管理。SDK/fake Gateway和文档检查不替代正常账户业务观察。

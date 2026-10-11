@@ -1,3 +1,5 @@
+<!-- [Sync] 2026-10-12: public 0.1.12 adopted; six normal image/Token, settings and 19-image reopen/hash observed; image-inflight cancel remains unverified. -->
+<!-- [History] Candidate-stage Sync below records its then-pending gates; current contract is under version/publication. -->
 <!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
 <!-- [Sync] 2026-10-11: public Runtime 0.1.11 qualified/published/adopted; real image business acceptance remains separate and incomplete. -->
 <!-- [Input] Dream repository governance and the Runtime's current source, build, release and integration contracts. -->
@@ -38,7 +40,16 @@
 
 ## 版本与发布
 
+### 当前版本事实（2026-10-12）
+
+- 当前公开合同为 Runtime `0.1.12`、SDK `0.2.145`、CLI compatibility `2.1.241`；同源资格38149158758、公开五包38149958179及正常Dream采用已完成，见[0.1.12回执](docs/build/runtime-0.1.12-release-notes.md)。第二次compact可见完成、五项正常图片Token、手动恢复第六图和引用/讨论工具名控制已观察；19张历史恢复、6新图重下载SHA与首次一致、原模型选择刷新恢复。普通取消通过不等于图片执行中取消，不能从已观察子项推断未验收行为或整体Goal状态。
+
+### 历史0.1.11合同快照（原文保留）
+
 - 当前已发布合同为 Runtime `0.1.11`、SDK `0.2.145`、CLI compatibility `2.1.241`；四平台同源资格、公开五包和正常Dream采用见 [0.1.11 回执](docs/build/runtime-0.1.11-release-notes.md)。已发布 `0.1.10` 的范围保留在 [0.1.10 回执](docs/build/runtime-0.1.10-release-notes.md)，真实图片业务验收仍由Dream独立记录，不能从发布推断通过。源码 provenance 版本不是 Runtime 发行版本；后续升级同步受影响合同，不将本段当作永久版本常量。
+
+### 持续发布规则
+
 - 版本变化时，原子同步事实确实变化的受影响合同，包括根项目、selector、四个平台、manifest/计划/门禁、安装验证、README 与相关设计，并在 Dream 同步相关精确 pin、resolver、Docker 和依赖/接入记录；不为同步而改动未受影响的文件。npm 不安装 Python SDK，`uv sync`不安装 Runtime。
 - 普通 PR CI 通过不等于完成四平台原生资格化或公开发布。按当前 workflow 检查确切源 SHA、平台构建、许可证/授权、SBOM、checksum、无 `.map`及生产 gate，复用仍有效的同字节验收。
 - 先发布四个精确平台包，再发布 selector；发布仅通过已配置的 CI/OIDC 与保护门禁，不从私有根目录执行 `npm publish`。文档变更不自动授权版本递增、重新资格化或发布。
