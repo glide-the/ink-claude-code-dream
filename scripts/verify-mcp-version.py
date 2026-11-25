@@ -1,6 +1,7 @@
 """[Input] Isolated environment containing public claude-agent-sdk 0.2.145 and one expected mcp release.
 [Output] Exercise real in-memory MCP initialize/ping/tools/resources/prompts/audio/structuredContent forwarding.
 [Pos] Network-free matrix payload; the runner creates disposable environments and never changes Dream/SDK repos.
+[Sync] 2026-11-26: bind the Notion JSON Read fix to Runtime 0.1.13.
 [Sync] 2026-10-11: bind fresh image-native release evidence and checks to Runtime 0.1.12; historical receipts remain unchanged.
 [Sync] 2026-09-15: pair MCP matrix evidence with Runtime 0.1.10 diagnostics.
 """
@@ -23,12 +24,12 @@ from claude_agent_sdk._internal.sdk_mcp_bridge import SdkMcpBridge
 INITIALIZE = {
     "protocolVersion": "2025-06-18",
     "capabilities": {},
-    "clientInfo": {"name": "ink-runtime-matrix", "version": "0.1.12"},
+    "clientInfo": {"name": "ink-runtime-matrix", "version": "0.1.13"},
 }
 
 
 def server() -> Server:
-    instance = Server("ink-matrix", version="0.1.12")
+    instance = Server("ink-matrix", version="0.1.13")
     tools = [
         mcp.types.Tool.model_validate(
             {
