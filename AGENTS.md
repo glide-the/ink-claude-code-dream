@@ -1,4 +1,3 @@
-<!-- [Sync] 2026-11-26: record the verified public Runtime 0.1.13 release. -->
 <!-- [Sync] 2026-10-12: public 0.1.12 adopted; six normal image/Token, settings and 19-image reopen/hash observed; image-inflight cancel remains unverified. -->
 <!-- [History] Candidate-stage Sync below records its then-pending gates; current contract is under version/publication. -->
 <!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
@@ -6,6 +5,7 @@
 <!-- [Input] Dream repository governance and the Runtime's current source, build, release and integration contracts. -->
 <!-- [Output] Mandatory instructions for coding agents maintaining this Runtime repository. -->
 <!-- [Pos] Root repository governance; nested folder contracts refine their own scope. -->
+<!-- [Sync] 2026-11-26: record the verified public Runtime 0.1.13 release. -->
 <!-- [Sync] 2026-09-13: adapt Dream AGENTS to the unique original-module Runtime and npm ownership. -->
 <!-- [Sync] 2026-09-13: require precise programming terminology and remove obsolete designs from current documentation. -->
 

@@ -1,4 +1,3 @@
-<!-- [Sync] 2026-11-26: record the verified public Runtime 0.1.13 release. -->
 <!-- [Sync] 2026-10-12: public 0.1.12 adopted; six normal image/Token, settings and 19-image reopen/hash observed; image-inflight cancel remains unverified. -->
 <!-- [History] Candidate-stage Sync below is retained; current publication/adoption is described in the final section. -->
 <!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
@@ -6,6 +5,7 @@
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
 <!-- [Output] Explain the one Runtime implementation, actual build, verification and local integration boundaries. -->
 <!-- [Pos] Operator entry point for ink-claude-code-dream. -->
+<!-- [Sync] 2026-11-26: record the verified public Runtime 0.1.13 release. -->
 <!-- [Sync] 2026-11-26: assign the non-PDF Read fix its own release version. -->
 <!-- [Sync] 2026-11-25: document the pending non-PDF Read correction. -->
 <!-- [Sync] 2026-10-11: exact native image dependency checks are local source repair; old release/normal adoption unchanged. -->
