@@ -5,6 +5,7 @@
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
 <!-- [Output] Explain the one Runtime implementation, actual build, verification and local integration boundaries. -->
 <!-- [Pos] Operator entry point for ink-claude-code-dream. -->
+<!-- [Sync] 2026-11-26: assign the non-PDF Read fix its own release version. -->
 <!-- [Sync] 2026-11-25: document the pending non-PDF Read correction. -->
 <!-- [Sync] 2026-10-11: exact native image dependency checks are local source repair; old release/normal adoption unchanged. -->
 <!-- [Sync] 2026-09-15: prepare Runtime 0.1.10 plugin-management repair for fresh native qualification and publication. -->
@@ -13,9 +14,9 @@
 
 Repository maintenance rules: [AGENTS.md](AGENTS.md) and the affected folder contracts.
 
-The working tree includes a pending correction for empty `Read.pages` on non-PDF files, including Notion JSON snapshots. PDF inputs retain the existing page-range validation. See the [Runtime design](docs/design/single-source-release-and-dream-adoption.md).
+Runtime `0.1.13` includes the correction for empty `Read.pages` on non-PDF files, including Notion JSON snapshots. PDF inputs retain the existing page-range validation. See the [Runtime design](docs/design/single-source-release-and-dream-adoption.md).
 
-Runtime `0.1.12` uses the original `claude-code-sourcemap` modules directly.
+Runtime `0.1.13` uses the original `claude-code-sourcemap` modules directly.
 `src` is the only implementation and preserves original directories, module paths, permissions and
 initial bytes: **1,902 files, 35 module directories, 30,382,832 bytes**.
 The default build compiles `src/entrypoints/cli.tsx`, not a wrapper or a side snapshot.
