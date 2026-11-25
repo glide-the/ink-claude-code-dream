@@ -1,3 +1,4 @@
+<!-- [Sync] 2026-11-26: record the verified public Runtime 0.1.13 release. -->
 <!-- [Sync] 2026-10-12: public 0.1.12 adopted; six normal image/Token, settings and 19-image reopen/hash observed; image-inflight cancel remains unverified. -->
 <!-- [History] Candidate-stage Sync below records its then-pending gates; current contract is under version/publication. -->
 <!-- [Sync] 2026-10-11: 0.1.12 compact-image candidate; original src and published 0.1.11 remain immutable, release/adoption pending. -->
@@ -40,7 +41,11 @@
 
 ## 版本与发布
 
-### 当前版本事实（2026-10-12）
+### 当前版本事实（2026-11-26）
+
+Runtime `0.1.13` 已发布，Python SDK 为 `0.2.145`，CLI 兼容版本为 `2.1.241`。非 PDF 文件的空白页码按省略处理。四平台资格检查与五个公开归档的摘要见 [0.1.13 发布记录](docs/build/runtime-0.1.13-release-notes.md)。
+
+### 历史 0.1.12 合同快照（2026-10-12）
 
 - 当前公开合同为 Runtime `0.1.12`、SDK `0.2.145`、CLI compatibility `2.1.241`；同源资格38149158758、公开五包38149958179及正常Dream采用已完成，见[0.1.12回执](docs/build/runtime-0.1.12-release-notes.md)。第二次compact可见完成、五项正常图片Token、手动恢复第六图和引用/讨论工具名控制已观察；19张历史恢复、6新图重下载SHA与首次一致、原模型选择刷新恢复。普通取消通过不等于图片执行中取消，不能从已观察子项推断未验收行为或整体Goal状态。
 
