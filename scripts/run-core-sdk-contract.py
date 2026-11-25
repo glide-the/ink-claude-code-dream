@@ -4,6 +4,7 @@
 [Input] A Claude CLI path and the source-only Ink SDK available on sys.path.
 [Output] A JSON receipt for stream-json, permission, tool, interrupt, and resume.
 [Pos] Provider-free process-boundary contract gate for a locally built core.
+[Sync] 2026-11-25: exercise the recorded empty pages argument on a thread-local JSON snapshot.
 [Sync] 2026-09-15: install the fixture through real marketplace/plugin commands before SDK Skill loading.
 [Sync] 2026-08-30: make the official nested-Docker comparator skip only its
                    unpatchable embedded Unix-socket filter and retain bounded Bash diagnostics.
@@ -55,6 +56,7 @@ class ProviderState:
     agent_prompt_seen: bool = False
     agent_result_content: str = ""
     bash_command: str = ""
+    snapshot_path: Path | None = None
     slow_stream_started: Event = field(default_factory=Event)
 
 
@@ -319,7 +321,11 @@ def _handler(state: ProviderState) -> type[BaseHTTPRequestHandler]:
                 if isinstance(tools, list) and isinstance(tool, dict)
                 if isinstance(tool.get("name"), str)
             }
-            if "toolu_runtime_contract" not in result_ids and not state.tool_result_seen:
+            if latest == "Read the Notion snapshot." and state.snapshot_path is not None:
+                tool_name, tool_id, tool_input = (
+                    "Read", "toolu_snapshot", {"file_path": str(state.snapshot_path), "pages": ""},
+                )
+            elif "toolu_runtime_contract" not in result_ids and not state.tool_result_seen:
                 tool_name, tool_id, tool_input = (
                     "Bash",
                     "toolu_runtime_contract",
@@ -598,6 +604,10 @@ async def run_contract(cli: Path, dream_compat: bool = False) -> dict[str, Any]:
             return {}
 
         with local_provider(bash_command) as (provider, base_url):
+            if dream_compat:
+                provider.snapshot_path = workspace / ".notion" / "snapshot.json"
+                provider.snapshot_path.parent.mkdir()
+                provider.snapshot_path.write_text('{"snapshot_version":"fixture-snapshot-42"}\n')
             common = {
                 "cli_path": str(cli),
                 "cwd": str(workspace),
@@ -654,8 +664,13 @@ async def run_contract(cli: Path, dream_compat: bool = False) -> dict[str, Any]:
                         f"stderr={''.join(stderr_lines[-20:])[-4000:]!r}"
                     )
                 server_info = await client.get_server_info()
-                await client.query("Return the deterministic Unicode response.")
+                await client.query("Read the Notion snapshot." if dream_compat else "Return the deterministic Unicode response.")
                 second_messages = await asyncio.wait_for(_collect(client), timeout=30)
+                if dream_compat and not any(
+                    "fixture-snapshot-42" in _tool_result_content(request, "toolu_snapshot")
+                    for request in provider.requests
+                ):
+                    raise AssertionError("Read with blank pages did not return the JSON snapshot")
 
                 await client.query("WAIT_FOR_INTERRUPT")
                 collector = asyncio.create_task(_collect(client))
