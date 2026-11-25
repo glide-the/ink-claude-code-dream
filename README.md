@@ -5,6 +5,7 @@
 <!-- [Input] Canonical original src modules, byte-exact reference, build transforms and versioned package contracts. -->
 <!-- [Output] Explain the one Runtime implementation, actual build, verification and local integration boundaries. -->
 <!-- [Pos] Operator entry point for ink-claude-code-dream. -->
+<!-- [Sync] 2026-11-26: record the verified public Runtime 0.1.13 release. -->
 <!-- [Sync] 2026-11-26: assign the non-PDF Read fix its own release version. -->
 <!-- [Sync] 2026-11-25: document the pending non-PDF Read correction. -->
 <!-- [Sync] 2026-10-11: exact native image dependency checks are local source repair; old release/normal adoption unchanged. -->
@@ -76,7 +77,7 @@ Historical 0.1.9 verification pointer (original wording retained):
 
 Current results and remaining qualification boundaries are in
 [0.1.9 notes](docs/build/runtime-0.1.9-release-notes.md).
-Current 0.1.12 evidence is in the [release record](docs/build/runtime-0.1.12-release-notes.md).
+Historical 0.1.12 evidence is in the [release record](docs/build/runtime-0.1.12-release-notes.md).
 
 ## Module and capability boundary
 
@@ -102,10 +103,7 @@ The private root package is the build workspace, not the npm selector.
 `cli.js`. Both command aliases select an exact native optional package. The selector is
 repository-authored; its MIT license does not relicense the original Runtime modules.
 
-Runtime project, selector and four platform packages are publicly released as `0.1.12`.
-This version retains the required native image dependencies, adds compact-image compatibility and completed fresh four-platform
-qualification, five-package publication and normal Dream Runtime adoption. Published `0.1.10` archives remain immutable.
-The [0.1.12 release record](docs/build/runtime-0.1.12-release-notes.md) tracks the current gates; the 0.1.11 record remains immutable history.
+Runtime `0.1.13` is available on npm for all four platforms. The [0.1.13 release record](docs/build/runtime-0.1.13-release-notes.md) lists the public package digests and the qualification run. Earlier image and compact checks are recorded in the [0.1.12 release notes](docs/build/runtime-0.1.12-release-notes.md).
 Python SDK stays `0.2.145`, source provenance
 `2.1.88`, and Dream-facing CLI compatibility `2.1.241`; API schema stays `2.0.0`.
 

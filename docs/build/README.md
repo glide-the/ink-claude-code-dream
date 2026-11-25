@@ -5,6 +5,7 @@
 <!-- [Input] Canonical original src modules, locked tooling, recovered dependencies/assets and current policy. -->
 <!-- [Output] Actual original-module build and verification commands with explicit release boundaries. -->
 <!-- [Pos] Current single-source build guide and artifact-validation boundary. -->
+<!-- [Sync] 2026-11-26: record the verified public Runtime 0.1.13 release. -->
 <!-- [Sync] 2026-10-11: exact native image dependency checks are local source repair; old release/normal adoption unchanged. -->
 <!-- [Sync] 2026-09-13: retain qualified source/build gates and link completed four-host public release evidence. -->
 
@@ -99,3 +100,5 @@ manual recovery's sixth image, 19-image reopen, six download hashes and restored
 settings now have frozen normal receipts in the
 [current release receipt](runtime-0.1.12-release-notes.md).
 Ordinary cancellation does not qualify image-inflight cancellation.
+
+The [0.1.13 release record](runtime-0.1.13-release-notes.md) lists the five public package digests and the Notion snapshot Read verification.
