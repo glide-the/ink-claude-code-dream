@@ -1,3 +1,4 @@
+// [Sync] 2026-11-25: let non-PDF Read inputs omit a page range using a blank string.
 // [Sync] 2026-10-11: exact canonical source receipt comparison replaces a stale fixed-count npm gate.
 // [Input] Exact original src target hashes plus contents after the existing headless/MCP transforms.
 // [Output] Marker-checked child/model projection and original compact image/input/output compatibility.
@@ -7,6 +8,7 @@
 // [Sync] 2026-10-11: keep compact completion text identical without ANSI formatting in the headless SDK path.
 
 export const DREAM_SOURCE_TARGETS = [
+  { path: "src/tools/FileReadTool/FileReadTool.ts", sha256: "09d6bc8554732ce7f1abbb7edda07dfb6cb97b0413ade26d78f37f1499098e36" },
   { path: "src/utils/subprocessEnv.ts", sha256: "519bf73db39e33c449f00be33710e3ead5ff2e48cc5e187b6fd324ac3b10a4f6" },
   { path: "src/utils/Shell.ts", sha256: "ff0375ff87ce31ca0478b1d46048ded218330625b17035729781a17afc2c73d6" },
   { path: "src/services/mcp/client.ts", sha256: "787bba952e1f37dead67afab114b4ee71f66c95e8dba4559afa55679b113b8d2" },
@@ -47,6 +49,12 @@ export function applyDreamSourceTransform(path: string, source: string): string 
   let result = source;
   let imports: string[];
   switch (path) {
+    case "src/tools/FileReadTool/FileReadTool.ts":
+      imports = [];
+      result = replaceOnce(result,
+        "    if (pages !== undefined) {\n      const parsed = parsePDFPageRange(pages)",
+        "    if (pages !== undefined && (pages.trim() !== '' || isPDFExtension(path.extname(file_path.trim())))) {\n      const parsed = parsePDFPageRange(pages)");
+      break;
     case "src/utils/subprocessEnv.ts":
       imports = ["stripNotionEnvironment"];
       result = replaceOnce(result,

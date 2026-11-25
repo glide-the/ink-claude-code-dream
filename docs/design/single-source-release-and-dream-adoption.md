@@ -1,4 +1,5 @@
 <!-- [Sync] 2026-10-12: public 0.1.12 adopted; six normal image/Token, settings and 19-image reopen/hash observed; image-inflight cancel remains unverified. -->
+<!-- [Sync] 2026-11-25: define the candidate Read validation change for empty non-PDF page ranges. -->
 <!-- [Input] Original module recovery, duplicate source directory, GitHub npm publishing and local Dream integration. -->
 <!-- [Output] Minimal implementation and interaction plan with independently verifiable release states. -->
 <!-- [Pos] Current source-cleanup/release/adoption design and acceptance checklist. -->
@@ -37,6 +38,12 @@ Ubuntu hosted CI 的 userns 宿主前提只在默认分支受保护的临时 job
 先执行真实 bwrap preflight；不改变 Runtime sandbox 或本机/生产安全配置。
 
 ## 实施与交互
+
+### 工作区 JSON 读取
+
+2026-11-25 的 Dream 对话中，内置 `Read` 对 `.notion/snapshot.json` 收到 `pages: ""`。0.1.12 在 `PreToolUse` 前解析页码并返回参数错误。候选构建在原 `FileReadTool.validateInput` 中将非 PDF 文件的空白页码视为省略，继续执行路径校验、权限判断和文件读取。PDF 的显式页码和任何文件的非空页码沿用原范围校验。SDK 验证通过本地模型响应指定空页码，检查工具回传快照内容。
+
+### 构建与接入
 
 1. 删除前验证 1,902 个源文件、35 个顶层模块、库存摘要和原始权限。
 2. 将双树同步器替换为只读单树校验器，检查原始库存并拒绝重复目录；更新
